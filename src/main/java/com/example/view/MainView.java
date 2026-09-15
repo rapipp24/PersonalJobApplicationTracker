@@ -8,10 +8,9 @@ public class MainView extends H1 {
     public MainView() {
 
         H1 judul = new H1("Job Application Tracker");
-        Textfield tombol = new tombol ("Tambah Lamaran");
         Button button = new Button("Tambah ");
         
-        add(judul, tombol, button);
+        add(judul,button);
 
     }
     }
