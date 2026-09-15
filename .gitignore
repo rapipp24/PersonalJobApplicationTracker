@@ -12,3 +12,7 @@
 node_modules/
 src/main/frontend/generated/
 vite.generated.ts
+
+
+/data/
+/src/main/bundles/
