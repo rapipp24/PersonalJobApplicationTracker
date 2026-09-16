@@ -20,6 +20,10 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.component.html.Anchor;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -349,8 +353,56 @@ public class MainView extends VerticalLayout {
 
         Button saveButton =
                 new Button("Simpan Lamaran");
-
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        
+        Button exportButton = new Button("Export CSV");
+        exportButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        StreamResource csvResource = new StreamResource( "job-applications.csv", () -> {
+            List<JobApplication> dataExport = service.findAll();
+
+            StringBuilder csv = new StringBuilder();
+
+            csv.append(
+                    "Perusahaan,Posisi,Status,Tanggal Melamar,Ekspektasi Gaji,Catatan\n"
+            );
+
+            for (JobApplication jobApplication : dataExport) {
+
+                csv.append(jobApplication.getCompanyName())
+                        .append(",")
+                        .append(jobApplication.getPosition())
+                        .append(",")
+                        .append(jobApplication.getStatus())
+                        .append(",")
+                        .append(jobApplication.getApplicationDate())
+                        .append(",")
+                        .append(
+                                jobApplication.getExpectedSalary() != null
+                                        ? jobApplication.getExpectedSalary()
+                                        : ""
+                        )
+                        .append(",")
+                        .append(
+                                jobApplication.getNotes() != null
+                                        ? jobApplication.getNotes()
+                                        : ""
+                        )
+                        .append("\n");
+            }
+
+            return new ByteArrayInputStream(
+                    csv.toString().getBytes(StandardCharsets.UTF_8)
+            );
+        }
+                );
+
+                Anchor exportLink = new Anchor(csvResource, "");
+
+                exportLink.getElement()
+                        .setAttribute("download", true);
+
+                exportLink.add(exportButton);
 
         saveButton.addClickListener(event -> {
 
@@ -489,6 +541,7 @@ public class MainView extends VerticalLayout {
 
                 judulDaftar,
                 filterLayout,
+                exportLink,
                 tableLamaran
         );
     }
