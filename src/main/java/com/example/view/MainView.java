@@ -1,7 +1,8 @@
 package com.example.view;
 
+import com.example.entity.JobApplication;
 import com.example.entity.ApplicationStatus;
-
+import com.example.service.JobApplicationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -12,13 +13,14 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.notification.Notification;
 
 import java.time.LocalDate;
 
 @Route("")
 public class MainView extends VerticalLayout {
 
-    public MainView() {
+    public MainView(JobApplicationService service) {
 
         H1 judul = new H1("Job Application Tracker");
 
@@ -34,9 +36,11 @@ public class MainView extends VerticalLayout {
 
         TextField companyName =
                 new TextField("Nama Perusahaan");
+        companyName.setRequiredIndicatorVisible(true);
 
         TextField position =
                 new TextField("Posisi / Jabatan");
+        position.setRequiredIndicatorVisible(true);
 
         DatePicker applicationDate =
                 new DatePicker("Tanggal Melamar");
@@ -55,6 +59,48 @@ public class MainView extends VerticalLayout {
 
         Button saveButton =
                 new Button("Simpan Lamaran");
+
+        saveButton.addClickListener(event -> {
+        
+        boolean namaPerusahaanKosong = companyName.isEmpty();
+        boolean posisiKosong = position.isEmpty();
+
+        companyName.setInvalid(namaPerusahaanKosong);
+        position.setInvalid(posisiKosong);
+
+        companyName.setErrorMessage("Nama perusahaan harus diisi");
+        position.setErrorMessage("Posisi harus diisi");
+
+        if(namaPerusahaanKosong || posisiKosong) {
+                Notification.show("Lengkapi data terlebih dahulu");
+            return;
+        }
+
+            JobApplication jobApplication = new JobApplication();
+
+            jobApplication.setCompanyName(companyName.getValue());
+            jobApplication.setPosition(position.getValue());
+            jobApplication.setApplicationDate(applicationDate.getValue());
+            jobApplication.setStatus(status.getValue());
+            jobApplication.setNotes(notes.getValue());
+
+
+            if(expectedSalary.getValue() != null) {
+                jobApplication.setExpectedSalary(expectedSalary.getValue().longValue());
+            }
+
+            service.simpanLamaran(jobApplication);
+            Notification.show("Lamaran berhasil disimpan");
+
+            companyName.clear();
+            position.clear();
+            expectedSalary.clear();
+            notes.clear();
+
+            applicationDate.setValue(LocalDate.now());
+            status.setValue(ApplicationStatus.APPLIED);
+            
+        });
 
         add(
                 judul,

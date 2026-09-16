@@ -17,7 +17,7 @@ public class JobApplicationService {
         return repository.findAll();
     }
 
-    public JobApplication save(JobApplication jobApplication) {
+    public JobApplication simpanLamaran(JobApplication jobApplication) {
         return repository.save(jobApplication);
     }
 }
