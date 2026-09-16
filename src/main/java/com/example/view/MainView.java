@@ -60,20 +60,25 @@ public class MainView extends VerticalLayout {
 
                Grid<JobApplication> tableLamaran = new Grid<>(JobApplication.class, false);
        
-       tableLamaran.addColumn(JobApplication::getCompanyName)
-                .setHeader("Perusahaan");
+        tableLamaran.addColumn(JobApplication::getCompanyName)
+                .setHeader("Perusahaan")
+                .setSortable(true);
 
         tableLamaran.addColumn(JobApplication::getPosition)
-                .setHeader("Posisi");
+                .setHeader("Posisi")
+                .setSortable(true);
 
         tableLamaran.addColumn(JobApplication::getStatus)
-                .setHeader("Status");
+                .setHeader("Status")
+                .setSortable(true);
 
         tableLamaran.addColumn(JobApplication::getApplicationDate)
-                .setHeader("Tanggal Melamar");
-        
+                .setHeader("Tanggal Melamar")
+                .setSortable(true);
+
         tableLamaran.addColumn(JobApplication::getExpectedSalary)
-                .setHeader("Ekspektasi Gaji");
+                .setHeader("Ekspektasi Gaji")
+                .setSortable(true);
 
         tableLamaran.addColumn(JobApplication::getNotes)
                 .setHeader("Catatan / Feedback");
