@@ -14,6 +14,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.grid.Grid;
 
 import java.time.LocalDate;
 
@@ -57,6 +58,29 @@ public class MainView extends VerticalLayout {
         TextArea notes =
                 new TextArea("Catatan / Feedback");
 
+               Grid<JobApplication> tableLamaran = new Grid<>(JobApplication.class, false);
+       
+       tableLamaran.addColumn(JobApplication::getCompanyName)
+                .setHeader("Perusahaan");
+
+        tableLamaran.addColumn(JobApplication::getPosition)
+                .setHeader("Posisi");
+
+        tableLamaran.addColumn(JobApplication::getStatus)
+                .setHeader("Status");
+
+        tableLamaran.addColumn(JobApplication::getApplicationDate)
+                .setHeader("Tanggal Melamar");
+        
+        tableLamaran.addColumn(JobApplication::getExpectedSalary)
+                .setHeader("Ekspektasi Gaji");
+
+        tableLamaran.addColumn(JobApplication::getNotes)
+                .setHeader("Catatan / Feedback");
+
+
+        tableLamaran.setItems(service.findAll());
+
         Button saveButton =
                 new Button("Simpan Lamaran");
 
@@ -90,12 +114,16 @@ public class MainView extends VerticalLayout {
             }
 
             service.simpanLamaran(jobApplication);
+            tableLamaran.setItems(service.findAll());
             Notification.show("Lamaran berhasil disimpan");
 
             companyName.clear();
             position.clear();
             expectedSalary.clear();
             notes.clear();
+
+            companyName.setInvalid(false);
+            position.setInvalid(false);
 
             applicationDate.setValue(LocalDate.now());
             status.setValue(ApplicationStatus.APPLIED);
@@ -111,7 +139,8 @@ public class MainView extends VerticalLayout {
                 status,
                 expectedSalary,
                 notes,
-                saveButton
+                saveButton,
+                tableLamaran
         );
     }
 }

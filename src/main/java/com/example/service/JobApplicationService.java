@@ -1,5 +1,6 @@
 package com.example.service;
 
+import java.util.List;
 import com.example.entity.JobApplication;
 import com.example.repository.JobApplicationRepository;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ public class JobApplicationService {
         this.repository = repository;
     }
 
-    public Iterable<JobApplication> findAll() {
+    public List<JobApplication> findAll() {
         return repository.findAll();
     }
 
