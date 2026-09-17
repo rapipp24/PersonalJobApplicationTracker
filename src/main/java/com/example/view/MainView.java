@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Comparator;
 
 @Route("")
 public class MainView extends VerticalLayout {
@@ -169,6 +170,12 @@ public class MainView extends VerticalLayout {
 
         tableLamaran.addColumn(JobApplication::getExpectedSalary)
                 .setHeader("Ekspektasi Gaji")
+                .setComparator(
+                        Comparator.comparing(
+                                JobApplication::getExpectedSalary,
+                                Comparator.nullsLast(Long::compareTo)
+                        )
+                )
                 .setSortable(true);
 
         tableLamaran.addColumn(JobApplication::getNotes)
