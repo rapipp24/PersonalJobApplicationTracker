@@ -442,6 +442,8 @@ public class MainView extends VerticalLayout {
             }
 
             service.simpanLamaran(jobApplication);
+            Notification.show("Lamaran berhasil disimpan");
+            
             List<JobApplication> dataTerbaru = service.findAll();
 
             angkaTotalLamaran.setText(
