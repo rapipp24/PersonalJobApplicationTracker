@@ -3,6 +3,7 @@ package com.example.view;
 import com.example.entity.JobApplication;
 import com.example.entity.ApplicationStatus;
 import com.example.service.JobApplicationService;
+import com.example.entity.ApplicationTipe;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -24,6 +25,7 @@ import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.component.html.Anchor;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -78,6 +80,12 @@ public class MainView extends VerticalLayout {
         status.setValue(ApplicationStatus.APPLIED);
         status.setWidth("220px");
 
+        ComboBox<ApplicationTipe> tipeKerja =
+        new ComboBox<>("Tipe Kerja");
+        tipeKerja.setItems(ApplicationTipe.values());
+        tipeKerja.setWidth("220px");
+
+
         NumberField expectedSalary =
         new NumberField("Ekspektasi Gaji");
         expectedSalary.setWidth("220px");
@@ -94,12 +102,16 @@ public class MainView extends VerticalLayout {
         baris1.getStyle().set("flex-wrap", "wrap");
 
         HorizontalLayout baris2 = new HorizontalLayout(
-                applicationDate, status, expectedSalary
+                applicationDate, status, tipeKerja, expectedSalary
         );
         baris2.setWidthFull();
         baris2.getStyle().set("flex-wrap", "wrap");
 
+        final JobApplication[] dataSedangDiedit = {null};
 
+        Button saveButton =
+                new Button("Simpan Lamaran");
+        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Grid<JobApplication> tableLamaran =
                 new Grid<>(JobApplication.class, false);
@@ -164,6 +176,10 @@ public class MainView extends VerticalLayout {
 
         }).setHeader("Status");
 
+        tableLamaran.addColumn(JobApplication::gettipeKerja)
+                .setHeader("Tipe Kerja")
+                .setSortable(true);
+
         tableLamaran.addColumn(JobApplication::getApplicationDate)
                 .setHeader("Tanggal Melamar")
                 .setSortable(true);
@@ -180,7 +196,6 @@ public class MainView extends VerticalLayout {
 
         tableLamaran.addColumn(JobApplication::getNotes)
                 .setHeader("Catatan / Feedback");
-
         
         tableLamaran.setWidthFull();
         tableLamaran.setHeight("420px");
@@ -280,6 +295,122 @@ public class MainView extends VerticalLayout {
         angkaDiterima.getStyle().set("margin", "4px 0 0 0");
         angkaDitolak.getStyle().set("margin", "4px 0 0 0");
 
+        tableLamaran.addComponentColumn(jobApplication -> {
+                Button editButton = new Button("Edit");
+                editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+                Button deleteButton = new Button("Hapus");
+
+                deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+
+        deleteButton.addClickListener(event -> {
+                ConfirmDialog dialog = new ConfirmDialog();
+
+                dialog.setHeader("Hapus Lamaran");
+                dialog.setText("Anda yakin ingin menghapus lamaran " + jobApplication.getCompanyName() + " - " + jobApplication.getPosition() + "?");
+
+                dialog.setCancelable(true);
+                dialog.setCancelText("Batal");
+
+                dialog.setConfirmText("Hapus");
+                dialog.setConfirmButtonTheme("error primary");
+
+                dialog.addConfirmListener(confirmevent -> {
+                service.hapusLamaran(jobApplication);
+
+        List<JobApplication> dataTerbaru = service.findAll();
+        angkaTotalLamaran.setText(String.valueOf(dataTerbaru.size()));
+        long diprosesTerbaru = dataTerbaru.stream()
+        .filter(dataLamaran ->
+                dataLamaran.getStatus() == ApplicationStatus.APPLIED
+                ||
+                dataLamaran.getStatus() == ApplicationStatus.SCREENING
+                ||
+                dataLamaran.getStatus() == ApplicationStatus.TECHNICAL_TEST
+                ||
+                dataLamaran.getStatus() == ApplicationStatus.INTERVIEW
+        )
+        .count();
+
+                angkaDiproses.setText(
+                        String.valueOf(diprosesTerbaru)
+                );
+
+                long diterimaTerbaru = dataTerbaru.stream()
+                        .filter(dataLamaran ->
+                                dataLamaran.getStatus() == ApplicationStatus.OFFERED
+                        )
+                        .count();
+
+                angkaDiterima.setText(
+                        String.valueOf(diterimaTerbaru)
+                );
+
+                long ditolakTerbaru = dataTerbaru.stream()
+                        .filter(dataLamaran ->
+                                dataLamaran.getStatus() == ApplicationStatus.REJECTED
+                        )
+                        .count();
+
+                angkaDitolak.setText(
+                        String.valueOf(ditolakTerbaru)
+                );
+
+        if(dataSedangDiedit[0] == jobApplication) {
+
+        dataSedangDiedit[0] = null;
+
+        companyName.clear();    
+        position.clear();
+        expectedSalary.clear();
+        notes.clear();
+
+        applicationDate.setValue(LocalDate.now());
+        status.setValue(ApplicationStatus.APPLIED);
+        tipeKerja.clear();
+
+        companyName.setInvalid(false);
+        position.setInvalid(false);
+
+        saveButton.setText("Simpan Lamaran");
+    }
+
+        tableLamaran.setItems(service.findAll());
+
+        Notification.show("Lamaran berhasil dihapus");
+        });
+                dialog.open();
+        });
+
+        editButton.addClickListener(event -> {
+
+                dataSedangDiedit[0] = jobApplication ;
+
+                companyName.setValue(jobApplication.getCompanyName());
+                position.setValue(jobApplication.getPosition());
+                applicationDate.setValue(jobApplication.getApplicationDate());
+                status.setValue(jobApplication.getStatus());
+
+                if(jobApplication.getExpectedSalary() != null) {
+                        expectedSalary.setValue(jobApplication.getExpectedSalary().doubleValue());
+                } else {
+                        expectedSalary.clear();
+                }
+
+                if(jobApplication.getNotes() != null) {
+                        notes.setValue(jobApplication.getNotes());
+                } else {
+                        notes.clear();
+                }
+
+                saveButton.setText("Update Lamaran");
+        });
+
+        return new HorizontalLayout(
+                editButton,
+                deleteButton
+        );
+        }).setHeader("Aksi");
+
         search.addValueChangeListener(event -> {
 
             String keyword = search.getValue().toLowerCase();
@@ -357,10 +488,6 @@ public class MainView extends VerticalLayout {
 
             tableLamaran.setItems(hasilFilter);
         });
-
-        Button saveButton =
-                new Button("Simpan Lamaran");
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         
         Button exportButton = new Button("Export CSV");
         exportButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -411,6 +538,7 @@ public class MainView extends VerticalLayout {
 
                 exportLink.add(exportButton);
 
+        
         saveButton.addClickListener(event -> {
 
             boolean namaPerusahaanKosong = companyName.isEmpty();
@@ -427,13 +555,19 @@ public class MainView extends VerticalLayout {
                 return;
             }
 
-            JobApplication jobApplication = new JobApplication();
+            JobApplication jobApplication ;
 
-            jobApplication.setCompanyName(companyName.getValue());
-            jobApplication.setPosition(position.getValue());
-            jobApplication.setApplicationDate(applicationDate.getValue());
-            jobApplication.setStatus(status.getValue());
-            jobApplication.setNotes(notes.getValue());
+            if(dataSedangDiedit[0] != null) {
+                    jobApplication = dataSedangDiedit[0];
+            } else {
+                jobApplication = new JobApplication();
+            }
+                jobApplication.setCompanyName(companyName.getValue());
+                jobApplication.setPosition(position.getValue());
+                jobApplication.setApplicationDate(applicationDate.getValue());
+                jobApplication.setStatus(status.getValue());
+                jobApplication.settipeKerja(tipeKerja.getValue());
+                jobApplication.setNotes(notes.getValue());
 
             if(expectedSalary.getValue() != null) {
                 jobApplication.setExpectedSalary(
@@ -521,6 +655,9 @@ public class MainView extends VerticalLayout {
             tableLamaran.setItems(hasilFilter);
 
             Notification.show("Lamaran berhasil disimpan");
+
+            dataSedangDiedit[0] = null;
+            saveButton.setText("Simpan");
 
             companyName.clear();
             position.clear();

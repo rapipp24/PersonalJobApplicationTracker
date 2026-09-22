@@ -24,6 +24,9 @@ public class JobApplication{
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private ApplicationTipe tipeKerja;
+
     private String notes;
 
     public String getCompanyName() {
@@ -72,6 +75,14 @@ public class JobApplication{
 
     public void setNotes(String notes) {
     this.notes = notes;
+    }
+
+    public ApplicationTipe gettipeKerja() {
+    return tipeKerja;
+    }
+
+    public void settipeKerja(ApplicationTipe tipeKerja) {
+    this.tipeKerja = tipeKerja;
     }
 }
 

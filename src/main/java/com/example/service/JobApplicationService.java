@@ -21,4 +21,8 @@ public class JobApplicationService {
     public JobApplication simpanLamaran(JobApplication jobApplication) {
         return repository.save(jobApplication);
     }
+
+    public void hapusLamaran(JobApplication jobApplication) {
+        repository.delete(jobApplication);
+    }
 }
