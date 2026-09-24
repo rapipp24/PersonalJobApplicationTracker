@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
@@ -16,8 +17,12 @@ public class JobApplication{
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
 
+    @NotBlank(message = "Nama perusahaan harus diisi")
     private String companyName;
+
+    @NotBlank(message = "Posisi harus diisi")
     private String position;
+
     private Long expectedSalary;
     private LocalDate applicationDate;
 
