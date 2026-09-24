@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.example.view.component.JobApplicationForm;
+import com.example.view.component.ApplicationDashboard;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,11 +36,25 @@ import java.util.Comparator;
 @Route("")
 public class MainView extends VerticalLayout {
 
+        private TextField search = new TextField("Cari Lamaran");
+
+        private ComboBox<ApplicationStatus> filterStatus =
+                new ComboBox<>("Filter Status");
+
+        private Grid<JobApplication> tableLamaran =
+                new Grid<>(JobApplication.class, false); 
+
+        private final JobApplicationService service;
+
     public MainView(JobApplicationService service) {
+
+        this.service = service;
 
         H1 judul = new H1("Job Application Tracker");
 
-        JobApplicationForm form =new JobApplicationForm();
+        JobApplicationForm form = new JobApplicationForm();
+        ApplicationDashboard dashboard = new ApplicationDashboard();
+        dashboard.updateData(service.findAll());
 
         JobApplication jobApplicationBaru = new JobApplication();
         jobApplicationBaru.setStatus(ApplicationStatus.APPLIED);
@@ -51,14 +66,12 @@ public class MainView extends VerticalLayout {
         setMaxWidth("1200px");
         getStyle().set("margin", "0 auto");
 
-        TextField search = new TextField("Cari Lamaran");
+        //konfigurasi search
         search.setPlaceholder("Cari perusahaan, posisi, atau catatan...");
         search.setWidth("400px");
         search.setValueChangeMode(ValueChangeMode.EAGER);
 
-
-        ComboBox<ApplicationStatus> filterStatus =
-                new ComboBox<>("Filter Status");
+        // filter
         filterStatus.setItems(ApplicationStatus.values());
         filterStatus.setClearButtonVisible(true);
         filterStatus.setWidth("220px");
@@ -69,10 +82,7 @@ public class MainView extends VerticalLayout {
         filterLayout.setWidthFull();
         filterLayout.getStyle().set("flex-wrap", "wrap");
         
-        Grid<JobApplication> tableLamaran =
-                new Grid<>(JobApplication.class, false);
-
-
+        //grid
         tableLamaran.addColumn(JobApplication::getCompanyName)
                 .setHeader("Perusahaan").setSortable(true);
 
@@ -163,117 +173,37 @@ public class MainView extends VerticalLayout {
         tableLamaran.setItems(service.findAll());
 
 
-        form.setSaveListener(jobApplication -> {
+ form.setSaveListener(jobApplication -> {
         service.simpanLamaran(jobApplication);
-        tableLamaran.setItems(service.findAll());
+
+        dashboard.updateData(service.findAll());
+        refreshGrid();
+        
         form.setJobApplication(new JobApplication());
+
         Notification.show("Lamaran berhasil disimpan");
         });
 
-        form.setCancelListener(() -> {
+
+
+form.setCancelListener(() -> {
         form.setJobApplication(new JobApplication());
         });
 
-        form.setDeleteListener(jobApplication -> {
+
+
+form.setDeleteListener(jobApplication -> {
         service.hapusLamaran(jobApplication);
-        tableLamaran.setItems(service.findAll());
+       
+        dashboard.updateData(service.findAll());
+        refreshGrid();
+
         form.setJobApplication(new JobApplication());
+
         Notification.show("Lamaran berhasil dihapus");
         });
 
-        
-        List<JobApplication> semuaLamaran = service.findAll();
-        long totalLamaran = semuaLamaran.size();
 
-
-        long totalDiproses = semuaLamaran.stream()
-                .filter(jobApplication -> 
-                jobApplication.getStatus() == ApplicationStatus.APPLIED
-                || jobApplication.getStatus() == ApplicationStatus.SCREENING
-                || jobApplication.getStatus() == ApplicationStatus.TECHNICAL_TEST
-                || jobApplication.getStatus() == ApplicationStatus.INTERVIEW)
-                .count();
-
-        long totalDiterima = semuaLamaran.stream()
-                .filter(jobApplication -> jobApplication.getStatus() == ApplicationStatus.OFFERED)
-                .count();
-
-        long totalDitolak = semuaLamaran.stream()
-                .filter(jobApplication -> jobApplication.getStatus() == ApplicationStatus.REJECTED)
-                .count();
-
-
-        Span labelTotalLamaran = new Span("Total Lamaran");
-        H2 angkaTotalLamaran = new H2(String.valueOf(totalLamaran));
-        VerticalLayout cardTotalLamaran = new VerticalLayout(labelTotalLamaran, angkaTotalLamaran);
-
-        Span labelDiproses = new Span("Diproses");
-        H2 angkaDiproses = new H2(String.valueOf(totalDiproses));
-        VerticalLayout cardDiproses = new VerticalLayout(labelDiproses, angkaDiproses);
-
-        Span labelDiterima = new Span("Diterima");
-        H2 angkaDiterima = new H2(String.valueOf(totalDiterima));
-        VerticalLayout cardDiterima = new VerticalLayout(labelDiterima, angkaDiterima);
-
-        Span labelDitolak = new Span("Ditolak");
-        H2 angkaDitolak = new H2(String.valueOf(totalDitolak));
-        VerticalLayout cardDitolak = new VerticalLayout(labelDitolak, angkaDitolak);
-
-
-        HorizontalLayout dashboard = new HorizontalLayout(
-                cardTotalLamaran,
-                cardDiproses,
-                cardDiterima,
-                cardDitolak
-        );
-
-        cardTotalLamaran.getStyle()
-                .set("padding", "16px 24px")
-                .set("border", "1px solid #E5E7EB")
-                .set("border-radius", "12px")
-                .set("font-weight", "600");
-
-        cardDiproses.getStyle()
-                .set("padding", "16px 24px")
-                .set("border", "1px solid #E5E7EB")
-                .set("border-radius", "12px")
-                .set("font-weight", "600")
-                .set("background-color", "#FEF3C7");
-
-        cardDiterima.getStyle()
-                .set("padding", "16px 24px")
-                .set("border", "1px solid #E5E7EB")
-                .set("border-radius", "12px")
-                .set("font-weight", "600")
-                .set("background-color", "#DCFCE7");
-
-        cardDitolak.getStyle()
-                .set("padding", "16px 24px")
-                .set("border", "1px solid #E5E7EB")
-                .set("border-radius", "12px")
-                .set("font-weight", "600")
-                .set("background-color", "#FEE2E2");
-
-        dashboard.setWidthFull();
-        dashboard.setSpacing(true);
-
-
-        dashboard.getStyle().set("flex-wrap", "wrap");
-
-        cardTotalLamaran.setWidth("220px");
-        cardDiproses.setWidth("220px");
-        cardDiterima.setWidth("220px");
-        cardDitolak.setWidth("220px");
-
-        cardTotalLamaran.setSpacing(false);
-        cardDiproses.setSpacing(false);
-        cardDiterima.setSpacing(false);
-        cardDitolak.setSpacing(false);
-
-        angkaTotalLamaran.getStyle().set("margin", "4px 0 0 0");
-        angkaDiproses.getStyle().set("margin", "4px 0 0 0");
-        angkaDiterima.getStyle().set("margin", "4px 0 0 0");
-        angkaDitolak.getStyle().set("margin", "4px 0 0 0");
 
         tableLamaran.addComponentColumn(jobApplication -> {
                 Button editButton = new Button("Edit");
@@ -294,54 +224,19 @@ public class MainView extends VerticalLayout {
                 dialog.setConfirmText("Hapus");
                 dialog.setConfirmButtonTheme("error primary");
 
-                dialog.addConfirmListener(confirmevent -> {
-                service.hapusLamaran(jobApplication);
 
-        List<JobApplication> dataTerbaru = service.findAll();
-        angkaTotalLamaran.setText(String.valueOf(dataTerbaru.size()));
-        long diprosesTerbaru = dataTerbaru.stream()
-        .filter(dataLamaran ->
-                dataLamaran.getStatus() == ApplicationStatus.APPLIED
-                ||
-                dataLamaran.getStatus() == ApplicationStatus.SCREENING
-                ||
-                dataLamaran.getStatus() == ApplicationStatus.TECHNICAL_TEST
-                ||
-                dataLamaran.getStatus() == ApplicationStatus.INTERVIEW
-        )
-        .count();
+        dialog.addConfirmListener(confirmevent -> {
+        service.hapusLamaran(jobApplication);
 
-                angkaDiproses.setText(
-                        String.valueOf(diprosesTerbaru)
-                );
+        dashboard.updateData(service.findAll());
+        refreshGrid();
 
-                long diterimaTerbaru = dataTerbaru.stream()
-                        .filter(dataLamaran ->
-                                dataLamaran.getStatus() == ApplicationStatus.OFFERED
-                        )
-                        .count();
-
-                angkaDiterima.setText(
-                        String.valueOf(diterimaTerbaru)
-                );
-
-                long ditolakTerbaru = dataTerbaru.stream()
-                        .filter(dataLamaran ->
-                                dataLamaran.getStatus() == ApplicationStatus.REJECTED
-                        )
-                        .count();
-
-                angkaDitolak.setText(
-                        String.valueOf(ditolakTerbaru)
-                );
-
-       form.setJobApplication(new JobApplication());
-
-        tableLamaran.setItems(service.findAll());
+        form.setJobApplication(new JobApplication());
 
         Notification.show("Lamaran berhasil dihapus");
         });
-                dialog.open();
+
+        dialog.open();
         });
 
         editButton.addClickListener(event -> {
@@ -354,84 +249,11 @@ public class MainView extends VerticalLayout {
         );
         }).setHeader("Aksi");
 
-        search.addValueChangeListener(event -> {
 
-            String keyword = search.getValue().toLowerCase();
+        search.addValueChangeListener(event -> refreshGrid());
 
-            List<JobApplication> hasilFilter =
-                    service.findAll()
-                            .stream()
-                            .filter(jobApplication -> {
+        filterStatus.addValueChangeListener(event -> refreshGrid());
 
-                                boolean cocokSearch =
-                                        jobApplication.getCompanyName()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        ||
-                                        jobApplication.getPosition()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        ||
-                                        (
-                                            jobApplication.getNotes() != null
-                                            &&
-                                            jobApplication.getNotes()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        );
-
-                                boolean cocokStatus =
-                                        filterStatus.getValue() == null
-                                        ||
-                                        jobApplication.getStatus()
-                                                == filterStatus.getValue();
-
-                                return cocokSearch && cocokStatus;
-                            })
-                            .toList();
-
-            tableLamaran.setItems(hasilFilter);
-        });
-
-        filterStatus.addValueChangeListener(event -> {
-
-            String keyword = search.getValue().toLowerCase();
-
-            List<JobApplication> hasilFilter =
-                    service.findAll()
-                            .stream()
-                            .filter(jobApplication -> {
-
-                                boolean cocokSearch =
-                                        jobApplication.getCompanyName()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        ||
-                                        jobApplication.getPosition()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        ||
-                                        (
-                                            jobApplication.getNotes() != null
-                                            &&
-                                            jobApplication.getNotes()
-                                                .toLowerCase()
-                                                .contains(keyword)
-                                        );
-
-                                boolean cocokStatus =
-                                        filterStatus.getValue() == null
-                                        ||
-                                        jobApplication.getStatus()
-                                                == filterStatus.getValue();
-
-                                return cocokSearch && cocokStatus;
-                            })
-                            .toList();
-
-            tableLamaran.setItems(hasilFilter);
-        });
-        
         Button exportButton = new Button("Export CSV");
         exportButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
@@ -496,6 +318,16 @@ public class MainView extends VerticalLayout {
                 filterLayout,
                 exportLink,
                 tableLamaran
+        );
+    }
+
+    private void refreshGrid() {
+        String keyword = search.getValue();
+
+        ApplicationStatus statusDipilih = filterStatus.getValue();
+
+        tableLamaran.setItems(
+                service.findAll(keyword, statusDipilih)
         );
     }
 }
