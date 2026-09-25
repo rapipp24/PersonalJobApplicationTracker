@@ -154,23 +154,41 @@ public class MainView extends VerticalLayout {
                 .setHeader("Tanggal Melamar")
                 .setSortable(true);
 
-        tableLamaran.addColumn(JobApplication::getExpectedSalary)
-                .setHeader("Ekspektasi Gaji")
-                .setComparator(
-                        Comparator.comparing(
-                                JobApplication::getExpectedSalary,
-                                Comparator.nullsLast(Long::compareTo)
-                        )
-                )
-                .setSortable(true);
+        tableLamaran.addColumn(jobApplication -> {
 
+        Long salary = jobApplication.getExpectedSalary();
+
+        if (salary == null) {
+                return "-";
+        }
+
+        return String.format("Rp %,d", salary)
+                .replace(',', '.');
+        })
+        .setHeader("Ekspektasi Gaji")
+        .setComparator(
+                Comparator.comparing(
+                        JobApplication::getExpectedSalary,
+                        Comparator.nullsLast(Long::compareTo)
+                )
+        )
+        .setSortable(true);
+
+        
         tableLamaran.addColumn(JobApplication::getNotes)
                 .setHeader("Catatan / Feedback");
         
         tableLamaran.setWidthFull();
         tableLamaran.setHeight("420px");
 
-        tableLamaran.setItems(service.findAll());
+        tableLamaran.setItems(service.findAll()); //batas
+
+
+tableLamaran.addItemClickListener(event -> {
+        JobApplication jobApplication = event.getItem();
+        
+        form.setJobApplication(jobApplication);
+});
 
 
  form.setSaveListener(jobApplication -> {
