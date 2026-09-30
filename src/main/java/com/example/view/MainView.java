@@ -29,11 +29,15 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.example.view.component.JobApplicationForm;
 import com.example.view.component.ApplicationDashboard;
 
+import jakarta.annotation.security.PermitAll;
+import com.vaadin.flow.spring.security.AuthenticationContext;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Comparator;
 
 @Route("")
+@PermitAll
 public class MainView extends VerticalLayout {
 
         private TextField search = new TextField("Cari Lamaran");
@@ -45,12 +49,21 @@ public class MainView extends VerticalLayout {
                 new Grid<>(JobApplication.class, false); 
 
         private final JobApplicationService service;
+        private final AuthenticationContext authenticationContext;
 
-    public MainView(JobApplicationService service) {
+    public MainView(JobApplicationService service, AuthenticationContext authenticationContext) {
 
         this.service = service;
+        this.authenticationContext = authenticationContext;
 
         H1 judul = new H1("Job Application Tracker");
+        Button logoutButton = new Button("Logout", event -> authenticationContext.logout());
+        logoutButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+        HorizontalLayout headerLayout = new HorizontalLayout(judul, logoutButton);
+        headerLayout.setWidthFull();
+        headerLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        headerLayout.setAlignItems(Alignment.CENTER);
 
         JobApplicationForm form = new JobApplicationForm();
         ApplicationDashboard dashboard = new ApplicationDashboard();
@@ -325,7 +338,7 @@ form.setDeleteListener(jobApplication -> {
         H2 judulForm = new H2("Tambah Lamaran");
                 
         add(
-                judul,
+                headerLayout,
                 dashboard,
 
                 judulForm,
