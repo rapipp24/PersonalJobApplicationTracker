@@ -32,13 +32,12 @@ import com.example.view.component.JobApplicationForm;
 import com.example.view.component.ApplicationDashboard;
 
 import jakarta.annotation.security.PermitAll;
-import com.vaadin.flow.spring.security.AuthenticationContext;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Comparator;
 
-@Route("")
+@Route(value = "", layout = MainLayout.class)
 @PermitAll
 public class MainView extends VerticalLayout {
 
@@ -51,50 +50,10 @@ public class MainView extends VerticalLayout {
                 new Grid<>(JobApplication.class, false); 
 
         private final JobApplicationService service;
-        private final AuthenticationContext authenticationContext;
 
-    public MainView(JobApplicationService service, AuthenticationContext authenticationContext) {
+    public MainView(JobApplicationService service) {
 
         this.service = service;
-        this.authenticationContext = authenticationContext;
-
-        H1 judul = new H1("Job Application Tracker");
-        Button logoutButton = new Button("Logout", event -> authenticationContext.logout());
-        logoutButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-
-        HorizontalLayout headerLayout = new HorizontalLayout(judul, logoutButton);
-        headerLayout.setWidthFull();
-        headerLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        headerLayout.setAlignItems(Alignment.CENTER);
-
-        // Informasi user yang sedang login (Task C)
-        String userEmail = authenticationContext.getPrincipalName().orElse("Unknown");
-        String userRoles = String.join(", ", authenticationContext.getGrantedRoles());
-        Paragraph infoUser = new Paragraph("Login sebagai: " + userEmail + " | Role: " + userRoles);
-        infoUser.getStyle().set("margin-top", "0").set("color", "gray");
-
-        // Tombol navigasi area berdasarkan role (Task C)
-        HorizontalLayout navigationLayout = new HorizontalLayout();
-        navigationLayout.setAlignItems(Alignment.CENTER);
-
-        boolean isAdmin = authenticationContext.hasRole("ADMIN");
-        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
-        boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
-
-        if (isPelamar || isAdmin) {
-            Button pelamarButton = new Button("Area Pelamar", event -> UI.getCurrent().navigate("pelamar"));
-            navigationLayout.add(pelamarButton);
-        }
-
-        if (isPemberiLamaran || isAdmin) {
-            Button pemberiLamaranButton = new Button("Area Pemberi Lamaran", event -> UI.getCurrent().navigate("pemberi-lamaran"));
-            navigationLayout.add(pemberiLamaranButton);
-        }
-
-        if (isAdmin) {
-            Button adminButton = new Button("Area Admin", event -> UI.getCurrent().navigate("admin"));
-            navigationLayout.add(adminButton);
-        }
 
         JobApplicationForm form = new JobApplicationForm();
         ApplicationDashboard dashboard = new ApplicationDashboard();
@@ -369,9 +328,6 @@ form.setDeleteListener(jobApplication -> {
         H2 judulForm = new H2("Tambah Lamaran");
                 
         add(
-                headerLayout,
-                infoUser,
-                navigationLayout,
                 dashboard,
 
                 judulForm,

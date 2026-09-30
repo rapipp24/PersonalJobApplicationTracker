@@ -9,7 +9,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route("pemberi-lamaran")
+@Route(value = "pemberi-lamaran", layout = MainLayout.class)
 @PageTitle("Area Pemberi Lamaran | Job Tracker")
 @RolesAllowed({"PEMBERI_LAMARAN", "ADMIN"})
 public class PemberiLamaranView extends VerticalLayout {
