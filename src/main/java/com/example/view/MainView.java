@@ -7,7 +7,9 @@ import com.example.entity.ApplicationTipe;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -64,6 +66,35 @@ public class MainView extends VerticalLayout {
         headerLayout.setWidthFull();
         headerLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
         headerLayout.setAlignItems(Alignment.CENTER);
+
+        // Informasi user yang sedang login (Task C)
+        String userEmail = authenticationContext.getPrincipalName().orElse("Unknown");
+        String userRoles = String.join(", ", authenticationContext.getGrantedRoles());
+        Paragraph infoUser = new Paragraph("Login sebagai: " + userEmail + " | Role: " + userRoles);
+        infoUser.getStyle().set("margin-top", "0").set("color", "gray");
+
+        // Tombol navigasi area berdasarkan role (Task C)
+        HorizontalLayout navigationLayout = new HorizontalLayout();
+        navigationLayout.setAlignItems(Alignment.CENTER);
+
+        boolean isAdmin = authenticationContext.hasRole("ADMIN");
+        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
+        boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
+
+        if (isPelamar || isAdmin) {
+            Button pelamarButton = new Button("Area Pelamar", event -> UI.getCurrent().navigate("pelamar"));
+            navigationLayout.add(pelamarButton);
+        }
+
+        if (isPemberiLamaran || isAdmin) {
+            Button pemberiLamaranButton = new Button("Area Pemberi Lamaran", event -> UI.getCurrent().navigate("pemberi-lamaran"));
+            navigationLayout.add(pemberiLamaranButton);
+        }
+
+        if (isAdmin) {
+            Button adminButton = new Button("Area Admin", event -> UI.getCurrent().navigate("admin"));
+            navigationLayout.add(adminButton);
+        }
 
         JobApplicationForm form = new JobApplicationForm();
         ApplicationDashboard dashboard = new ApplicationDashboard();
@@ -339,6 +370,8 @@ form.setDeleteListener(jobApplication -> {
                 
         add(
                 headerLayout,
+                infoUser,
+                navigationLayout,
                 dashboard,
 
                 judulForm,
