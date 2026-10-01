@@ -2,10 +2,13 @@ package com.example.view;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -27,23 +30,28 @@ public class MainLayout extends AppLayout {
         DrawerToggle drawerToggle = new DrawerToggle();
 
         H1 logo = new H1("Job Application Tracker");
-        logo.getStyle().set("font-size", "var(--lumo-font-size-l)")
-                .set("margin", "0");
+        logo.addClassName("app-logo");
 
         String userEmail = authenticationContext.getPrincipalName().orElse("Unknown");
-        String userRoles = String.join(", ", authenticationContext.getGrantedRoles());
 
-        Span userInfo = new Span(userEmail + " (" + userRoles + ")");
-        userInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        MenuBar accountMenu = new MenuBar();
+        accountMenu.addClassName("account-menu");
+        accountMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
 
-        Button logoutButton = new Button("Logout", event -> authenticationContext.logout());
-        logoutButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        Icon userIcon = VaadinIcon.USER.create();
+        Span emailSpan = new Span(userEmail);
+
+        HorizontalLayout accountContent = new HorizontalLayout(userIcon, emailSpan);
+        accountContent.setAlignItems(Alignment.CENTER);
+        accountContent.addClassName("account-menu-content");
+
+        MenuItem accountItem = accountMenu.addItem(accountContent);
+        accountItem.getSubMenu().addItem("Logout", event -> authenticationContext.logout());
 
         HorizontalLayout header = new HorizontalLayout(
                 drawerToggle,
                 logo,
-                userInfo,
-                logoutButton
+                accountMenu
         );
 
         header.setDefaultVerticalComponentAlignment(Alignment.CENTER);
@@ -55,25 +63,26 @@ public class MainLayout extends AppLayout {
     }
 
     private void createDrawer() {
-        RouterLink homeLink = new RouterLink("Home", MainView.class);
-        VerticalLayout navLayout = new VerticalLayout(homeLink);
+        RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
+        RouterLink applicationsLink = new RouterLink("Applications", ApplicationsView.class);
+        VerticalLayout navLayout = new VerticalLayout(dashboardLink, applicationsLink);
 
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
         boolean isPelamar = authenticationContext.hasRole("PELAMAR");
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isPelamar || isAdmin) {
-            RouterLink pelamarLink = new RouterLink("Area Pelamar", PelamarView.class);
-            navLayout.add(pelamarLink);
+            RouterLink applicantLink = new RouterLink("Applicant Area", PelamarView.class);
+            navLayout.add(applicantLink);
         }
 
         if (isPemberiLamaran || isAdmin) {
-            RouterLink pemberiLamaranLink = new RouterLink("Area Pemberi Lamaran", PemberiLamaranView.class);
-            navLayout.add(pemberiLamaranLink);
+            RouterLink employerLink = new RouterLink("Employer Area", PemberiLamaranView.class);
+            navLayout.add(employerLink);
         }
 
         if (isAdmin) {
-            RouterLink adminLink = new RouterLink("Area Admin", AdminView.class);
+            RouterLink adminLink = new RouterLink("Admin Area", AdminView.class);
             navLayout.add(adminLink);
         }
 

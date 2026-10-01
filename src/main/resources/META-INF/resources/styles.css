@@ -1,1 +1,61 @@
-/* Add your styles here */
+/* Global View Container */
+.view-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.filter-layout {
+    flex-wrap: wrap;
+}
+
+/* App Header & Account Menu Styles */
+.app-logo {
+    font-size: var(--lumo-font-size-l);
+    margin: 0;
+}
+
+.account-menu-content {
+    gap: var(--lumo-space-xs);
+}
+
+.account-menu {
+    cursor: pointer;
+}
+
+/* Status Badge Styles */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-badge.offered {
+    background-color: #DCFCE7;
+    color: #166534;
+}
+
+.status-badge.rejected {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-badge.interview {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.status-badge.technical-test {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.screening {
+    background-color: #F3E8FF;
+    color: #6B21A8;
+}
+
+.status-badge.applied {
+    background-color: #E5E7EB;
+    color: #374151;
+}
