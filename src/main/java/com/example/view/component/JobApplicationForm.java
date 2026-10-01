@@ -7,7 +7,7 @@ import com.example.entity.JobApplication;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -24,8 +24,8 @@ public class JobApplicationForm extends FormLayout {
     private TextField companyName = new TextField("Perusahaan");
     private TextField position = new TextField("Posisi");
     private DatePicker applicationDate = new DatePicker("Tanggal Melamar");
-    private ComboBox<ApplicationStatus> status = new ComboBox<>("Status");
-    private ComboBox<ApplicationTipe> tipeKerja = new ComboBox<>("Tipe Kerja");
+    private Select<ApplicationStatus> status = new Select<>();
+    private Select<ApplicationTipe> tipeKerja = new Select<>();
     private NumberField expectedSalary = new NumberField("Ekspektasi Gaji");
     private TextArea notes = new TextArea("Catatan");
 
@@ -40,10 +40,13 @@ public class JobApplicationForm extends FormLayout {
     private Runnable cancelListener;
 
     public JobApplicationForm() {
+        status.setLabel("Status");
         status.setItems(ApplicationStatus.values());
         status.setValue(ApplicationStatus.APPLIED);
 
+        tipeKerja.setLabel("Tipe Kerja");
         tipeKerja.setItems(ApplicationTipe.values());
+        tipeKerja.setEmptySelectionAllowed(true);
         
         binder.forField(expectedSalary)
             .withConverter(

@@ -6,7 +6,6 @@ import com.example.service.JobApplicationService;
 import com.example.view.component.JobApplicationForm;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
@@ -16,6 +15,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -37,7 +37,7 @@ public class ApplicationsView extends VerticalLayout {
     private final JobApplicationService service;
 
     private final TextField search = new TextField("Cari Lamaran");
-    private final ComboBox<ApplicationStatus> filterStatus = new ComboBox<>("Filter Status");
+    private final Select<ApplicationStatus> filterStatus = new Select<>();
     private final Grid<JobApplication> tableLamaran = new Grid<>(JobApplication.class, false);
     private final JobApplicationForm form = new JobApplicationForm();
 
@@ -92,8 +92,10 @@ public class ApplicationsView extends VerticalLayout {
         search.setValueChangeMode(ValueChangeMode.EAGER);
         search.addValueChangeListener(event -> refreshGrid());
 
+        filterStatus.setLabel("Filter Status");
         filterStatus.setItems(ApplicationStatus.values());
-        filterStatus.setClearButtonVisible(true);
+        filterStatus.setEmptySelectionAllowed(true);
+        filterStatus.setEmptySelectionCaption("Semua Status");
         filterStatus.setWidth("220px");
         filterStatus.addValueChangeListener(event -> refreshGrid());
 
@@ -180,7 +182,9 @@ public class ApplicationsView extends VerticalLayout {
                 .setHeader("Catatan / Feedback");
 
         tableLamaran.addComponentColumn(this::createActionButtons)
-                .setHeader("Aksi");
+                .setHeader("Aksi")
+                .setWidth("190px")
+                .setFlexGrow(0);
 
         tableLamaran.setWidthFull();
         tableLamaran.setHeight("420px");
@@ -207,16 +211,32 @@ public class ApplicationsView extends VerticalLayout {
     }
 
     private HorizontalLayout createActionButtons(JobApplication jobApplication) {
-        Button editButton = new Button("Edit");
-        editButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-        editButton.addClickListener(event -> form.setJobApplication(jobApplication));
+    Button editButton = new Button("Edit");
+    editButton.addThemeVariants(
+            ButtonVariant.LUMO_PRIMARY,
+            ButtonVariant.LUMO_SMALL
+    );
+    editButton.addClickListener(
+            event -> form.setJobApplication(jobApplication)
+    );
 
-        Button deleteButton = new Button("Hapus");
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
-        deleteButton.addClickListener(event -> openDeleteConfirmDialog(jobApplication));
+    Button deleteButton = new Button("Hapus");
+    deleteButton.addThemeVariants(
+            ButtonVariant.LUMO_ERROR,
+            ButtonVariant.LUMO_SMALL
+    );
+    deleteButton.addClickListener(
+            event -> openDeleteConfirmDialog(jobApplication)
+    );
 
-        return new HorizontalLayout(editButton, deleteButton);
-    }
+    HorizontalLayout actionLayout =
+            new HorizontalLayout(editButton, deleteButton);
+
+    actionLayout.setPadding(false);
+    actionLayout.setSpacing(true);
+
+    return actionLayout;
+}
 
     private void openDeleteConfirmDialog(JobApplication jobApplication) {
         ConfirmDialog dialog = new ConfirmDialog();
