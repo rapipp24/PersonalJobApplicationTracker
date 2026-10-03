@@ -17,9 +17,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @StyleSheet("context://styles.css")
@@ -34,27 +31,8 @@ public class MainLayout extends AppLayout {
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
 
-        loadStyles();
         createHeader();
         createDrawer();
-    }
-
-    private void loadStyles() {
-        try (InputStream is = getClass().getResourceAsStream("/META-INF/resources/styles.css")) {
-            if (is != null) {
-                String css = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                getElement().executeJs(
-                        "if (!document.getElementById('app-styles')) {" +
-                        "  const style = document.createElement('style');" +
-                        "  style.id = 'app-styles';" +
-                        "  style.textContent = $0;" +
-                        "  document.head.appendChild(style);" +
-                        "}",
-                        css
-                );
-            }
-        } catch (IOException ignored) {
-        }
     }
 
     private void createHeader() {
