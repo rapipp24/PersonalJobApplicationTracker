@@ -14,6 +14,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.security.AuthenticationContext;
+import com.vaadin.flow.component.notification.Notification;
 
 import jakarta.annotation.security.RolesAllowed;
 
@@ -61,6 +62,8 @@ public class PemberiLamaranView extends VerticalLayout {
 
             form.setSaveListener(posting -> {
                 jobPostingService.simpanLowongan(posting);
+                resetForm();
+                Notification.show("Lowongan berhasil disimpan");
             });
         }
 
@@ -101,5 +104,11 @@ public class PemberiLamaranView extends VerticalLayout {
                 .orElseThrow(() ->
                         new IllegalStateException("User tidak ditemukan")
                 );
+    }
+
+    private void resetForm() {
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setEmployer(getCurrentUser());
+        form.setJobPosting(jobPosting);
     }
 }
