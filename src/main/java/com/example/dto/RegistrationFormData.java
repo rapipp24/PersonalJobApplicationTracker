@@ -27,6 +27,11 @@ public class RegistrationFormData {
     @NotNull(message = "Please select an account type.")
     private Role accountType;
 
+    // Nama perusahaan — hanya wajib untuk PEMBERI_LAMARAN.
+    // Tidak dipasang @NotBlank di sini supaya PELAMAR tidak gagal validasi.
+    // Validasi conditional dilakukan di RegisterView sebelum memanggil service.
+    private String companyName = "";
+
     public RegistrationFormData() {
     }
 
@@ -68,5 +73,13 @@ public class RegistrationFormData {
 
     public void setAccountType(Role accountType) {
         this.accountType = accountType;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 }

@@ -106,6 +106,21 @@ public class RegisterView extends VerticalLayout {
             return role.name();
         });
 
+        TextField companyName = new TextField("Nama Perusahaan");
+        companyName.setWidthFull();
+        companyName.setVisible(false);
+
+        // Tampilkan field Nama Perusahaan hanya saat memilih PEMBERI_LAMARAN
+        accountType.addValueChangeListener(event -> {
+            Role selectedRole = event.getValue();
+            if (selectedRole == Role.PEMBERI_LAMARAN) {
+                companyName.setVisible(true);
+            } else {
+                companyName.setVisible(false);
+                companyName.clear();
+            }
+        });
+
         Button registerButton = new Button("Register");
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         registerButton.setWidthFull();
@@ -170,6 +185,17 @@ public class RegisterView extends VerticalLayout {
                 return;
             }
 
+            // Validasi tambahan: PEMBERI_LAMARAN wajib mengisi nama perusahaan
+            if (formData.getAccountType() == Role.PEMBERI_LAMARAN) {
+                String namaPerusahaan = companyName.getValue();
+                if (namaPerusahaan == null || namaPerusahaan.trim().isEmpty()) {
+                    companyName.setErrorMessage("Nama perusahaan harus diisi.");
+                    companyName.setInvalid(true);
+                    return;
+                }
+                formData.setCompanyName(namaPerusahaan.trim());
+            }
+
             String emailValue = formData.getEmail().trim();
             if (registrationService.emailExists(emailValue)) {
                 Notification.show("Email is already registered.");
@@ -182,7 +208,8 @@ public class RegisterView extends VerticalLayout {
                         nameValue,
                         emailValue,
                         formData.getPassword(),
-                        formData.getAccountType()
+                        formData.getAccountType(),
+                        formData.getCompanyName()
                 );
 
                 Notification.show("Registration successful. Please log in.");
@@ -199,6 +226,7 @@ public class RegisterView extends VerticalLayout {
                 password,
                 confirmPassword,
                 accountType,
+                companyName,
                 registerButton
         );
 
