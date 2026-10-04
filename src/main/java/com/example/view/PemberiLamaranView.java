@@ -59,22 +59,55 @@ public class PemberiLamaranView extends VerticalLayout {
                     "Kelola lowongan pekerjaan yang Anda buat."
             );
 
+            User currentUser = getCurrentUser();
+
+            // Guard: PEMBERI_LAMARAN lama yang belum mempunyai Company
+            // tidak diizinkan membuat lowongan baru untuk menghindari companyName kosong.
+            if (currentUser.getCompany() == null) {
+                Paragraph noCompanyInfo = new Paragraph(
+                        "Akun Anda belum terhubung dengan data perusahaan. "
+                        + "Silakan hubungi administrator."
+                );
+
+                Button backButton = new Button(
+                        "Kembali ke Halaman Utama",
+                        event -> UI.getCurrent().navigate("")
+                );
+
+                tableLowongan.setItems(
+                        jobPostingService.findByEmployer(currentUser)
+                );
+
+                add(title, description, noCompanyInfo, tableLowongan, backButton);
+                return;
+            }
+
             JobPosting jobPosting = new JobPosting();
-            jobPosting.setEmployer(getCurrentUser());
+            jobPosting.setEmployer(currentUser);
+            jobPosting.setCompanyName(currentUser.getCompany().getName());
             form.setJobPosting(jobPosting);
 
             form.setSaveListener(posting -> {
                 jobPostingService.simpanLowongan(posting);
 
                 Notification.show("Lowongan berhasil disimpan");
-                
+
                 resetForm();
                 refreshTableLowongan();
-                
+            });
+
+            form.setCancelListener(() -> {
+                resetForm();
+                refreshTableLowongan();
+            });
+
+            tableLowongan.addItemClickListener(event -> {
+                JobPosting selectedJobPosting = event.getItem();
+                form.setJobPosting(selectedJobPosting);
             });
 
             tableLowongan.setItems(
-                    jobPostingService.findByEmployer(getCurrentUser())
+                    jobPostingService.findByEmployer(currentUser)
             );
         }
 
@@ -82,6 +115,8 @@ public class PemberiLamaranView extends VerticalLayout {
             description.setText(
                     "Kelola seluruh lowongan pekerjaan sebagai Admin."
             );
+
+            tableLowongan.addEmployerColumn();
 
             tableLowongan.setItems(
                     jobPostingService.findAll()
@@ -122,29 +157,36 @@ public class PemberiLamaranView extends VerticalLayout {
     }
 
     private void resetForm() {
+        User currentUser = getCurrentUser();
+
         JobPosting jobPosting = new JobPosting();
-        jobPosting.setEmployer(getCurrentUser());
+        jobPosting.setEmployer(currentUser);
+
+        if (currentUser.getCompany() != null) {
+            jobPosting.setCompanyName(currentUser.getCompany().getName());
+        }
+
         form.setJobPosting(jobPosting);
     }
 
     private void refreshTableLowongan() {
 
-    boolean isAdmin =
-            authenticationContext.hasRole("ADMIN");
+        boolean isAdmin =
+                authenticationContext.hasRole("ADMIN");
 
-    boolean isPemberiLamaran =
-            authenticationContext.hasRole("PEMBERI_LAMARAN");
+        boolean isPemberiLamaran =
+                authenticationContext.hasRole("PEMBERI_LAMARAN");
 
-    if (isPemberiLamaran) {
-        tableLowongan.setItems(
-                jobPostingService.findByEmployer(getCurrentUser())
-        );
+        if (isPemberiLamaran) {
+            tableLowongan.setItems(
+                    jobPostingService.findByEmployer(getCurrentUser())
+            );
+        }
+
+        if (isAdmin) {
+            tableLowongan.setItems(
+                    jobPostingService.findAll()
+            );
+        }
     }
-
-    if (isAdmin) {
-        tableLowongan.setItems(
-                jobPostingService.findAll()
-        );
-    }
-}
 }

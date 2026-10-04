@@ -24,4 +24,9 @@ public class JobPostingGrid extends Grid<JobPosting> {
         addColumn(JobPosting::getJobTipe)
                 .setHeader("Jenis Pekerjaan");
     }
+
+    public void addEmployerColumn() {
+        addColumn(jobPosting -> jobPosting.getEmployer().getName())
+                .setHeader("Pemberi Lamaran");
+    }
 }

@@ -38,6 +38,8 @@ public class JobPostingForm extends FormLayout {
 
 
     public JobPostingForm() {
+        companyName.setReadOnly(true);
+
         tipeKerja.setLabel("Tipe Kerja");
         tipeKerja.setItems(ApplicationTipe.values());
         tipeKerja.setEmptySelectionAllowed(true);
