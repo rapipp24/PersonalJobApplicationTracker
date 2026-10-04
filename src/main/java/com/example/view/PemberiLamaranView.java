@@ -5,6 +5,7 @@ import com.example.repository.UserRepository;
 import com.example.service.JobPostingService;
 import com.example.entity.JobPosting;
 import com.example.view.component.JobPostingForm;
+import com.example.view.component.JobPostingGrid;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -15,6 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.component.notification.Notification;
+
 
 import jakarta.annotation.security.RolesAllowed;
 
@@ -29,6 +31,7 @@ public class PemberiLamaranView extends VerticalLayout {
     private final UserRepository userRepository;
 
     private final JobPostingForm form = new JobPostingForm();
+    private final JobPostingGrid tableLowongan = new JobPostingGrid();
 
     public PemberiLamaranView(
             JobPostingService jobPostingService,
@@ -62,14 +65,26 @@ public class PemberiLamaranView extends VerticalLayout {
 
             form.setSaveListener(posting -> {
                 jobPostingService.simpanLowongan(posting);
-                resetForm();
+
                 Notification.show("Lowongan berhasil disimpan");
+                
+                resetForm();
+                refreshTableLowongan();
+                
             });
+
+            tableLowongan.setItems(
+                    jobPostingService.findByEmployer(getCurrentUser())
+            );
         }
 
         if (isAdmin) {
             description.setText(
                     "Kelola seluruh lowongan pekerjaan sebagai Admin."
+            );
+
+            tableLowongan.setItems(
+                    jobPostingService.findAll()
             );
         }
 
@@ -79,15 +94,15 @@ public class PemberiLamaranView extends VerticalLayout {
         );
 
         add(
-        title,
-        description
+                title,
+                description
         );
 
         if (isPemberiLamaran) {
             add(form);
         }
 
-        add(backButton);
+        add(tableLowongan, backButton);
 
     }
 
@@ -111,4 +126,25 @@ public class PemberiLamaranView extends VerticalLayout {
         jobPosting.setEmployer(getCurrentUser());
         form.setJobPosting(jobPosting);
     }
+
+    private void refreshTableLowongan() {
+
+    boolean isAdmin =
+            authenticationContext.hasRole("ADMIN");
+
+    boolean isPemberiLamaran =
+            authenticationContext.hasRole("PEMBERI_LAMARAN");
+
+    if (isPemberiLamaran) {
+        tableLowongan.setItems(
+                jobPostingService.findByEmployer(getCurrentUser())
+        );
+    }
+
+    if (isAdmin) {
+        tableLowongan.setItems(
+                jobPostingService.findAll()
+        );
+    }
+}
 }
