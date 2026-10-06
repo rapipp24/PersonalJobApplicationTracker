@@ -83,16 +83,16 @@ public class MainLayout extends AppLayout {
 
     private void createDrawer() {
         RouterLink dashboardLink = new RouterLink("Dashboard", DashboardView.class);
-        RouterLink applicationsLink = new RouterLink("Applications", ApplicationsView.class);
-        VerticalLayout navLayout = new VerticalLayout(dashboardLink, applicationsLink);
+        VerticalLayout navLayout = new VerticalLayout(dashboardLink);
 
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
         boolean isPelamar = authenticationContext.hasRole("PELAMAR");
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isPelamar || isAdmin) {
+            RouterLink applicationsLink = new RouterLink("Applications", ApplicationsView.class);
             RouterLink applicantLink = new RouterLink("Applicant Area", PelamarView.class);
-            navLayout.add(applicantLink);
+            navLayout.add(applicationsLink, applicantLink);
         }
 
         if (isPemberiLamaran || isAdmin) {
