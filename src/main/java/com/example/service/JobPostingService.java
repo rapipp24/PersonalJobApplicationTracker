@@ -31,4 +31,8 @@ public class JobPostingService {
     public List<JobPosting> findByEmployer(User employer) {
         return repository.findByEmployer(employer);
     }
+
+    public List<JobPosting> findActiveJobPostings() {
+        return repository.findByActiveTrue();
+    }
 }

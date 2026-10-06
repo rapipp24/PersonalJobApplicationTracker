@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
@@ -33,6 +35,14 @@ public class JobApplication{
     private ApplicationTipe tipeKerja;
 
     private String notes;
+
+    @ManyToOne
+    @JoinColumn(name = "applicant_id")
+    private User applicant;
+
+    @ManyToOne
+    @JoinColumn(name = "job_posting_id")
+    private JobPosting jobPosting;
 
     public String getCompanyName() {
     return companyName;
@@ -87,7 +97,23 @@ public class JobApplication{
     }
 
     public void settipeKerja(ApplicationTipe tipeKerja) {
-    this.tipeKerja = tipeKerja;
+        this.tipeKerja = tipeKerja;
+    }
+
+    public User getApplicant() {
+        return applicant;
+    }
+
+    public void setApplicant(User applicant) {
+        this.applicant = applicant;
+    }
+
+    public JobPosting getJobPosting() {
+        return jobPosting;
+    }
+
+    public void setJobPosting(JobPosting jobPosting) {
+        this.jobPosting = jobPosting;
     }
 }
 

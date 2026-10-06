@@ -2,6 +2,8 @@ package com.example.service;
 
 import com.example.entity.ApplicationStatus;
 import com.example.entity.JobApplication;
+import com.example.entity.JobPosting;
+import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.mockito.Mockito;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -117,5 +120,26 @@ public class JobApplicationServiceTest {
         );
 
         verify(repository).findAll();
+    }
+
+    @Test
+    void harusBisaMengecekApakahPelamarSudahMelamar() {
+
+        JobApplicationRepository repository =
+                Mockito.mock(JobApplicationRepository.class);
+
+        JobApplicationService service =
+                new JobApplicationService(repository);
+
+        User pelamar = new User();
+        JobPosting lowongan = new JobPosting();
+
+        when(repository.existsByApplicantAndJobPosting(pelamar, lowongan))
+                .thenReturn(true);
+
+        boolean sudah = service.hasApplied(pelamar, lowongan);
+
+        assertTrue(sudah);
+        verify(repository).existsByApplicantAndJobPosting(pelamar, lowongan);
     }
 }

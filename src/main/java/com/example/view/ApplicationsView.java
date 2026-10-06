@@ -2,6 +2,8 @@ package com.example.view;
 
 import com.example.entity.ApplicationStatus;
 import com.example.entity.JobApplication;
+import com.example.entity.User;
+import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.view.component.JobApplicationForm;
 import com.vaadin.flow.component.button.Button;
@@ -21,7 +23,8 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
-import jakarta.annotation.security.PermitAll;
+import com.vaadin.flow.spring.security.AuthenticationContext;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -31,18 +34,25 @@ import java.util.List;
 
 @Route(value = "applications", layout = MainLayout.class)
 @PageTitle("Applications | Job Application Tracker")
-@PermitAll
+@RolesAllowed({"PELAMAR", "ADMIN"})
 public class ApplicationsView extends VerticalLayout {
 
     private final JobApplicationService service;
+    private final AuthenticationContext authenticationContext;
+    private final UserRepository userRepository;
 
     private final TextField search = new TextField("Cari Lamaran");
     private final Select<ApplicationStatus> filterStatus = new Select<>();
     private final Grid<JobApplication> tableLamaran = new Grid<>(JobApplication.class, false);
     private final JobApplicationForm form = new JobApplicationForm();
 
-    public ApplicationsView(JobApplicationService service) {
+    public ApplicationsView(
+            JobApplicationService service,
+            AuthenticationContext authenticationContext,
+            UserRepository userRepository) {
         this.service = service;
+        this.authenticationContext = authenticationContext;
+        this.userRepository = userRepository;
 
         addClassName("view-container");
         setWidthFull();
@@ -54,10 +64,25 @@ public class ApplicationsView extends VerticalLayout {
         resetForm();
     }
 
+    private User getCurrentUser() {
+        String email = authenticationContext
+                .getPrincipalName()
+                .orElseThrow(() -> new IllegalStateException("User belum login"));
+
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User tidak ditemukan"));
+    }
+
     private void createFormSection() {
         H2 formTitle = new H2("Tambah Lamaran");
 
         form.setSaveListener(jobApplication -> {
+            boolean isAdmin = authenticationContext.hasRole("ADMIN");
+            if (!isAdmin && jobApplication.getApplicant() == null) {
+                jobApplication.setApplicant(getCurrentUser());
+            }
+
             service.simpanLamaran(jobApplication);
             refreshGrid();
             resetForm();
@@ -112,7 +137,16 @@ public class ApplicationsView extends VerticalLayout {
         exportButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         StreamResource csvResource = new StreamResource("job-applications.csv", () -> {
-            List<JobApplication> dataExport = service.findAll();
+            boolean isAdmin = authenticationContext.hasRole("ADMIN");
+            List<JobApplication> dataExport;
+
+            if (isAdmin) {
+                dataExport = service.findAll();
+            } else {
+                User currentUser = getCurrentUser();
+                dataExport = service.findByApplicant(currentUser);
+            }
+
             StringBuilder csv = new StringBuilder();
 
             csv.append("Perusahaan,Posisi,Status,Tanggal Melamar,Ekspektasi Gaji,Catatan\n");
@@ -261,12 +295,25 @@ public class ApplicationsView extends VerticalLayout {
         JobApplication jobApplicationBaru = new JobApplication();
         jobApplicationBaru.setStatus(ApplicationStatus.APPLIED);
         jobApplicationBaru.setApplicationDate(LocalDate.now());
+
+        boolean isAdmin = authenticationContext.hasRole("ADMIN");
+        if (!isAdmin) {
+            jobApplicationBaru.setApplicant(getCurrentUser());
+        }
+
         form.setJobApplication(jobApplicationBaru);
     }
 
     private void refreshGrid() {
         String keyword = search.getValue();
         ApplicationStatus statusDipilih = filterStatus.getValue();
-        tableLamaran.setItems(service.findAll(keyword, statusDipilih));
+
+        boolean isAdmin = authenticationContext.hasRole("ADMIN");
+        if (isAdmin) {
+            tableLamaran.setItems(service.findAll(keyword, statusDipilih));
+        } else {
+            User currentUser = getCurrentUser();
+            tableLamaran.setItems(service.findByApplicant(currentUser, keyword, statusDipilih));
+        }
     }
 }
