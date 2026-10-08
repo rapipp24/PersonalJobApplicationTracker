@@ -12,4 +12,12 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     List<JobApplication> findByApplicant(User applicant);
 
     boolean existsByApplicantAndJobPosting(User applicant, JobPosting jobPosting);
+
+    boolean existsByJobPosting(JobPosting jobPosting);
+
+    List<JobApplication> findByJobPosting(JobPosting jobPosting);
+
+    List<JobApplication> findByJobPostingOrderByApplicationDateDesc(JobPosting jobPosting);
+
+    List<JobApplication> findByJobPostingEmployerOrderByApplicationDateDesc(User employer);
 }

@@ -9,6 +9,7 @@ import com.example.view.component.JobPostingGrid;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -74,6 +75,8 @@ public class PemberiLamaranView extends VerticalLayout {
                         event -> UI.getCurrent().navigate("")
                 );
 
+                tableLowongan.addStatusColumn();
+
                 tableLowongan.setItems(
                         jobPostingService.findByEmployer(currentUser)
                 );
@@ -82,33 +85,11 @@ public class PemberiLamaranView extends VerticalLayout {
                 return;
             }
 
-            JobPosting jobPosting = new JobPosting();
-            jobPosting.setEmployer(currentUser);
-            jobPosting.setCompanyName(currentUser.getCompany().getName());
-            form.setJobPosting(jobPosting);
+            configureEmployerForm();
+            configureEmployerGrid();
 
-            form.setSaveListener(posting -> {
-                jobPostingService.simpanLowongan(posting);
-
-                Notification.show("Lowongan berhasil disimpan");
-
-                resetForm();
-                refreshTableLowongan();
-            });
-
-            form.setCancelListener(() -> {
-                resetForm();
-                refreshTableLowongan();
-            });
-
-            tableLowongan.addItemClickListener(event -> {
-                JobPosting selectedJobPosting = event.getItem();
-                form.setJobPosting(selectedJobPosting);
-            });
-
-            tableLowongan.setItems(
-                    jobPostingService.findByEmployer(currentUser)
-            );
+            resetForm();
+            refreshTableLowongan();
         }
 
         if (isAdmin) {
@@ -116,11 +97,8 @@ public class PemberiLamaranView extends VerticalLayout {
                     "Kelola seluruh lowongan pekerjaan sebagai Admin."
             );
 
-            tableLowongan.addEmployerColumn();
-
-            tableLowongan.setItems(
-                    jobPostingService.findAll()
-            );
+            configureAdminGrid();
+            refreshTableLowongan();
         }
 
         Button backButton = new Button(
@@ -139,6 +117,89 @@ public class PemberiLamaranView extends VerticalLayout {
 
         add(tableLowongan, backButton);
 
+    }
+
+    private void configureEmployerForm() {
+        form.setSaveListener(this::handleSave);
+        form.setCancelListener(this::handleCancel);
+        form.setDeleteListener(this::handleDelete);
+        form.setViewApplicantsListener(this::handleViewApplicants);
+    }
+
+    private void configureEmployerGrid() {
+        tableLowongan.addItemClickListener(event -> {
+            JobPosting selectedJobPosting = event.getItem();
+            form.setJobPosting(selectedJobPosting);
+        });
+
+        tableLowongan.addStatusColumn();
+        tableLowongan.addActiveActionColumn(this::handleToggleActive);
+        tableLowongan.addApplicantsActionColumn(this::handleViewApplicants);
+    }
+
+    private void handleViewApplicants(JobPosting posting) {
+        if (posting != null && posting.getId() != null) {
+            UI.getCurrent().navigate(JobApplicantsView.class, posting.getId());
+        }
+    }
+
+    private void configureAdminGrid() {
+        tableLowongan.addEmployerColumn();
+        tableLowongan.addStatusColumn();
+    }
+
+    private void handleSave(JobPosting posting) {
+        jobPostingService.simpanLowongan(posting);
+        Notification.show("Lowongan berhasil disimpan");
+        resetForm();
+        refreshTableLowongan();
+    }
+
+    private void handleCancel() {
+        resetForm();
+        refreshTableLowongan();
+    }
+
+    private void handleDelete(JobPosting posting) {
+        if (posting == null || posting.getId() == null) {
+            Notification.show("Pilih lowongan yang ingin dihapus terlebih dahulu.");
+            return;
+        }
+
+        User currentUser = getCurrentUser();
+
+        // Validasi kepemilikan lowongan
+        if (posting.getEmployer() == null || !posting.getEmployer().getId().equals(currentUser.getId())) {
+            Notification.show("Anda tidak memiliki hak untuk menghapus lowongan ini.");
+            return;
+        }
+
+        // Validasi apakah lowongan sudah pernah dilamar
+        if (jobPostingService.hasApplications(posting)) {
+            Notification.show(
+                    "Lowongan ini tidak dapat dihapus karena sudah memiliki lamaran. "
+                    + "Nonaktifkan lowongan jika tidak ingin menerima lamaran baru."
+            );
+            return;
+        }
+
+        // Konfirmasi sebelum menghapus secara permanen
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Hapus Lowongan");
+        dialog.setText("Lowongan " + posting.getPosition() + " akan dihapus permanen.");
+        dialog.setCancelable(true);
+        dialog.setCancelText("Batal");
+        dialog.setConfirmText("Hapus");
+        dialog.setConfirmButtonTheme("error primary");
+
+        dialog.addConfirmListener(event -> {
+            jobPostingService.hapusLowongan(posting, currentUser);
+            Notification.show("Lowongan berhasil dihapus.");
+            resetForm();
+            refreshTableLowongan();
+        });
+
+        dialog.open();
     }
 
     private User getCurrentUser() {
@@ -187,6 +248,34 @@ public class PemberiLamaranView extends VerticalLayout {
             tableLowongan.setItems(
                     jobPostingService.findAll()
             );
+        }
+    }
+
+    private void handleToggleActive(JobPosting jobPosting) {
+        if (jobPosting.isActive()) {
+            ConfirmDialog dialog = new ConfirmDialog();
+            dialog.setHeader("Nonaktifkan Lowongan");
+            dialog.setText("Anda yakin ingin menonaktifkan lowongan " + jobPosting.getPosition() + "? Lowongan ini tidak akan muncul lagi untuk pelamar.");
+            dialog.setCancelable(true);
+            dialog.setCancelText("Batal");
+            dialog.setConfirmText("Nonaktifkan");
+            dialog.setConfirmButtonTheme("error primary");
+
+            dialog.addConfirmListener(event -> {
+                jobPosting.setActive(false);
+                jobPostingService.simpanLowongan(jobPosting);
+                Notification.show("Job posting dinonaktifkan.");
+                resetForm();
+                refreshTableLowongan();
+            });
+
+            dialog.open();
+        } else {
+            jobPosting.setActive(true);
+            jobPostingService.simpanLowongan(jobPosting);
+            Notification.show("Job posting diaktifkan.");
+            resetForm();
+            refreshTableLowongan();
         }
     }
 }

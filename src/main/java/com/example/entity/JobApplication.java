@@ -44,9 +44,17 @@ public class JobApplication{
     @JoinColumn(name = "job_posting_id")
     private JobPosting jobPosting;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getCompanyName() {
-    return companyName;
-}
+        return companyName;
+    }
 
     public void setCompanyName(String companyName) {
     this.companyName = companyName;

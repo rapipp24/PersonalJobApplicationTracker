@@ -31,9 +31,11 @@ public class JobPostingForm extends FormLayout {
     private Button saveButton = new Button("Simpan");
     private Button cancelButton = new Button("Batal");
     private Button deleteButton = new Button("Hapus");
+    private Button viewApplicantsButton = new Button("Lihat Pelamar");
 
     private Consumer<JobPosting> saveListener;
     private Consumer<JobPosting> deleteListener;
+    private Consumer<JobPosting> viewApplicantsListener;
     private Runnable cancelListener;
 
 
@@ -74,6 +76,15 @@ public class JobPostingForm extends FormLayout {
     binder.bindInstanceFields(this);
 
     saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+    viewApplicantsButton.setEnabled(false);
+    viewApplicantsButton.addClickListener(event -> {
+        JobPosting jobPosting = binder.getBean();
+        if (jobPosting != null && jobPosting.getId() != null && viewApplicantsListener != null) {
+            viewApplicantsListener.accept(jobPosting);
+        }
+    });
 
     saveButton.addClickListener(event -> {
         JobPosting jobPosting = binder.getBean();
@@ -100,11 +111,14 @@ public class JobPostingForm extends FormLayout {
     }
     });
 
-    add(position, companyName, location, tipeKerja, jobTipe, salaryMin, salaryMax, description, requirements,saveButton, cancelButton, deleteButton);
+    add(position, companyName, location, tipeKerja, jobTipe, salaryMin, salaryMax, description, requirements, saveButton, cancelButton, deleteButton, viewApplicantsButton);
 }
 
     public void setJobPosting(JobPosting jobPosting) {
         binder.setBean(jobPosting);
+        boolean isExisting = jobPosting != null && jobPosting.getId() != null;
+        deleteButton.setEnabled(isExisting);
+        viewApplicantsButton.setEnabled(isExisting);
     }
 
     public void setSaveListener(Consumer<JobPosting> saveListener) {
@@ -113,6 +127,10 @@ public class JobPostingForm extends FormLayout {
 
     public void setDeleteListener(Consumer<JobPosting> deleteListener) {
         this.deleteListener = deleteListener;
+    }
+
+    public void setViewApplicantsListener(Consumer<JobPosting> viewApplicantsListener) {
+        this.viewApplicantsListener = viewApplicantsListener;
     }
 
     public void setCancelListener(Runnable cancelListener) {
