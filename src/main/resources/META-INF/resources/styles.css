@@ -814,3 +814,610 @@ vaadin-app-layout.employer-app-layout::part(navbar) {
     flex-grow: 1;
     line-height: 1;
 }
+
+/* ==========================================================================
+   Applicant Shell & Sidebar Styles (Stitch Reference)
+   Scoped to .applicant-app-layout to prevent affecting other roles
+   ========================================================================== */
+
+vaadin-app-layout.applicant-app-layout {
+    --vaadin-app-layout-drawer-width: 260px;
+}
+
+vaadin-app-layout.applicant-app-layout::part(drawer) {
+    background-color: #F4F7FC;
+    border-right: 1px solid #E2E8F0;
+    box-shadow: none;
+}
+
+vaadin-app-layout.applicant-app-layout::part(navbar) {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    box-shadow: none;
+    height: 60px;
+}
+
+.applicant-navbar-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.applicant-sidebar-layout {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    background-color: #F4F7FC;
+    box-sizing: border-box;
+}
+
+.applicant-sidebar-brand {
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    background-color: #F4F7FC;
+    border-bottom: 1px solid #E2E8F0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-brand-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.applicant-brand-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: #1E2838;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.applicant-brand-icon {
+    font-size: 1.15rem;
+    color: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.applicant-brand-text-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.applicant-brand-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.applicant-brand-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background-color: #E2E8F0;
+    color: #475569;
+    text-transform: uppercase;
+    display: inline-block;
+    line-height: 1.2;
+    width: fit-content;
+}
+
+.applicant-sidebar-content {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: #334155 !important;
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background-color: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    margin-bottom: 4px;
+    box-sizing: border-box;
+    width: 100%;
+    cursor: pointer;
+}
+
+.applicant-nav-item:hover {
+    background-color: #E2E8F0;
+    color: #0F172A !important;
+    text-decoration: none !important;
+}
+
+.applicant-nav-item.applicant-nav-item-active {
+    background-color: #1E2858 !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+.applicant-nav-item.applicant-nav-item-active .applicant-nav-lucide-icon {
+    color: #FFFFFF !important;
+}
+
+.applicant-nav-item.applicant-nav-item-active:hover {
+    background-color: #162044 !important;
+    color: #FFFFFF !important;
+}
+
+.applicant-nav-lucide-icon {
+    font-size: 1.15rem;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.applicant-nav-item:hover .applicant-nav-lucide-icon {
+    color: #0F172A;
+}
+
+.applicant-nav-item.applicant-nav-item-active:hover .applicant-nav-lucide-icon {
+    color: #FFFFFF !important;
+}
+
+.applicant-nav-label {
+    flex-grow: 1;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   Applicant Dashboard Styles
+   Scoped under .applicant-dashboard to prevent affecting other roles
+   ========================================================================== */
+
+.applicant-dashboard {
+    gap: 20px;
+    padding-bottom: 32px;
+    box-sizing: border-box;
+}
+
+/* Header */
+.applicant-header-layout {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.applicant-dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.applicant-dashboard-subtitle {
+    font-size: 0.95rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* KPI Cards */
+.applicant-kpi-row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+.applicant-kpi-card {
+    flex: 1 1 calc(25% - 16px);
+    min-width: 200px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.applicant-kpi-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.applicant-kpi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.applicant-kpi-value {
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 14px 0 6px 0;
+    color: #0F172A;
+}
+
+.applicant-kpi-value.offered-color {
+    color: #16A34A;
+}
+
+.applicant-kpi-subtext {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.3;
+}
+
+/* Section Card (Common container for Progress & Recent Applications) */
+.applicant-section-card {
+    width: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+}
+
+.applicant-section-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.applicant-section-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.applicant-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+}
+
+.applicant-section-subtitle {
+    font-size: 0.875rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Active Applications 2-Area Composition (Gauge Left 35-40%, Breakdown Right 60-65%) */
+.applicant-gauge-content-layout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    box-sizing: border-box;
+    padding: 6px 0 2px 0;
+}
+
+.applicant-gauge-area {
+    flex: 0 0 38%;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.applicant-gauge-box {
+    position: relative;
+    width: 190px;
+    height: 105px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.applicant-gauge-svg-container {
+    width: 190px;
+    height: 105px;
+}
+
+.applicant-gauge-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.applicant-gauge-center-text {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.applicant-gauge-center-number {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1;
+    margin: 0;
+}
+
+.applicant-gauge-center-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748B;
+    margin-top: 3px;
+    line-height: 1.1;
+}
+
+.applicant-breakdown-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 36px;
+    align-items: center;
+    border-left: 1px solid #F1F5F9;
+    padding-left: 36px;
+    box-sizing: border-box;
+}
+
+.applicant-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.applicant-legend-dot.legend-applied {
+    background-color: #3B82F6;
+}
+
+.applicant-legend-dot.legend-screening {
+    background-color: #8B5CF6;
+}
+
+.applicant-legend-dot.legend-tech-test {
+    background-color: #F59E0B;
+}
+
+.applicant-legend-dot.legend-interview {
+    background-color: #06B6D4;
+}
+
+.applicant-legend-label {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+    flex: 1;
+}
+
+.applicant-legend-count {
+    font-size: 0.95rem;
+    color: #0F172A;
+    font-weight: 700;
+    text-align: right;
+    min-width: 24px;
+}
+
+/* Recent Applications */
+.applicant-view-all-link {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #2563EB;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.applicant-view-all-link:hover {
+    color: #1D4ED8;
+    text-decoration: underline;
+}
+
+.applicant-empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-radius: 10px;
+    margin: 8px 0;
+}
+
+.applicant-empty-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+
+.applicant-empty-desc {
+    font-size: 0.85rem;
+    color: #94A3B8;
+    margin: 0;
+}
+
+/* Grid styling */
+.applicant-grid {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.applicant-grid::part(header-cell) {
+    background-color: #F8FAFC;
+    color: #64748B;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.applicant-grid::part(cell) {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 0.875rem;
+}
+
+.applicant-grid::part(row):hover {
+    background-color: #F8FAFC;
+}
+
+.applicant-grid::part(body-cell) {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.applicant-company-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: #EEF2F6;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #E2E8F0;
+}
+
+.applicant-company-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.applicant-company-name {
+    font-weight: 600;
+    color: #0F172A;
+    font-size: 0.9rem;
+}
+
+.applicant-company-location {
+    font-size: 0.775rem;
+    color: #64748B;
+}
+
+.applicant-table-position {
+    font-weight: 500;
+    color: #1E293B;
+}
+
+.applicant-work-type-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #475569;
+    background-color: #F1F5F9;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.applicant-table-date {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 900px) {
+    .applicant-kpi-card {
+        flex: 1 1 calc(50% - 16px);
+    }
+    .applicant-gauge-content-layout {
+        gap: 20px;
+    }
+    .applicant-gauge-area {
+        flex: 0 0 35%;
+        min-width: 190px;
+    }
+    .applicant-breakdown-area {
+        padding-left: 20px;
+        gap: 14px 24px;
+    }
+}
+
+@media (max-width: 680px) {
+    .applicant-kpi-card {
+        flex: 1 1 100%;
+    }
+    .applicant-gauge-content-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+    .applicant-gauge-area {
+        flex: 0 0 auto;
+        width: 100%;
+        justify-content: center;
+    }
+    .applicant-breakdown-area {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #F1F5F9;
+        padding-left: 0;
+        padding-top: 16px;
+        gap: 12px 24px;
+    }
+}
+
+@media (max-width: 440px) {
+    .applicant-breakdown-area {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

@@ -6,6 +6,7 @@ import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
+import com.example.view.component.ApplicantDashboard;
 import com.example.view.component.ApplicationDashboard;
 import com.example.view.component.EmployerDashboard;
 import com.vaadin.flow.component.html.H2;
@@ -78,11 +79,11 @@ public class DashboardView extends VerticalLayout {
             employerDashboard.updateData(currentUser, jobPostings, applications);
             add(employerDashboard);
         } else {
-            // PELAMAR: tetap sesuai perilaku existing
-            ApplicationDashboard dashboard = new ApplicationDashboard();
-            List<JobApplication> data = jobApplicationService.findByApplicant(currentUser);
-            dashboard.updateData(data);
-            add(title, dashboard);
+            // PELAMAR: Dashboard khusus Pelamar berdasarkan Stitch design
+            ApplicantDashboard applicantDashboard = new ApplicantDashboard();
+            List<JobApplication> applications = jobApplicationService.findByApplicant(currentUser);
+            applicantDashboard.updateData(currentUser, applications);
+            add(applicantDashboard);
         }
     }
 }

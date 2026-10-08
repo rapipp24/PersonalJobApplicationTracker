@@ -33,6 +33,11 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private RouterLink employerJobPostingsLink;
     private boolean isEmployer = false;
 
+    private RouterLink applicantDashboardLink;
+    private RouterLink applicantBrowseJobsLink;
+    private RouterLink applicantApplicationsLink;
+    private boolean isApplicant = false;
+
     public MainLayout(
             AuthenticationContext authenticationContext,
             UserRepository userRepository) {
@@ -41,6 +46,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
+        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
 
         if (isPemberiLamaran && !isAdmin) {
             this.isEmployer = true;
@@ -48,6 +54,12 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             setPrimarySection(Section.DRAWER);
             createEmployerHeader();
             createEmployerDrawer();
+        } else if (isPelamar && !isAdmin) {
+            this.isApplicant = true;
+            addClassName("applicant-app-layout");
+            setPrimarySection(Section.DRAWER);
+            createApplicantHeader();
+            createApplicantDrawer();
         } else {
             setPrimarySection(Section.NAVBAR);
             createHeader();
@@ -142,14 +154,124 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         addToDrawer(drawerLayout);
     }
 
+    private void createApplicantHeader() {
+        DrawerToggle drawerToggle = new DrawerToggle();
+        drawerToggle.addClassName("applicant-drawer-toggle");
+
+        Div spacer = new Div();
+
+        MenuBar accountMenu = createAccountMenu();
+
+        HorizontalLayout header = new HorizontalLayout(
+                drawerToggle,
+                spacer,
+                accountMenu
+        );
+
+        header.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        header.expand(spacer);
+        header.setWidthFull();
+        header.addClassNames("py-0", "px-m");
+        header.addClassName("applicant-navbar-header");
+
+        addToNavbar(header);
+    }
+
+    private void createApplicantDrawer() {
+        VerticalLayout drawerLayout = new VerticalLayout();
+        drawerLayout.setPadding(false);
+        drawerLayout.setSpacing(false);
+        drawerLayout.setWidthFull();
+        drawerLayout.addClassName("applicant-sidebar-layout");
+
+        // 1. BRAND AREA
+        Div brandArea = new Div();
+        brandArea.addClassName("applicant-sidebar-brand");
+
+        Div brandContainer = new Div();
+        brandContainer.addClassName("applicant-brand-container");
+
+        Div iconBox = new Div();
+        iconBox.addClassName("applicant-brand-icon-box");
+        Html brandIcon = new Html("<iconify-icon icon=\"lucide:briefcase-business\" class=\"applicant-brand-icon\"></iconify-icon>");
+        iconBox.add(brandIcon);
+
+        Div textGroup = new Div();
+        textGroup.addClassName("applicant-brand-text-group");
+
+        Span brandTitle = new Span("Job Application Tracker");
+        brandTitle.addClassName("applicant-brand-title");
+
+        Span badge = new Span("APPLICANT");
+        badge.addClassName("applicant-brand-badge");
+
+        textGroup.add(brandTitle, badge);
+        brandContainer.add(iconBox, textGroup);
+        brandArea.add(brandContainer);
+
+        // 2. SIDEBAR CONTENT
+        Div sidebarContent = new Div();
+        sidebarContent.addClassName("applicant-sidebar-content");
+
+        // Link 1: Dashboard
+        applicantDashboardLink = new RouterLink();
+        applicantDashboardLink.setRoute(DashboardView.class);
+        applicantDashboardLink.addClassName("applicant-nav-item");
+        Html dashIcon = new Html("<iconify-icon icon=\"lucide:layout-dashboard\" class=\"applicant-nav-lucide-icon\"></iconify-icon>");
+        Span dashLabel = new Span("Dashboard");
+        dashLabel.addClassName("applicant-nav-label");
+        applicantDashboardLink.add(dashIcon, dashLabel);
+
+        // Link 2: Browse Jobs
+        applicantBrowseJobsLink = new RouterLink();
+        applicantBrowseJobsLink.setRoute(PelamarView.class);
+        applicantBrowseJobsLink.addClassName("applicant-nav-item");
+        Html browseIcon = new Html("<iconify-icon icon=\"lucide:search\" class=\"applicant-nav-lucide-icon\"></iconify-icon>");
+        Span browseLabel = new Span("Browse Jobs");
+        browseLabel.addClassName("applicant-nav-label");
+        applicantBrowseJobsLink.add(browseIcon, browseLabel);
+
+        // Link 3: Applications
+        applicantApplicationsLink = new RouterLink();
+        applicantApplicationsLink.setRoute(ApplicationsView.class);
+        applicantApplicationsLink.addClassName("applicant-nav-item");
+        Html appsIcon = new Html("<iconify-icon icon=\"lucide:file-text\" class=\"applicant-nav-lucide-icon\"></iconify-icon>");
+        Span appsLabel = new Span("Applications");
+        appsLabel.addClassName("applicant-nav-label");
+        applicantApplicationsLink.add(appsIcon, appsLabel);
+
+        sidebarContent.add(applicantDashboardLink, applicantBrowseJobsLink, applicantApplicationsLink);
+
+        drawerLayout.add(brandArea, sidebarContent);
+        addToDrawer(drawerLayout);
+    }
+
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        if (!isEmployer) {
+        String path = event.getLocation().getPath();
+        if (isEmployer) {
+            updateEmployerNavActiveState(path);
+        } else if (isApplicant) {
+            updateApplicantNavActiveState(path);
+        }
+    }
+
+    private void updateApplicantNavActiveState(String path) {
+        if (applicantDashboardLink == null || applicantBrowseJobsLink == null || applicantApplicationsLink == null) {
             return;
         }
 
-        String path = event.getLocation().getPath();
-        updateEmployerNavActiveState(path);
+        applicantDashboardLink.removeClassName("applicant-nav-item-active");
+        applicantBrowseJobsLink.removeClassName("applicant-nav-item-active");
+        applicantApplicationsLink.removeClassName("applicant-nav-item-active");
+
+        if (path == null || path.isBlank()) {
+            applicantDashboardLink.addClassName("applicant-nav-item-active");
+        } else if (path.startsWith("pelamar")) {
+            applicantBrowseJobsLink.addClassName("applicant-nav-item-active");
+        } else if (path.startsWith("applications")) {
+            applicantApplicationsLink.addClassName("applicant-nav-item-active");
+        }
     }
 
     private void updateEmployerNavActiveState(String path) {
