@@ -57,11 +57,19 @@ public class ApplicationsView extends VerticalLayout {
         addClassName("view-container");
         setWidthFull();
 
-        createFormSection();
+        boolean isAdmin = authenticationContext.hasRole("ADMIN");
+
+        if (isAdmin) {
+            createFormSection();
+        }
+
         createTableSection();
 
         refreshGrid();
-        resetForm();
+
+        if (isAdmin) {
+            resetForm();
+        }
     }
 
     private User getCurrentUser() {
@@ -215,20 +223,24 @@ public class ApplicationsView extends VerticalLayout {
         tableLamaran.addColumn(JobApplication::getNotes)
                 .setHeader("Catatan / Feedback");
 
-        tableLamaran.addComponentColumn(this::createActionButtons)
-                .setHeader("Aksi")
-                .setWidth("190px")
-                .setFlexGrow(0);
+        boolean isAdmin = authenticationContext.hasRole("ADMIN");
+
+        if (isAdmin) {
+            tableLamaran.addComponentColumn(this::createActionButtons)
+                    .setHeader("Aksi")
+                    .setWidth("190px")
+                    .setFlexGrow(0);
+
+            tableLamaran.addItemClickListener(event -> {
+                JobApplication jobApplication = event.getItem();
+                if (jobApplication != null) {
+                    form.setJobApplication(jobApplication);
+                }
+            });
+        }
 
         tableLamaran.setWidthFull();
         tableLamaran.setHeight("420px");
-
-        tableLamaran.addItemClickListener(event -> {
-            JobApplication jobApplication = event.getItem();
-            if (jobApplication != null) {
-                form.setJobApplication(jobApplication);
-            }
-        });
     }
 
     private Span createStatusBadge(JobApplication jobApplication) {
