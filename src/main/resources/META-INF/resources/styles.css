@@ -148,3 +148,669 @@
         padding: var(--lumo-space-m);
     }
 }
+
+/* ==========================================================================
+   Employer Dashboard Styles
+   Scoped under .employer-dashboard to prevent affecting other roles
+   ========================================================================== */
+
+.employer-dashboard {
+    gap: 20px;
+    padding-bottom: 32px;
+    box-sizing: border-box;
+}
+
+/* Header */
+.employer-header-layout {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.employer-header-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.employer-dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.employer-dashboard-subtitle {
+    font-size: 0.95rem;
+    color: #64748B;
+    margin: 0;
+}
+
+.employer-btn-create-job {
+    background-color: #1E293B !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.15s ease;
+}
+
+.employer-btn-create-job:hover {
+    background-color: #0F172A !important;
+}
+
+/* Company Card */
+.employer-company-card {
+    width: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+}
+
+.employer-company-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background-color: #EFF6FF;
+    color: #2563EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.employer-company-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.employer-company-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.2;
+}
+
+.employer-company-subtext {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+
+/* KPI Cards */
+.employer-kpi-row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+.employer-kpi-card {
+    flex: 1 1 calc(25% - 16px);
+    min-width: 200px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.employer-kpi-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.employer-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.employer-kpi-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+}
+
+.kpi-lucide-icon {
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.kpi-lucide-check {
+    color: #16A34A;
+}
+
+.kpi-lucide-bell {
+    color: #D97706;
+}
+
+.employer-kpi-value {
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 14px 0 6px 0;
+    color: #0F172A;
+}
+
+.employer-kpi-value.active-color {
+    color: #16A34A;
+}
+
+.employer-kpi-value.new-apps-color {
+    color: #0F172A;
+}
+
+.employer-kpi-value.total-apps-color {
+    color: #0F172A;
+}
+
+.employer-kpi-subtext {
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.3;
+}
+
+/* Section Card (Common container for Status Summary & Recent Applicants) */
+.employer-section-card {
+    width: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+}
+
+.employer-section-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.employer-section-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.employer-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+}
+
+.employer-section-subtitle {
+    font-size: 0.875rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Funnel Bar */
+.employer-funnel-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 9999px;
+    background-color: #F1F5F9;
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.employer-funnel-segment {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.employer-funnel-segment.new-apps {
+    background-color: #3B82F6;
+}
+
+.employer-funnel-segment.in-process {
+    background-color: #0EA5E9;
+}
+
+.employer-funnel-segment.offered {
+    background-color: #10B981;
+}
+
+.employer-funnel-segment.rejected {
+    background-color: #EF4444;
+}
+
+.employer-funnel-segment.empty {
+    background-color: #E2E8F0;
+    width: 100%;
+}
+
+/* Status Cards Row */
+.employer-status-row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-sizing: border-box;
+}
+
+.employer-status-card {
+    flex: 1 1 calc(25% - 16px);
+    min-width: 180px;
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+.employer-status-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 22px;
+}
+
+.employer-status-card-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.employer-mini-badge {
+    font-size: 0.725rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.employer-mini-badge.needs-review {
+    background-color: #FEF3C7;
+    color: #B45309;
+}
+
+.employer-mini-badge.active-review {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.employer-mini-badge.offered {
+    background-color: #DCFCE7;
+    color: #166534;
+}
+
+.employer-mini-badge.closed {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.employer-status-card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1;
+}
+
+.employer-status-card-desc {
+    font-size: 0.775rem;
+    color: #64748B;
+    line-height: 1.3;
+}
+
+.employer-status-footer-note {
+    font-size: 0.775rem;
+    font-style: italic;
+    color: #94A3B8;
+    margin-top: 14px;
+    margin-bottom: 0;
+}
+
+/* Recent Applicants Table */
+.employer-grid {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.employer-grid::part(header-cell) {
+    background-color: #F8FAFC;
+    color: #64748B;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.employer-grid::part(cell) {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 0.875rem;
+}
+
+.employer-grid::part(row) {
+    transition: background-color 0.15s ease;
+}
+
+.employer-grid::part(row):hover {
+    background-color: #F8FAFC;
+}
+
+.employer-grid::part(body-cell) {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.employer-applicant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #EEF2F6;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.employer-applicant-name {
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.employer-applicant-position {
+    font-weight: 500;
+    color: #334155;
+}
+
+.employer-applicant-date {
+    color: #64748B;
+    font-size: 0.85rem;
+}
+
+.employer-action-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569 !important;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.employer-action-btn:hover {
+    background-color: #EEF2F6 !important;
+    color: #1E293B !important;
+}
+
+.employer-action-icon {
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Empty State */
+.employer-empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-radius: 10px;
+    margin: 8px 0;
+}
+
+.employer-empty-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+}
+
+.employer-empty-desc {
+    font-size: 0.85rem;
+    color: #94A3B8;
+    margin: 0;
+}
+
+/* ==========================================================================
+   Employer Shell & Sidebar Styles (Stitch Reference)
+   Scoped to .employer-app-layout to prevent affecting other roles
+   ========================================================================== */
+
+vaadin-app-layout.employer-app-layout {
+    --vaadin-app-layout-drawer-width: 260px;
+}
+
+vaadin-app-layout.employer-app-layout::part(drawer) {
+    background-color: #F4F7FC;
+    border-right: 1px solid #E2E8F0;
+    box-shadow: none;
+}
+
+vaadin-app-layout.employer-app-layout::part(navbar) {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    box-shadow: none;
+    height: 60px;
+}
+
+.employer-navbar-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.employer-sidebar-layout {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    background-color: #F4F7FC;
+    box-sizing: border-box;
+}
+
+.employer-sidebar-brand {
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    background-color: #F4F7FC;
+    border-bottom: 1px solid #E2E8F0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.employer-brand-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.employer-brand-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: #1E2838;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.employer-brand-icon {
+    font-size: 1.15rem;
+    color: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employer-brand-text-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.employer-brand-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.employer-brand-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background-color: #E2E8F0;
+    color: #475569;
+    text-transform: uppercase;
+    display: inline-block;
+    line-height: 1.2;
+    width: fit-content;
+}
+
+.employer-sidebar-content {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.employer-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: #334155 !important;
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background-color: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    margin-bottom: 4px;
+    box-sizing: border-box;
+    width: 100%;
+    cursor: pointer;
+}
+
+.employer-nav-item:hover {
+    background-color: #E2E8F0;
+    color: #0F172A !important;
+    text-decoration: none !important;
+}
+
+.employer-nav-item.employer-nav-item-active {
+    background-color: #1E2858 !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+.employer-nav-item.employer-nav-item-active vaadin-icon,
+.employer-nav-item.employer-nav-item-active .employer-nav-icon,
+.employer-nav-item.employer-nav-item-active .employer-nav-lucide-icon {
+    color: #FFFFFF !important;
+}
+
+.employer-nav-item.employer-nav-item-active:hover {
+    background-color: #162044 !important;
+    color: #FFFFFF !important;
+}
+
+.employer-nav-lucide-icon {
+    font-size: 1.15rem;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+
+.employer-nav-item:hover .employer-nav-lucide-icon {
+    color: #0F172A;
+}
+
+.employer-nav-item.employer-nav-item-active:hover .employer-nav-lucide-icon {
+    color: #FFFFFF !important;
+}
+
+.employer-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748B;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.employer-nav-icon vaadin-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.employer-nav-label {
+    flex-grow: 1;
+    line-height: 1;
+}

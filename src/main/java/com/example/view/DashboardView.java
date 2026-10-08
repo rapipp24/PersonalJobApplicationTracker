@@ -76,7 +76,7 @@ public class DashboardView extends VerticalLayout {
             List<JobPosting> jobPostings = jobPostingService.findByEmployer(currentUser);
             List<JobApplication> applications = jobApplicationService.findByEmployer(currentUser);
             employerDashboard.updateData(currentUser, jobPostings, applications);
-            add(title, employerDashboard);
+            add(employerDashboard);
         } else {
             // PELAMAR: tetap sesuai perilaku existing
             ApplicationDashboard dashboard = new ApplicationDashboard();
