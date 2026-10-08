@@ -13,6 +13,17 @@ node_modules/
 src/main/frontend/generated/
 vite.generated.ts
 
-
 /data/
 /src/main/bundles/
+
+# Environment / local secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Accidental temporary files
+oword*
