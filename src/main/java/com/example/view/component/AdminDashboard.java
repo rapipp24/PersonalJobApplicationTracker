@@ -7,7 +7,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 import java.util.List;
 
-public class ApplicationDashboard extends HorizontalLayout {
+public class AdminDashboard extends HorizontalLayout {
 
     private StatSummaryCard totalCard =
         new StatSummaryCard("Total Lamaran");
@@ -22,7 +22,7 @@ public class ApplicationDashboard extends HorizontalLayout {
             new StatSummaryCard("Ditolak");
 
 
-    public ApplicationDashboard() {
+    public AdminDashboard() {
     
         add(
             totalCard,

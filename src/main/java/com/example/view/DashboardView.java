@@ -7,7 +7,7 @@ import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
 import com.example.view.component.ApplicantDashboard;
-import com.example.view.component.ApplicationDashboard;
+import com.example.view.component.AdminDashboard;
 import com.example.view.component.EmployerDashboard;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -62,7 +62,7 @@ public class DashboardView extends VerticalLayout {
 
         if (isAdmin) {
             // ADMIN: tetap sesuai perilaku existing
-            ApplicationDashboard dashboard = new ApplicationDashboard();
+            AdminDashboard dashboard = new AdminDashboard();
             List<JobApplication> data = jobApplicationService.findAll();
             dashboard.updateData(data);
             add(title, dashboard);
