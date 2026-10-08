@@ -1,10 +1,13 @@
 package com.example.view;
 
 import com.example.entity.JobApplication;
+import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
+import com.example.service.JobPostingService;
 import com.example.view.component.ApplicationDashboard;
+import com.example.view.component.EmployerDashboard;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -19,15 +22,18 @@ import java.util.List;
 @PermitAll
 public class DashboardView extends VerticalLayout {
 
-    private final JobApplicationService service;
+    private final JobApplicationService jobApplicationService;
+    private final JobPostingService jobPostingService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
 
     public DashboardView(
-            JobApplicationService service,
+            JobApplicationService jobApplicationService,
+            JobPostingService jobPostingService,
             AuthenticationContext authenticationContext,
             UserRepository userRepository) {
-        this.service = service;
+        this.jobApplicationService = jobApplicationService;
+        this.jobPostingService = jobPostingService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
 
@@ -50,20 +56,33 @@ public class DashboardView extends VerticalLayout {
     private void createDashboard() {
         H2 title = new H2("Dashboard Ringkasan");
 
-        ApplicationDashboard dashboard = new ApplicationDashboard();
-
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
-        List<JobApplication> data;
+        boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isAdmin) {
-            data = service.findAll();
-        } else {
-            User currentUser = getCurrentUser();
-            data = service.findByApplicant(currentUser);
+            // ADMIN: tetap sesuai perilaku existing
+            ApplicationDashboard dashboard = new ApplicationDashboard();
+            List<JobApplication> data = jobApplicationService.findAll();
+            dashboard.updateData(data);
+            add(title, dashboard);
+            return;
         }
 
-        dashboard.updateData(data);
+        User currentUser = getCurrentUser();
 
-        add(title, dashboard);
+        if (isPemberiLamaran) {
+            // PEMBERI_LAMARAN: Dashboard dinamis khusus Employer
+            EmployerDashboard employerDashboard = new EmployerDashboard();
+            List<JobPosting> jobPostings = jobPostingService.findByEmployer(currentUser);
+            List<JobApplication> applications = jobApplicationService.findByEmployer(currentUser);
+            employerDashboard.updateData(currentUser, jobPostings, applications);
+            add(title, employerDashboard);
+        } else {
+            // PELAMAR: tetap sesuai perilaku existing
+            ApplicationDashboard dashboard = new ApplicationDashboard();
+            List<JobApplication> data = jobApplicationService.findByApplicant(currentUser);
+            dashboard.updateData(data);
+            add(title, dashboard);
+        }
     }
 }
