@@ -1421,3 +1421,594 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
         gap: 10px;
     }
 }
+
+/* ==========================================================================
+   Applicant Browse Jobs Styles
+   Scoped under .applicant-browse-jobs to prevent affecting other views
+   ========================================================================== */
+
+.applicant-browse-jobs {
+    gap: 12px;
+    padding: 0 16px 24px 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.applicant-browse-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 0px;
+}
+
+.applicant-browse-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.applicant-browse-subtitle {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* Search & Filter Card */
+.applicant-browse-filter-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-browse-search-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-browse-search-input {
+    flex: 1 1 55%;
+    --vaadin-input-field-height: 40px;
+    --lumo-size-m: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    margin: 0;
+}
+
+.applicant-browse-location-input {
+    flex: 1 1 35%;
+    min-width: 180px;
+    --vaadin-input-field-height: 40px;
+    --lumo-size-m: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    margin: 0;
+}
+
+.applicant-browse-jobs vaadin-text-field {
+    --vaadin-input-field-height: 40px;
+    --lumo-size-m: 40px;
+    height: 40px;
+    min-height: 40px;
+    font-size: 13.5px;
+}
+
+.applicant-browse-jobs vaadin-text-field::part(input-field) {
+    min-height: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    font-size: 13.5px;
+    box-shadow: none;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.applicant-browse-jobs vaadin-text-field::part(value) {
+    font-size: 13.5px;
+    color: #1E293B;
+}
+
+.applicant-browse-jobs vaadin-text-field vaadin-icon,
+.applicant-browse-jobs vaadin-text-field [slot="prefix"] {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: #94A3B8;
+    margin-right: 6px;
+}
+
+.applicant-browse-jobs .applicant-browse-search-btn,
+.applicant-browse-search-btn {
+    --lumo-button-size: 40px;
+    background-color: #1E2858 !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+    padding: 0 20px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    flex-shrink: 0;
+    cursor: pointer;
+    box-shadow: none !important;
+    line-height: 40px !important;
+    margin: 0 !important;
+}
+
+.applicant-browse-jobs .applicant-browse-search-btn:hover,
+.applicant-browse-search-btn:hover {
+    background-color: #162044 !important;
+}
+
+.applicant-browse-filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-browse-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.applicant-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.applicant-filter-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.applicant-browse-filter-select {
+    --vaadin-input-field-height: 34px;
+    --lumo-size-m: 34px;
+    height: 34px;
+    min-height: 34px;
+    margin: 0;
+    padding: 0;
+}
+
+.applicant-work-type-select {
+    min-width: 105px;
+    width: 105px;
+}
+
+.applicant-job-type-select {
+    min-width: 120px;
+    width: 120px;
+}
+
+.applicant-browse-jobs vaadin-select {
+    --vaadin-input-field-height: 34px;
+    --lumo-size-m: 34px;
+    height: 34px;
+    min-height: 34px;
+    font-size: 12.5px;
+}
+
+.applicant-browse-jobs vaadin-select::part(input-field) {
+    min-height: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    font-size: 12.5px;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.applicant-browse-jobs vaadin-select::part(value) {
+    font-size: 12.5px;
+    color: #334155;
+    font-weight: 500;
+}
+
+.applicant-browse-jobs vaadin-select::part(toggle-button) {
+    font-size: 11px;
+    width: 16px;
+    color: #94A3B8;
+}
+
+.applicant-browse-job-count {
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: auto;
+    line-height: 34px;
+}
+
+/* Cards Grid */
+.applicant-jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-job-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.applicant-job-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+}
+
+.applicant-job-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.applicant-job-company-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.applicant-job-company-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 8px;
+    background-color: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    color: #1E293B;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.applicant-job-company-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    justify-content: center;
+}
+
+.applicant-job-company-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0F172A;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.applicant-job-company-meta {
+    font-size: 11.5px;
+    color: #64748B;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.applicant-job-active-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background-color: #EFF6FF;
+    color: #2563EB;
+    border: 1px solid #DBEAFE;
+    line-height: 1.3;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.applicant-job-position {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 4px 0 8px 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.applicant-job-tags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.applicant-job-salary {
+    font-size: 10.5px;
+    font-weight: 600;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    border: 1px solid #E2E8F0;
+    padding: 3px 7px;
+    border-radius: 5px;
+    line-height: 1.25;
+    display: inline-flex;
+    align-items: center;
+}
+
+.applicant-job-work-type,
+.applicant-job-type {
+    font-size: 10.5px;
+    font-weight: 500;
+    background-color: #F1F5F9;
+    color: #475569;
+    padding: 3px 7px;
+    border-radius: 5px;
+    line-height: 1.25;
+    display: inline-flex;
+    align-items: center;
+}
+
+.applicant-job-description {
+    font-size: 12px;
+    color: #64748B;
+    line-height: 1.4;
+    margin: 0 0 10px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.applicant-job-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 10px;
+    margin-top: auto;
+    gap: 10px;
+}
+
+.applicant-job-detail-button {
+    background: transparent !important;
+    color: #1E2858 !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: unset !important;
+    cursor: pointer;
+    border: none !important;
+    box-shadow: none !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+.applicant-job-detail-button:hover {
+    text-decoration: underline;
+}
+
+.applicant-job-apply-button {
+    --lumo-button-size: 35px;
+    background-color: #1E2858 !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 0 16px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    border-radius: 7px !important;
+    border: none !important;
+    cursor: pointer;
+    box-shadow: none !important;
+    line-height: 35px !important;
+    margin: 0 !important;
+}
+
+.applicant-job-apply-button:hover {
+    background-color: #162044 !important;
+}
+
+.applicant-job-applied-button {
+    --lumo-button-size: 35px;
+    background-color: #F1F5F9 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 0 16px !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    border-radius: 7px !important;
+    cursor: default;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    line-height: 35px !important;
+    margin: 0 !important;
+}
+
+/* Empty State */
+.applicant-job-empty {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    grid-column: 1 / -1;
+    box-sizing: border-box;
+    gap: 6px;
+}
+
+.applicant-job-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1E293B;
+    margin: 0;
+}
+
+.applicant-job-empty-desc {
+    font-size: 12.5px;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Pagination */
+.applicant-job-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 16px;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.applicant-job-pagination-info {
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 500;
+}
+
+.applicant-job-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px !important;
+    --lumo-space-m: 5px;
+}
+
+.applicant-page-btn {
+    --lumo-button-size: 30px;
+    min-width: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #334155 !important;
+    cursor: pointer;
+    box-shadow: none !important;
+    line-height: 28px !important;
+    margin: 0 !important;
+}
+
+.applicant-page-btn:hover:not([disabled]) {
+    background-color: #F8FAFC !important;
+    border-color: #CBD5E1 !important;
+}
+
+.applicant-page-btn-active {
+    background-color: #1E2858 !important;
+    color: #FFFFFF !important;
+    border-color: #1E2858 !important;
+    font-weight: 600 !important;
+}
+
+/* Responsive Breakpoints for Browse Jobs */
+@media (max-width: 900px) {
+    .applicant-jobs-grid {
+        grid-template-columns: 1fr;
+    }
+    .applicant-browse-search-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .applicant-browse-search-input,
+    .applicant-browse-location-input,
+    .applicant-browse-search-btn {
+        width: 100%;
+        flex: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .applicant-browse-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .applicant-browse-filter-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .applicant-filter-item {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .applicant-work-type-select,
+    .applicant-job-type-select {
+        width: auto;
+        flex: 1;
+    }
+    .applicant-browse-job-count {
+        margin-left: 0;
+        text-align: center;
+    }
+    .applicant-job-pagination {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
+
