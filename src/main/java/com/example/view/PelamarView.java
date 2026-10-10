@@ -10,8 +10,8 @@ import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -20,7 +20,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -342,7 +341,7 @@ public class PelamarView extends VerticalLayout {
         Div footerRow = new Div();
         footerRow.addClassName("applicant-job-footer");
 
-        Button viewDetailsBtn = new Button("View Details", event -> showJobDetailsDialog(job));
+        Button viewDetailsBtn = new Button("View Details", event -> UI.getCurrent().navigate(JobDetailView.class, job.getId()));
         viewDetailsBtn.addClassName("applicant-job-detail-button");
         footerRow.add(viewDetailsBtn);
 
@@ -403,86 +402,6 @@ public class PelamarView extends VerticalLayout {
         Notification.show("Lamaran berhasil dikirim");
     }
 
-    private void showJobDetailsDialog(JobPosting job) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("640px");
-        dialog.setMaxWidth("95vw");
-
-        VerticalLayout dialogLayout = new VerticalLayout();
-        dialogLayout.setPadding(false);
-        dialogLayout.setSpacing(true);
-
-        H3 title = new H3(job.getPosition() != null ? job.getPosition() : "-");
-        title.getStyle().set("margin", "0").set("color", "#0F172A");
-
-        String company = job.getCompanyName() != null ? job.getCompanyName() : "-";
-        String location = job.getLocation() != null ? job.getLocation() : "-";
-        Paragraph companyLocation = new Paragraph(company + " · " + location);
-        companyLocation.getStyle().set("color", "#64748B").set("margin", "0");
-
-        Div tags = new Div();
-        tags.addClassName("applicant-job-tags");
-        String salary = formatSalaryBadge(job.getSalaryMin(), job.getSalaryMax());
-        if (salary != null) {
-            Span salaryBadge = new Span(salary);
-            salaryBadge.addClassName("applicant-job-salary");
-            tags.add(salaryBadge);
-        }
-        Span workTypeBadge = new Span(formatWorkType(job.getTipeKerja()));
-        workTypeBadge.addClassName("applicant-job-work-type");
-        Span jobTypeBadge = new Span(formatJobType(job.getJobTipe()));
-        jobTypeBadge.addClassName("applicant-job-type");
-        tags.add(workTypeBadge, jobTypeBadge);
-
-        Paragraph descHeader = new Paragraph("Job Description");
-        descHeader.getStyle().set("font-weight", "600").set("color", "#0F172A").set("margin", "12px 0 4px 0");
-        Paragraph descContent = new Paragraph(job.getDescription() != null && !job.getDescription().isBlank()
-                ? job.getDescription()
-                : "No description provided.");
-        descContent.getStyle().set("color", "#334155").set("line-height", "1.6").set("white-space", "pre-line").set("margin", "0");
-
-        Paragraph reqHeader = new Paragraph("Requirements");
-        reqHeader.getStyle().set("font-weight", "600").set("color", "#0F172A").set("margin", "12px 0 4px 0");
-        Paragraph reqContent = new Paragraph(job.getRequirements() != null && !job.getRequirements().isBlank()
-                ? job.getRequirements()
-                : "No specific requirements listed.");
-        reqContent.getStyle().set("color", "#334155").set("line-height", "1.6").set("white-space", "pre-line").set("margin", "0");
-
-        dialogLayout.add(title, companyLocation, tags, descHeader, descContent, reqHeader, reqContent);
-
-        HorizontalLayout footer = new HorizontalLayout();
-        footer.setWidthFull();
-        footer.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        footer.setAlignItems(Alignment.CENTER);
-        footer.getStyle().set("margin-top", "16px");
-
-        Button closeButton = new Button("Close", event -> dialog.close());
-        footer.add(closeButton);
-
-        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
-        if (isPelamar) {
-            User currentUser = getCurrentUser();
-            boolean sudahMelamar = jobApplicationService.hasApplied(currentUser, job);
-            if (sudahMelamar) {
-                Button appliedBtn = new Button("Applied");
-                appliedBtn.setEnabled(false);
-                appliedBtn.addClassName("applicant-job-applied-button");
-                footer.add(appliedBtn);
-            } else {
-                Button applyBtn = new Button("Apply Now");
-                applyBtn.addClassName("applicant-job-apply-button");
-                applyBtn.addClickListener(event -> {
-                    handleApply(job, applyBtn);
-                    dialog.close();
-                    renderCurrentPage();
-                });
-                footer.add(applyBtn);
-            }
-        }
-
-        dialog.add(dialogLayout, footer);
-        dialog.open();
-    }
 
     private void renderPagination(int startIndex, int endIndex, int totalItems, int totalPages) {
         paginationContainer.removeAll();

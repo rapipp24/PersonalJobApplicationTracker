@@ -61,7 +61,6 @@ public class DashboardView extends VerticalLayout {
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isAdmin) {
-            // ADMIN: tetap sesuai perilaku existing
             AdminDashboard dashboard = new AdminDashboard();
             List<JobApplication> data = jobApplicationService.findAll();
             dashboard.updateData(data);
@@ -72,14 +71,12 @@ public class DashboardView extends VerticalLayout {
         User currentUser = getCurrentUser();
 
         if (isPemberiLamaran) {
-            // PEMBERI_LAMARAN: Dashboard dinamis khusus Employer
             EmployerDashboard employerDashboard = new EmployerDashboard();
             List<JobPosting> jobPostings = jobPostingService.findByEmployer(currentUser);
             List<JobApplication> applications = jobApplicationService.findByEmployer(currentUser);
             employerDashboard.updateData(currentUser, jobPostings, applications);
             add(employerDashboard);
         } else {
-            // PELAMAR: Dashboard khusus Pelamar berdasarkan Stitch design
             ApplicantDashboard applicantDashboard = new ApplicantDashboard();
             List<JobApplication> applications = jobApplicationService.findByApplicant(currentUser);
             applicantDashboard.updateData(currentUser, applications);
