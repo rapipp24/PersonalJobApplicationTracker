@@ -1,14 +1,13 @@
 package com.example.view;
 
-import com.example.entity.ApplicationStatus;
 import com.example.entity.ApplicationTipe;
-import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.JobTipe;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
+import com.example.service.SavedJobService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.UI;
@@ -44,6 +43,7 @@ public class JobDetailView extends VerticalLayout implements HasUrlParameter<Lon
 
     private final JobPostingService jobPostingService;
     private final JobApplicationService jobApplicationService;
+    private final SavedJobService savedJobService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
 
@@ -52,10 +52,12 @@ public class JobDetailView extends VerticalLayout implements HasUrlParameter<Lon
     public JobDetailView(
             JobPostingService jobPostingService,
             JobApplicationService jobApplicationService,
+            SavedJobService savedJobService,
             AuthenticationContext authenticationContext,
             UserRepository userRepository) {
         this.jobPostingService = jobPostingService;
         this.jobApplicationService = jobApplicationService;
+        this.savedJobService = savedJobService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
 
@@ -327,9 +329,27 @@ public class JobDetailView extends VerticalLayout implements HasUrlParameter<Lon
                 applyButton.setText("Apply Now");
                 applyButton.addClassName("applicant-job-apply-button");
                 applyButton.addClassName("applicant-job-detail-apply-btn");
-                applyButton.addClickListener(event -> handleApply(currentJob, applyButton));
+                applyButton.addClickListener(event -> UI.getCurrent().navigate(ApplyJobView.class, currentJob.getId()));
             }
             actionSection.add(applyButton);
+
+            boolean isSaved = savedJobService.isJobSaved(currentUser, currentJob);
+            Button saveButton = new Button();
+            saveButton.addClassName("applicant-detail-save-btn");
+            updateSaveButton(saveButton, isSaved);
+
+            saveButton.addClickListener(event -> {
+                try {
+                    boolean nowSaved = savedJobService.toggleSave(currentUser, currentJob);
+                    updateSaveButton(saveButton, nowSaved);
+                    Notification.show(nowSaved ? "Lowongan berhasil disimpan" : "Lowongan dihapus dari Saved Jobs");
+                } catch (Exception ex) {
+                    boolean actualSaved = savedJobService.isJobSaved(currentUser, currentJob);
+                    updateSaveButton(saveButton, actualSaved);
+                    Notification.show("Gagal memperbarui status simpan lowongan. Silakan coba lagi.");
+                }
+            });
+            actionSection.add(saveButton);
         }
 
         sidebarCard.add(actionSection);
@@ -407,41 +427,6 @@ public class JobDetailView extends VerticalLayout implements HasUrlParameter<Lon
 
         row.add(labelSpan, valSpan);
         return row;
-    }
-
-    private void handleApply(JobPosting job, Button applyButton) {
-        if (!job.isActive()) {
-            Notification.show("Lowongan ini sudah tidak aktif");
-            return;
-        }
-
-        User currentUser = getCurrentUser();
-        if (jobApplicationService.hasApplied(currentUser, job)) {
-            Notification.show("Anda sudah melamar lowongan ini");
-            applyButton.setText("Applied");
-            applyButton.setEnabled(false);
-            applyButton.removeClassName("applicant-job-apply-button");
-            applyButton.addClassName("applicant-job-applied-button");
-            return;
-        }
-
-        JobApplication jobApplication = new JobApplication();
-        jobApplication.setApplicant(currentUser);
-        jobApplication.setJobPosting(job);
-        jobApplication.setCompanyName(job.getCompanyName());
-        jobApplication.setPosition(job.getPosition());
-        jobApplication.settipeKerja(job.getTipeKerja());
-        jobApplication.setApplicationDate(LocalDate.now());
-        jobApplication.setStatus(ApplicationStatus.APPLIED);
-
-        jobApplicationService.simpanLamaran(jobApplication);
-
-        applyButton.setText("Applied");
-        applyButton.setEnabled(false);
-        applyButton.removeClassName("applicant-job-apply-button");
-        applyButton.addClassName("applicant-job-applied-button");
-
-        Notification.show("Lamaran berhasil dikirim");
     }
 
     private User getCurrentUser() {
@@ -532,5 +517,21 @@ public class JobDetailView extends VerticalLayout implements HasUrlParameter<Lon
             return "-";
         }
         return date.format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH));
+    }
+
+    private void updateSaveButton(Button btn, boolean isSaved) {
+        if (isSaved) {
+            btn.setText("Saved");
+            btn.setIcon(new Html("<iconify-icon icon=\"lucide:bookmark\" class=\"applicant-detail-save-icon saved\"></iconify-icon>"));
+            btn.addClassName("saved");
+            btn.setTooltipText("Remove from saved jobs");
+            btn.setAriaLabel("Remove from saved jobs");
+        } else {
+            btn.setText("Save Job");
+            btn.setIcon(new Html("<iconify-icon icon=\"lucide:bookmark\" class=\"applicant-detail-save-icon\"></iconify-icon>"));
+            btn.removeClassName("saved");
+            btn.setTooltipText("Save Job");
+            btn.setAriaLabel("Save Job");
+        }
     }
 }

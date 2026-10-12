@@ -1609,6 +1609,11 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
     width: 120px;
 }
 
+.applicant-sort-by-select {
+    min-width: 175px;
+    width: 175px;
+}
+
 .applicant-browse-jobs vaadin-select {
     --vaadin-input-field-height: 34px;
     --lumo-size-m: 34px;
@@ -1872,6 +1877,64 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
     opacity: 1 !important;
     line-height: 35px !important;
     margin: 0 !important;
+}
+
+/* Bookmark Save Action */
+.applicant-job-save-btn {
+    --lumo-button-size: 32px;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    margin: 0 !important;
+}
+
+.applicant-job-save-btn:hover {
+    border-color: #CBD5E1 !important;
+    background-color: #F8FAFC !important;
+}
+
+.applicant-job-save-icon {
+    font-size: 16px;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.applicant-job-save-btn:hover .applicant-job-save-icon {
+    color: #1E2858;
+}
+
+.applicant-job-save-btn.saved {
+    background-color: #EFF6FF !important;
+    border-color: #BFDBFE !important;
+}
+
+.applicant-job-save-btn.saved:hover {
+    background-color: #DBEAFE !important;
+    border-color: #93C5FD !important;
+}
+
+.applicant-job-save-icon.saved {
+    color: #1E2858;
+}
+
+.applicant-job-save-btn.saved:hover .applicant-job-save-icon.saved {
+    color: #162044;
 }
 
 /* Empty State */
@@ -2306,6 +2369,71 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
     margin: 0 !important;
 }
 
+/* Application Action - Save Job Button */
+.applicant-detail-save-btn {
+    --lumo-button-size: 38px;
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #1E293B !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    transition: all 0.15s ease;
+}
+
+.applicant-detail-save-btn:hover {
+    background-color: #F8FAFC !important;
+    border-color: #94A3B8 !important;
+    color: #0F172A !important;
+}
+
+.applicant-detail-save-icon {
+    font-size: 15px;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.applicant-detail-save-btn:hover .applicant-detail-save-icon {
+    color: #0F172A;
+}
+
+.applicant-detail-save-btn.saved {
+    background-color: #EFF6FF !important;
+    border-color: #BFDBFE !important;
+    color: #1E2858 !important;
+}
+
+.applicant-detail-save-btn.saved:hover {
+    background-color: #DBEAFE !important;
+    border-color: #93C5FD !important;
+    color: #162044 !important;
+}
+
+.applicant-detail-save-icon.saved {
+    color: #1E2858;
+}
+
+.applicant-detail-save-btn.saved:hover .applicant-detail-save-icon.saved {
+    color: #162044;
+}
+
 .applicant-job-detail-card-title {
     font-size: 14px;
     font-weight: 700;
@@ -2357,6 +2485,615 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
 @media (max-width: 960px) {
     .applicant-job-detail-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   APPLICANT APPLY JOB VIEW
+   ========================================================================== */
+
+.applicant-apply-page {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0 26px 36px 26px;
+}
+
+/* Navigation Row (Back Button + Breadcrumb) */
+.applicant-apply-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+/* Back Action (Icon-only) */
+.applicant-apply-back-btn {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    color: #1E293B !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    cursor: pointer;
+    box-shadow: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.applicant-apply-back-btn:hover {
+    background-color: #F1F5F9 !important;
+    color: #0F172A !important;
+    text-decoration: none !important;
+}
+
+.applicant-apply-back-icon {
+    font-size: 18px;
+    color: #1E293B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.applicant-apply-back-btn:hover .applicant-apply-back-icon {
+    color: #0F172A;
+}
+
+/* Breadcrumb Navigation */
+.applicant-apply-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #64748B;
+    margin: 0;
+    flex-wrap: wrap;
+}
+
+.applicant-apply-breadcrumb-link {
+    cursor: pointer;
+    color: #64748B;
+    transition: color 0.15s ease;
+}
+
+.applicant-apply-breadcrumb-link:hover {
+    color: #0F172A;
+    text-decoration: underline;
+}
+
+.applicant-apply-breadcrumb-sep {
+    color: #CBD5E1;
+}
+
+.applicant-apply-breadcrumb-item {
+    color: #64748B;
+    cursor: default;
+}
+
+.applicant-apply-breadcrumb-current {
+    color: #0F172A;
+    font-weight: 600;
+    cursor: default;
+}
+
+/* Page Title & Subtitle Header Group */
+.applicant-apply-title-block {
+    margin-bottom: 26px;
+}
+
+.applicant-apply-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 7px 0;
+    letter-spacing: -0.01em;
+}
+
+.applicant-apply-subtitle {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0;
+}
+
+/* 2-Column Main Grid Layout */
+.applicant-apply-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: start;
+}
+
+/* Left / Main Content Surface */
+.applicant-apply-content {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 26px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.applicant-apply-section {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.applicant-apply-sec-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.applicant-apply-step-badge {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    border-radius: 50%;
+    background-color: #EFF6FF;
+    border: 1px solid #DBEAFE;
+    color: #1E40AF;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.applicant-apply-sec-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.applicant-apply-sec-subtitle {
+    font-size: 12.5px;
+    color: #64748B;
+    margin: 0 0 20px 0;
+    line-height: 1.4;
+}
+
+/* 2-Column Field Grid */
+.applicant-apply-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20px;
+    row-gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 26px;
+}
+
+.applicant-apply-field-item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-apply-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.applicant-apply-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.applicant-apply-badge {
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+
+.applicant-apply-badge-locked {
+    background-color: #F1F5F9;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
+}
+
+.applicant-apply-badge-optional {
+    color: #94A3B8;
+    background-color: transparent;
+    font-weight: 500;
+}
+
+/* Common Input Settings */
+.applicant-apply-input {
+    width: 100%;
+}
+
+/* 1. Locked Inputs (Full Name, Email) */
+.applicant-apply-input-locked {
+    --vaadin-input-field-background: #F8FAFC !important;
+}
+
+.applicant-apply-input-locked::part(input-field) {
+    background-color: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 8px !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.applicant-apply-input-locked input {
+    cursor: not-allowed !important;
+    color: #334155 !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}
+
+.applicant-apply-input-locked .applicant-apply-field-icon {
+    color: #64748B !important;
+}
+
+/* 2. Editable Inputs (Phone, LinkedIn) */
+.applicant-apply-input-editable {
+    --vaadin-input-field-background: #FFFFFF !important;
+}
+
+.applicant-apply-input-editable::part(input-field) {
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.applicant-apply-input-editable[focused]::part(input-field),
+.applicant-apply-input-editable:focus-within::part(input-field) {
+    border-color: #0F172A !important;
+    box-shadow: 0 0 0 1px #0F172A !important;
+}
+
+.applicant-apply-input-editable input {
+    color: #0F172A !important;
+    font-weight: 400 !important;
+    font-size: 13px !important;
+}
+
+/* Placeholder styling: lighter gray, lower contrast, normal weight 400 */
+.applicant-apply-input-editable input::placeholder {
+    color: #94A3B8 !important;
+    font-weight: 400 !important;
+    font-size: 12.5px !important;
+    opacity: 1 !important;
+}
+
+.applicant-apply-field-icon {
+    font-size: 15px;
+    color: #94A3B8;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Divider */
+.applicant-apply-divider {
+    border: none;
+    border-top: 1px solid #F1F5F9;
+    margin: 0 0 24px 0;
+    width: 100%;
+}
+
+/* Upload Drop Area */
+.applicant-apply-upload-container {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 26px;
+}
+
+.applicant-apply-upload-box {
+    border: 1px dashed #CBD5E1;
+    border-radius: 10px;
+    background-color: #F8FAFC;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    width: 100%;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.applicant-apply-upload-box:hover {
+    border-color: #94A3B8;
+    background-color: #F1F5F9;
+}
+
+.applicant-apply-upload-cloud-icon {
+    font-size: 22px;
+    color: #64748B;
+    margin-bottom: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.applicant-apply-upload-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E293B;
+    margin: 0 0 4px 0;
+}
+
+.applicant-apply-upload-hint {
+    font-size: 11.5px;
+    color: #64748B;
+    margin: 0 0 14px 0;
+}
+
+.applicant-apply-upload-component {
+    margin: 0;
+}
+
+.applicant-apply-upload-component vaadin-button,
+.applicant-apply-upload-component::part(upload-button) {
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    height: 32px !important;
+    padding: 0 14px !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+}
+
+.applicant-apply-upload-component vaadin-button:hover,
+.applicant-apply-upload-component::part(upload-button):hover {
+    background-color: #F8FAFC !important;
+    border-color: #94A3B8 !important;
+}
+
+.applicant-apply-file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-top: 14px;
+}
+
+.applicant-apply-file-icon {
+    font-size: 16px;
+    color: #16A34A;
+}
+
+.applicant-apply-file-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #166534;
+}
+
+.applicant-apply-file-ready {
+    font-size: 11px;
+    font-weight: 600;
+    color: #15803D;
+    background-color: #DCFCE7;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Action Buttons */
+.applicant-apply-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.applicant-apply-btn-cancel {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    color: #64748B !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    box-shadow: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    transition: color 0.15s ease;
+}
+
+.applicant-apply-btn-cancel:hover {
+    color: #0F172A !important;
+    text-decoration: underline !important;
+}
+
+.applicant-apply-btn-submit {
+    background-color: #0F172A !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    height: 38px !important;
+    padding: 0 22px !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.applicant-apply-btn-submit:hover {
+    background-color: #1E293B !important;
+}
+
+/* Right / Job Summary Surface */
+.applicant-apply-job-summary {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.applicant-apply-summary-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 16px 0;
+}
+
+.applicant-apply-summary-company-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.applicant-apply-summary-avatar {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 8px;
+    background-color: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    color: #1E293B;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.applicant-apply-summary-comp-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.applicant-apply-summary-comp-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.applicant-apply-summary-position {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 10px 0;
+    line-height: 1.3;
+}
+
+.applicant-apply-summary-salary {
+    margin-bottom: 8px;
+    align-self: flex-start;
+}
+
+.applicant-apply-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 12px;
+    gap: 8px;
+}
+
+.applicant-apply-summary-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.applicant-apply-summary-row-label-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.applicant-apply-summary-row-icon {
+    font-size: 14px;
+    color: #64748B;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.applicant-apply-summary-row-label {
+    color: #64748B;
+    flex-shrink: 0;
+}
+
+.applicant-apply-summary-row-val {
+    color: #0F172A;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-word;
+}
+
+/* Responsive Breakpoints for Apply Job View */
+@media (max-width: 960px) {
+    .applicant-apply-page {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .applicant-apply-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .applicant-apply-page {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .applicant-apply-nav-row {
+        margin-bottom: 20px;
+    }
+
+    .applicant-apply-title-block {
+        margin-bottom: 22px;
+    }
+
+    .applicant-apply-content {
+        padding: 18px;
+    }
+
+    .applicant-apply-field-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 22px;
     }
 }
 

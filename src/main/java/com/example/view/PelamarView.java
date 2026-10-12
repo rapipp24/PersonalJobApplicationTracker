@@ -1,14 +1,14 @@
 package com.example.view;
 
-import com.example.entity.ApplicationStatus;
 import com.example.entity.ApplicationTipe;
-import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.JobTipe;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
+import com.example.service.SavedJobService;
+import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -43,6 +43,7 @@ public class PelamarView extends VerticalLayout {
 
     private final JobPostingService jobPostingService;
     private final JobApplicationService jobApplicationService;
+    private final SavedJobService savedJobService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
 
@@ -51,6 +52,7 @@ public class PelamarView extends VerticalLayout {
     private final TextField locationField = new TextField();
     private final Select<String> workTypeSelect = new Select<>();
     private final Select<String> jobTypeSelect = new Select<>();
+    private final Select<String> sortBySelect = new Select<>();
     private final Span jobCountSpan = new Span();
 
     // Containers
@@ -66,10 +68,12 @@ public class PelamarView extends VerticalLayout {
     public PelamarView(
             JobPostingService jobPostingService,
             JobApplicationService jobApplicationService,
+            SavedJobService savedJobService,
             AuthenticationContext authenticationContext,
             UserRepository userRepository) {
         this.jobPostingService = jobPostingService;
         this.jobApplicationService = jobApplicationService;
+        this.savedJobService = savedJobService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
 
@@ -166,7 +170,24 @@ public class PelamarView extends VerticalLayout {
 
         jobTypeFilter.add(jobTypeLabel, jobTypeSelect);
 
-        filterGroup.add(workingTypeFilter, jobTypeFilter);
+        // Sort by Filter (Label + Dropdown)
+        HorizontalLayout sortByFilter = new HorizontalLayout();
+        sortByFilter.addClassName("applicant-filter-item");
+        sortByFilter.setAlignItems(Alignment.CENTER);
+        sortByFilter.setSpacing(true);
+
+        Span sortByLabel = new Span("Sort by");
+        sortByLabel.addClassName("applicant-filter-label");
+
+        sortBySelect.setItems("Newest", "Oldest", "Salary: High to Low", "Salary: Low to High");
+        sortBySelect.setValue("Newest");
+        sortBySelect.addClassName("applicant-browse-filter-select");
+        sortBySelect.addClassName("applicant-sort-by-select");
+        sortBySelect.addValueChangeListener(event -> applyFilter());
+
+        sortByFilter.add(sortByLabel, sortBySelect);
+
+        filterGroup.add(workingTypeFilter, jobTypeFilter, sortByFilter);
 
         jobCountSpan.addClassName("applicant-browse-job-count");
 
@@ -229,8 +250,55 @@ public class PelamarView extends VerticalLayout {
             }
         }
 
+        sortFilteredJobs(filteredJobs);
+
         jobCountSpan.setText("Showing " + filteredJobs.size() + " active job openings");
         renderCurrentPage();
+    }
+
+    private void sortFilteredJobs(List<JobPosting> jobs) {
+        String selectedSort = sortBySelect.getValue();
+        if (selectedSort == null || selectedSort.isEmpty()) {
+            selectedSort = "Newest";
+        }
+
+        if ("Newest".equals(selectedSort)) {
+            jobs.sort((a, b) -> {
+                LocalDate dateA = a.getPostedDate();
+                LocalDate dateB = b.getPostedDate();
+                if (dateA == null && dateB == null) return 0;
+                if (dateA == null) return 1;
+                if (dateB == null) return -1;
+                return dateB.compareTo(dateA);
+            });
+        } else if ("Oldest".equals(selectedSort)) {
+            jobs.sort((a, b) -> {
+                LocalDate dateA = a.getPostedDate();
+                LocalDate dateB = b.getPostedDate();
+                if (dateA == null && dateB == null) return 0;
+                if (dateA == null) return 1;
+                if (dateB == null) return -1;
+                return dateA.compareTo(dateB);
+            });
+        } else if ("Salary: High to Low".equals(selectedSort)) {
+            jobs.sort((a, b) -> {
+                Long salA = a.getSalaryMax() != null ? a.getSalaryMax() : a.getSalaryMin();
+                Long salB = b.getSalaryMax() != null ? b.getSalaryMax() : b.getSalaryMin();
+                if (salA == null && salB == null) return 0;
+                if (salA == null) return 1;
+                if (salB == null) return -1;
+                return salB.compareTo(salA);
+            });
+        } else if ("Salary: Low to High".equals(selectedSort)) {
+            jobs.sort((a, b) -> {
+                Long salA = a.getSalaryMin() != null ? a.getSalaryMin() : a.getSalaryMax();
+                Long salB = b.getSalaryMin() != null ? b.getSalaryMin() : b.getSalaryMax();
+                if (salA == null && salB == null) return 0;
+                if (salA == null) return 1;
+                if (salB == null) return -1;
+                return salA.compareTo(salB);
+            });
+        }
     }
 
     private void renderCurrentPage() {
@@ -305,6 +373,37 @@ public class PelamarView extends VerticalLayout {
 
         headerRow.add(companyBlock);
 
+        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
+        User currentUser = null;
+        if (isPelamar) {
+            try {
+                currentUser = getCurrentUser();
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (isPelamar && currentUser != null) {
+            boolean isSaved = savedJobService.isJobSaved(currentUser, job);
+            Button bookmarkBtn = new Button();
+            bookmarkBtn.addClassName("applicant-job-save-btn");
+            updateBookmarkButton(bookmarkBtn, isSaved);
+
+            final User applicantUser = currentUser;
+            bookmarkBtn.addClickListener(event -> {
+                try {
+                    boolean nowSaved = savedJobService.toggleSave(applicantUser, job);
+                    updateBookmarkButton(bookmarkBtn, nowSaved);
+                    Notification.show(nowSaved ? "Lowongan berhasil disimpan" : "Lowongan dihapus dari Saved Jobs");
+                } catch (Exception ex) {
+                    boolean actualSaved = savedJobService.isJobSaved(applicantUser, job);
+                    updateBookmarkButton(bookmarkBtn, actualSaved);
+                    Notification.show("Gagal memperbarui status simpan lowongan. Silakan coba lagi.");
+                }
+            });
+
+            headerRow.add(bookmarkBtn);
+        }
+
         // 2. Position Title
         H3 positionTitle = new H3(job.getPosition() != null ? job.getPosition() : "-");
         positionTitle.addClassName("applicant-job-position");
@@ -345,9 +444,7 @@ public class PelamarView extends VerticalLayout {
         viewDetailsBtn.addClassName("applicant-job-detail-button");
         footerRow.add(viewDetailsBtn);
 
-        boolean isPelamar = authenticationContext.hasRole("PELAMAR");
-        if (isPelamar) {
-            User currentUser = getCurrentUser();
+        if (isPelamar && currentUser != null) {
             boolean sudahMelamar = jobApplicationService.hasApplied(currentUser, job);
 
             Button applyButton = new Button();
@@ -358,7 +455,7 @@ public class PelamarView extends VerticalLayout {
             } else {
                 applyButton.setText("Apply Now");
                 applyButton.addClassName("applicant-job-apply-button");
-                applyButton.addClickListener(event -> handleApply(job, applyButton));
+                applyButton.addClickListener(event -> UI.getCurrent().navigate(ApplyJobView.class, job.getId()));
             }
             footerRow.add(applyButton);
         }
@@ -367,39 +464,18 @@ public class PelamarView extends VerticalLayout {
         return card;
     }
 
-    private void handleApply(JobPosting job, Button applyButton) {
-        if (!job.isActive()) {
-            Notification.show("Lowongan ini sudah tidak aktif");
-            return;
+    private void updateBookmarkButton(Button btn, boolean isSaved) {
+        if (isSaved) {
+            btn.setIcon(new Html("<iconify-icon icon=\"lucide:bookmark\" class=\"applicant-job-save-icon saved\"></iconify-icon>"));
+            btn.addClassName("saved");
+            btn.setTooltipText("Remove from saved jobs");
+            btn.setAriaLabel("Remove from saved jobs");
+        } else {
+            btn.setIcon(new Html("<iconify-icon icon=\"lucide:bookmark\" class=\"applicant-job-save-icon\"></iconify-icon>"));
+            btn.removeClassName("saved");
+            btn.setTooltipText("Save job");
+            btn.setAriaLabel("Save job");
         }
-
-        User currentUser = getCurrentUser();
-        if (jobApplicationService.hasApplied(currentUser, job)) {
-            Notification.show("Anda sudah melamar lowongan ini");
-            applyButton.setText("Applied");
-            applyButton.setEnabled(false);
-            applyButton.removeClassName("applicant-job-apply-button");
-            applyButton.addClassName("applicant-job-applied-button");
-            return;
-        }
-
-        JobApplication jobApplication = new JobApplication();
-        jobApplication.setApplicant(currentUser);
-        jobApplication.setJobPosting(job);
-        jobApplication.setCompanyName(job.getCompanyName());
-        jobApplication.setPosition(job.getPosition());
-        jobApplication.settipeKerja(job.getTipeKerja());
-        jobApplication.setApplicationDate(LocalDate.now());
-        jobApplication.setStatus(ApplicationStatus.APPLIED);
-
-        jobApplicationService.simpanLamaran(jobApplication);
-
-        applyButton.setText("Applied");
-        applyButton.setEnabled(false);
-        applyButton.removeClassName("applicant-job-apply-button");
-        applyButton.addClassName("applicant-job-applied-button");
-
-        Notification.show("Lamaran berhasil dikirim");
     }
 
 
