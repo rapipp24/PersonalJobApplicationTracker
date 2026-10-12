@@ -1,0 +1,3 @@
+interface:
+  display_name: "Java Vaadin Clean Architecture"
+  short_description: "Jaga struktur Spring Boot + Vaadin tetap sederhana dan sesuai project"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Project Refactor"
+  short_description: "Refactor aman untuk Java Spring Boot + Vaadin"
