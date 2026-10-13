@@ -3097,4 +3097,101 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
     }
 }
 
+/* ==========================================================================
+   Applicant Applications Styles
+   Scoped under .applicant-applications to prevent affecting other views
+   ========================================================================== */
 
+.applicant-applications {
+    gap: 16px;
+    padding: 0 16px 24px 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.applicant-applications-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.applicant-applications-title {
+    font-size: 25px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.applicant-applications-subtitle {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* Tabs */
+.applicant-applications-tabs {
+    width: 100%;
+    border-bottom: 1px solid #E2E8F0;
+    --lumo-primary-color: #1E2858;
+}
+
+.applicant-applications-tabs vaadin-tab {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #64748B;
+    cursor: pointer;
+    padding: 10px 16px;
+    transition: color 0.15s ease;
+}
+
+.applicant-applications-tabs vaadin-tab[selected] {
+    color: #1E2858;
+    font-weight: 700;
+}
+
+/* Content Container */
+.applicant-applications-content {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-applied-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+}
+
+/* Saved Jobs Placeholder */
+.applicant-saved-placeholder {
+    background-color: #FFFFFF;
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    padding: 56px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 8px;
+}
+
+.applicant-saved-placeholder-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1E293B;
+    margin: 0;
+}
+
+.applicant-saved-placeholder-desc {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0;
+}

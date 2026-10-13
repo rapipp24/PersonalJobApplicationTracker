@@ -5,19 +5,25 @@ import com.example.entity.JobApplication;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
+import com.example.service.SavedJobService;
 import com.example.view.component.JobApplicationForm;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -38,6 +44,7 @@ import java.util.List;
 public class ApplicationsView extends VerticalLayout {
 
     private final JobApplicationService service;
+    private final SavedJobService savedJobService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
 
@@ -46,30 +53,125 @@ public class ApplicationsView extends VerticalLayout {
     private final Grid<JobApplication> tableLamaran = new Grid<>(JobApplication.class, false);
     private final JobApplicationForm form = new JobApplicationForm();
 
+    private Tab appliedTab;
+    private Tab savedTab;
+    private Div appliedContentContainer;
+    private Div savedContentContainer;
+
     public ApplicationsView(
             JobApplicationService service,
+            SavedJobService savedJobService,
             AuthenticationContext authenticationContext,
             UserRepository userRepository) {
         this.service = service;
+        this.savedJobService = savedJobService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
-
-        addClassName("view-container");
-        setWidthFull();
 
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
 
         if (isAdmin) {
-            createFormSection();
+            buildAdminView();
+        } else {
+            buildApplicantView();
         }
+    }
 
+    private void buildAdminView() {
+        addClassName("view-container");
+        setWidthFull();
+
+        createFormSection();
         createTableSection();
+        refreshGrid();
+        resetForm();
+    }
+
+    private void buildApplicantView() {
+        addClassName("applicant-applications");
+        setPadding(false);
+        setSpacing(false);
+        setWidthFull();
+
+        createApplicantHeader();
+
+        User currentUser = getCurrentUser();
+        int appliedCount = service.findByApplicant(currentUser).size();
+        int savedCount = savedJobService.getSavedJobs(currentUser).size();
+
+        appliedTab = new Tab("Applied Jobs (" + appliedCount + ")");
+        savedTab = new Tab("Saved Jobs (" + savedCount + ")");
+
+        Tabs tabs = new Tabs(appliedTab, savedTab);
+        tabs.addClassName("applicant-applications-tabs");
+
+        Div contentContainer = new Div();
+        contentContainer.addClassName("applicant-applications-content");
+
+        appliedContentContainer = createApplicantAppliedContent();
+        savedContentContainer = createApplicantSavedPlaceholder();
+
+        appliedContentContainer.setVisible(true);
+        savedContentContainer.setVisible(false);
+
+        contentContainer.add(appliedContentContainer, savedContentContainer);
+
+        tabs.addSelectedChangeListener(event -> {
+            Tab selected = event.getSelectedTab();
+            if (selected == appliedTab) {
+                appliedContentContainer.setVisible(true);
+                savedContentContainer.setVisible(false);
+            } else if (selected == savedTab) {
+                appliedContentContainer.setVisible(false);
+                savedContentContainer.setVisible(true);
+            }
+        });
+
+        add(tabs, contentContainer);
 
         refreshGrid();
+    }
 
-        if (isAdmin) {
-            resetForm();
-        }
+    private void createApplicantHeader() {
+        Div headerLayout = new Div();
+        headerLayout.addClassName("applicant-applications-header");
+
+        H2 title = new H2("Applications");
+        title.addClassName("applicant-applications-title");
+
+        Paragraph subtitle = new Paragraph("Manage your job applications and saved opportunities.");
+        subtitle.addClassName("applicant-applications-subtitle");
+
+        headerLayout.add(title, subtitle);
+        add(headerLayout);
+    }
+
+    private Div createApplicantAppliedContent() {
+        Div container = new Div();
+        container.addClassName("applicant-applied-container");
+        container.setWidthFull();
+
+        configureGrid();
+        HorizontalLayout filterLayout = createFilterLayout();
+        Anchor exportLink = createExportButton();
+
+        container.add(filterLayout, exportLink, tableLamaran);
+        return container;
+    }
+
+    private Div createApplicantSavedPlaceholder() {
+        Div container = new Div();
+        container.addClassName("applicant-saved-placeholder");
+        container.setWidthFull();
+
+        H3 title = new H3("Saved Jobs");
+        title.addClassName("applicant-saved-placeholder-title");
+
+        Paragraph desc = new Paragraph("Your saved opportunities will appear here.");
+        desc.addClassName("applicant-saved-placeholder-desc");
+
+        container.add(title, desc);
+        return container;
     }
 
     private User getCurrentUser() {
