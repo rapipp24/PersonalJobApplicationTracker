@@ -90,6 +90,7 @@ public class SavedJobServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(savedJob, result.get(0));
+        assertEquals(activeJobPosting, result.get(0).getJobPosting());
 
         List<SavedJob> emptyResult = service.getSavedJobs(null);
         assertTrue(emptyResult.isEmpty());
