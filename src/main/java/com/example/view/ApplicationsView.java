@@ -6,6 +6,7 @@ import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.SavedJobService;
+import com.example.view.component.ApplicantAppliedJobs;
 import com.example.view.component.ApplicantSavedJobs;
 import com.example.view.component.JobApplicationForm;
 import com.vaadin.flow.component.button.Button;
@@ -56,8 +57,9 @@ public class ApplicationsView extends VerticalLayout {
 
     private Tab appliedTab;
     private Tab savedTab;
+    private Span appliedTabLabel;
     private Span savedTabLabel;
-    private Div appliedContentContainer;
+    private ApplicantAppliedJobs appliedJobsComponent;
     private ApplicantSavedJobs savedJobsComponent;
 
     public ApplicationsView(
@@ -101,7 +103,8 @@ public class ApplicationsView extends VerticalLayout {
         int appliedCount = service.findByApplicant(currentUser).size();
         int savedCount = savedJobService.getSavedJobs(currentUser).size();
 
-        appliedTab = new Tab("Applied Jobs (" + appliedCount + ")");
+        appliedTabLabel = new Span("Applied Jobs (" + appliedCount + ")");
+        appliedTab = new Tab(appliedTabLabel);
         savedTabLabel = new Span("Saved Jobs (" + savedCount + ")");
         savedTab = new Tab(savedTabLabel);
 
@@ -111,7 +114,11 @@ public class ApplicationsView extends VerticalLayout {
         Div contentContainer = new Div();
         contentContainer.addClassName("applicant-applications-content");
 
-        appliedContentContainer = createApplicantAppliedContent();
+        appliedJobsComponent = new ApplicantAppliedJobs(
+                currentUser,
+                service,
+                newCount -> appliedTabLabel.setText("Applied Jobs (" + newCount + ")")
+        );
         savedJobsComponent = new ApplicantSavedJobs(
                 currentUser,
                 savedJobService,
@@ -119,25 +126,23 @@ public class ApplicationsView extends VerticalLayout {
                 newCount -> savedTabLabel.setText("Saved Jobs (" + newCount + ")")
         );
 
-        appliedContentContainer.setVisible(true);
+        appliedJobsComponent.setVisible(true);
         savedJobsComponent.setVisible(false);
 
-        contentContainer.add(appliedContentContainer, savedJobsComponent);
+        contentContainer.add(appliedJobsComponent, savedJobsComponent);
 
         tabs.addSelectedChangeListener(event -> {
             Tab selected = event.getSelectedTab();
             if (selected == appliedTab) {
-                appliedContentContainer.setVisible(true);
+                appliedJobsComponent.setVisible(true);
                 savedJobsComponent.setVisible(false);
             } else if (selected == savedTab) {
-                appliedContentContainer.setVisible(false);
+                appliedJobsComponent.setVisible(false);
                 savedJobsComponent.setVisible(true);
             }
         });
 
         add(tabs, contentContainer);
-
-        refreshGrid();
     }
 
     private void createApplicantHeader() {
@@ -152,19 +157,6 @@ public class ApplicationsView extends VerticalLayout {
 
         headerLayout.add(title, subtitle);
         add(headerLayout);
-    }
-
-    private Div createApplicantAppliedContent() {
-        Div container = new Div();
-        container.addClassName("applicant-applied-container");
-        container.setWidthFull();
-
-        configureGrid();
-        HorizontalLayout filterLayout = createFilterLayout();
-        Anchor exportLink = createExportButton();
-
-        container.add(filterLayout, exportLink, tableLamaran);
-        return container;
     }
 
     private User getCurrentUser() {
