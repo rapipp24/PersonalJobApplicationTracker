@@ -3167,31 +3167,436 @@ vaadin-app-layout.applicant-app-layout::part(navbar) {
     box-sizing: border-box;
 }
 
-/* Saved Jobs Placeholder */
-.applicant-saved-placeholder {
+/* Saved Jobs Content & Cards (Phase 3B - Refined) */
+.applicant-saved-jobs {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.applicant-saved-toolbar {
+    width: 100%;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+}
+
+.applicant-saved-search-input,
+vaadin-text-field.applicant-saved-search-input {
+    width: 55%;
+    max-width: 620px;
+    min-width: 260px;
+    margin: 0;
+}
+
+.applicant-saved-search-input::part(input-field) {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    height: 40px;
+    min-height: 40px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.applicant-saved-search-input:focus-within::part(input-field) {
+    border-color: #1E2858;
+    box-shadow: 0 0 0 1px #1E2858;
+}
+
+.applicant-saved-search-input::part(value) {
+    font-size: 13.5px;
+    color: #1E293B;
+}
+
+.applicant-saved-search-input [part="prefix"] {
+    color: #94A3B8;
+}
+
+.applicant-saved-count {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748B;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.applicant-saved-cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.applicant-saved-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.applicant-saved-card:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.applicant-saved-card.closed {
+    background-color: #FAFAFA;
+    border-color: #E2E8F0;
+    opacity: 0.85;
+}
+
+.applicant-saved-card-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.applicant-saved-company-avatar {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    background-color: #F8FAFC;
+    color: #475569;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E2E8F0;
+    flex-shrink: 0;
+}
+
+.applicant-saved-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.applicant-saved-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.applicant-saved-card-position {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.applicant-saved-closed-badge {
+    background-color: #FEE2E2;
+    color: #DC2626;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    align-self: center;
+}
+
+.applicant-saved-card-company-loc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748B;
+    flex-wrap: wrap;
+}
+
+.applicant-saved-card-company {
+    font-weight: 500;
+    color: #334155;
+}
+
+.applicant-saved-separator {
+    color: #94A3B8;
+    font-weight: bold;
+}
+
+.applicant-saved-loc-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #64748B;
+}
+
+.applicant-saved-meta-icon {
+    font-size: 13px;
+    color: #94A3B8;
+}
+
+.applicant-saved-card-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.applicant-saved-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #F1F5F9;
+    color: #334155;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.applicant-saved-salary-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid #E2E8F0;
+}
+
+.applicant-saved-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #E2E8F0;
+    flex-wrap: wrap;
+}
+
+.applicant-saved-date {
+    font-size: 12px;
+    color: #94A3B8;
+    font-weight: 400;
+}
+
+.applicant-saved-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.applicant-saved-remove-btn {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #64748B;
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.applicant-saved-remove-btn:hover,
+.applicant-saved-remove-btn:active {
+    color: #DC2626;
+    background-color: #FEF2F2;
+    border-color: #FECACA;
+}
+
+.applicant-saved-remove-icon {
+    font-size: 14px;
+    color: inherit;
+}
+
+.applicant-saved-detail-btn {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.applicant-saved-detail-btn:hover:not([disabled]) {
+    background-color: #F8FAFC;
+    border-color: #94A3B8;
+    color: #0F172A;
+}
+
+.applicant-saved-detail-btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background-color: #F8FAFC;
+    border-color: #E2E8F0;
+    color: #94A3B8;
+}
+
+.applicant-saved-apply-btn {
+    background-color: #1E2858;
+    color: #FFFFFF;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 5px 16px;
+    border: 1px solid #1E2858;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.applicant-saved-apply-btn:hover:not([disabled]) {
+    background-color: #161e42;
+}
+
+.applicant-saved-apply-btn[disabled] {
+    background-color: #E2E8F0;
+    border-color: #E2E8F0;
+    color: #94A3B8;
+    cursor: not-allowed;
+}
+
+.applicant-saved-applied-btn {
+    background-color: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    color: #64748B;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 5px 16px;
+    cursor: default;
+    box-sizing: border-box;
+}
+
+/* Empty States */
+.applicant-saved-empty-state {
     background-color: #FFFFFF;
     border: 1px dashed #CBD5E1;
     border-radius: 12px;
-    padding: 56px 24px;
+    padding: 48px 24px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    gap: 10px;
     box-sizing: border-box;
-    gap: 8px;
 }
 
-.applicant-saved-placeholder-title {
+.applicant-saved-empty-icon {
+    font-size: 32px;
+    color: #94A3B8;
+}
+
+.applicant-saved-empty-title {
     font-size: 16px;
     font-weight: 600;
     color: #1E293B;
     margin: 0;
 }
 
-.applicant-saved-placeholder-desc {
+.applicant-saved-empty-desc {
     font-size: 13px;
     color: #64748B;
     margin: 0;
+    max-width: 400px;
+}
+
+.applicant-saved-browse-btn {
+    background-color: #1E2858;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 7px 16px;
+    margin-top: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.applicant-saved-search-empty {
+    background-color: #FFFFFF;
+    border: 1px dashed #E2E8F0;
+    border-radius: 12px;
+    padding: 36px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+}
+
+.applicant-saved-search-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1E293B;
+    margin: 0;
+}
+
+.applicant-saved-search-empty-desc {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .applicant-saved-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }
+
+    .applicant-saved-search-input,
+    vaadin-text-field.applicant-saved-search-input {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .applicant-saved-count {
+        align-self: flex-start;
+        white-space: normal;
+    }
+
+    .applicant-saved-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .applicant-saved-card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
 }

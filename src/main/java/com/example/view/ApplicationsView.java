@@ -6,6 +6,7 @@ import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobApplicationService;
 import com.example.service.SavedJobService;
+import com.example.view.component.ApplicantSavedJobs;
 import com.example.view.component.JobApplicationForm;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -55,8 +56,9 @@ public class ApplicationsView extends VerticalLayout {
 
     private Tab appliedTab;
     private Tab savedTab;
+    private Span savedTabLabel;
     private Div appliedContentContainer;
-    private Div savedContentContainer;
+    private ApplicantSavedJobs savedJobsComponent;
 
     public ApplicationsView(
             JobApplicationService service,
@@ -100,7 +102,8 @@ public class ApplicationsView extends VerticalLayout {
         int savedCount = savedJobService.getSavedJobs(currentUser).size();
 
         appliedTab = new Tab("Applied Jobs (" + appliedCount + ")");
-        savedTab = new Tab("Saved Jobs (" + savedCount + ")");
+        savedTabLabel = new Span("Saved Jobs (" + savedCount + ")");
+        savedTab = new Tab(savedTabLabel);
 
         Tabs tabs = new Tabs(appliedTab, savedTab);
         tabs.addClassName("applicant-applications-tabs");
@@ -109,21 +112,26 @@ public class ApplicationsView extends VerticalLayout {
         contentContainer.addClassName("applicant-applications-content");
 
         appliedContentContainer = createApplicantAppliedContent();
-        savedContentContainer = createApplicantSavedPlaceholder();
+        savedJobsComponent = new ApplicantSavedJobs(
+                currentUser,
+                savedJobService,
+                service,
+                newCount -> savedTabLabel.setText("Saved Jobs (" + newCount + ")")
+        );
 
         appliedContentContainer.setVisible(true);
-        savedContentContainer.setVisible(false);
+        savedJobsComponent.setVisible(false);
 
-        contentContainer.add(appliedContentContainer, savedContentContainer);
+        contentContainer.add(appliedContentContainer, savedJobsComponent);
 
         tabs.addSelectedChangeListener(event -> {
             Tab selected = event.getSelectedTab();
             if (selected == appliedTab) {
                 appliedContentContainer.setVisible(true);
-                savedContentContainer.setVisible(false);
+                savedJobsComponent.setVisible(false);
             } else if (selected == savedTab) {
                 appliedContentContainer.setVisible(false);
-                savedContentContainer.setVisible(true);
+                savedJobsComponent.setVisible(true);
             }
         });
 
@@ -156,21 +164,6 @@ public class ApplicationsView extends VerticalLayout {
         Anchor exportLink = createExportButton();
 
         container.add(filterLayout, exportLink, tableLamaran);
-        return container;
-    }
-
-    private Div createApplicantSavedPlaceholder() {
-        Div container = new Div();
-        container.addClassName("applicant-saved-placeholder");
-        container.setWidthFull();
-
-        H3 title = new H3("Saved Jobs");
-        title.addClassName("applicant-saved-placeholder-title");
-
-        Paragraph desc = new Paragraph("Your saved opportunities will appear here.");
-        desc.addClassName("applicant-saved-placeholder-desc");
-
-        container.add(title, desc);
         return container;
     }
 
