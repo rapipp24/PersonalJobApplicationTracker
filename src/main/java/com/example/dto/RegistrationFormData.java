@@ -32,6 +32,14 @@ public class RegistrationFormData {
     // Validasi conditional dilakukan di RegisterView sebelum memanggil service.
     private String companyName = "";
 
+    private CompanyRegistrationType companyRegistrationType = CompanyRegistrationType.REGISTER_NEW_COMPANY;
+    private String industry = "";
+    private String location = "";
+    private String website = "";
+    private String officialContact = "";
+    private String description = "";
+    private Long selectedCompanyId;
+
     public RegistrationFormData() {
     }
 
@@ -81,5 +89,61 @@ public class RegistrationFormData {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public CompanyRegistrationType getCompanyRegistrationType() {
+        return companyRegistrationType;
+    }
+
+    public void setCompanyRegistrationType(CompanyRegistrationType companyRegistrationType) {
+        this.companyRegistrationType = companyRegistrationType;
+    }
+
+    public String getIndustry() {
+        return industry;
+    }
+
+    public void setIndustry(String industry) {
+        this.industry = industry;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public String getOfficialContact() {
+        return officialContact;
+    }
+
+    public void setOfficialContact(String officialContact) {
+        this.officialContact = officialContact;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Long getSelectedCompanyId() {
+        return selectedCompanyId;
+    }
+
+    public void setSelectedCompanyId(Long selectedCompanyId) {
+        this.selectedCompanyId = selectedCompanyId;
     }
 }

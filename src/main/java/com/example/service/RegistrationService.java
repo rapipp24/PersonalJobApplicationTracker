@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.Role;
 import com.example.entity.User;
 import com.example.repository.CompanyRepository;
@@ -8,6 +9,8 @@ import com.example.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class RegistrationService {
@@ -27,6 +30,16 @@ public class RegistrationService {
 
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    public List<Company> findVerifiedCompanies(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return companyRepository.findByVerificationStatus(CompanyVerificationStatus.VERIFIED);
+        }
+        return companyRepository.findByNameContainingIgnoreCaseAndVerificationStatus(
+                keyword.trim(),
+                CompanyVerificationStatus.VERIFIED
+        );
     }
 
     @Transactional

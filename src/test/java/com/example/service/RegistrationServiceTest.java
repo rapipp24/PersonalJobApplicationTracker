@@ -111,4 +111,45 @@ public class RegistrationServiceTest {
         verify(userRepository, never()).save(any(User.class));
         verify(companyRepository, never()).save(any(Company.class));
     }
+
+    @Test
+    void testFindVerifiedCompaniesDenganKeywordKosongMengambilSemuaVerified() {
+        Company comp = new Company();
+        comp.setName("PT Terverifikasi");
+        comp.setVerificationStatus(com.example.entity.CompanyVerificationStatus.VERIFIED);
+
+        when(companyRepository.findByVerificationStatus(com.example.entity.CompanyVerificationStatus.VERIFIED))
+                .thenReturn(java.util.List.of(comp));
+
+        java.util.List<Company> resultEmpty = registrationService.findVerifiedCompanies("");
+        assertEquals(1, resultEmpty.size());
+        assertEquals("PT Terverifikasi", resultEmpty.get(0).getName());
+
+        java.util.List<Company> resultNull = registrationService.findVerifiedCompanies(null);
+        assertEquals(1, resultNull.size());
+
+        verify(companyRepository, Mockito.times(2))
+                .findByVerificationStatus(com.example.entity.CompanyVerificationStatus.VERIFIED);
+        verify(companyRepository, never())
+                .findByNameContainingIgnoreCaseAndVerificationStatus(any(), any());
+    }
+
+    @Test
+    void testFindVerifiedCompaniesDenganKeywordMemanggilSearchVerifiedSaja() {
+        Company comp = new Company();
+        comp.setName("PT Maju Makmur");
+        comp.setVerificationStatus(com.example.entity.CompanyVerificationStatus.VERIFIED);
+
+        when(companyRepository.findByNameContainingIgnoreCaseAndVerificationStatus(
+                "Maju", com.example.entity.CompanyVerificationStatus.VERIFIED))
+                .thenReturn(java.util.List.of(comp));
+
+        java.util.List<Company> result = registrationService.findVerifiedCompanies("  Maju  ");
+        assertEquals(1, result.size());
+        assertEquals("PT Maju Makmur", result.get(0).getName());
+
+        verify(companyRepository).findByNameContainingIgnoreCaseAndVerificationStatus(
+                "Maju", com.example.entity.CompanyVerificationStatus.VERIFIED);
+        verify(companyRepository, never()).findByVerificationStatus(any());
+    }
 }
