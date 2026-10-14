@@ -44,6 +44,14 @@ public class User {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "company_permission")
+    private CompanyPermission companyPermission;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "membership_status")
+    private CompanyMembershipStatus membershipStatus;
+
     public User() {
     }
 
@@ -100,5 +108,21 @@ public class User {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public CompanyPermission getCompanyPermission() {
+        return companyPermission;
+    }
+
+    public void setCompanyPermission(CompanyPermission companyPermission) {
+        this.companyPermission = companyPermission;
+    }
+
+    public CompanyMembershipStatus getMembershipStatus() {
+        return membershipStatus;
+    }
+
+    public void setMembershipStatus(CompanyMembershipStatus membershipStatus) {
+        this.membershipStatus = membershipStatus;
     }
 }
