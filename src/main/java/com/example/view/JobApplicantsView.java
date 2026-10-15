@@ -1,6 +1,8 @@
 package com.example.view;
 
 import com.example.entity.ApplicationStatus;
+import com.example.entity.Company;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -61,6 +63,15 @@ public class JobApplicantsView extends VerticalLayout implements HasUrlParameter
 
     @Override
     public void setParameter(BeforeEvent event, Long jobPostingId) {
+        User currentUser = getCurrentUser();
+        Company company = currentUser.getCompany();
+
+        // Guard: Akses pelamar hanya untuk Employer dengan Company yang sudah VERIFIED
+        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+            event.forwardTo(DashboardView.class);
+            return;
+        }
+
         if (jobPostingId == null) {
             event.forwardTo(PemberiLamaranView.class);
             return;
@@ -73,7 +84,6 @@ public class JobApplicantsView extends VerticalLayout implements HasUrlParameter
         }
 
         JobPosting jobPosting = postingOptional.get();
-        User currentUser = getCurrentUser();
 
         // Validasi keamanan: hanya employer pemilik lowongan yang boleh melihat
         if (jobPosting.getEmployer() == null || !jobPosting.getEmployer().getId().equals(currentUser.getId())) {

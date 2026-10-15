@@ -1,9 +1,11 @@
 package com.example.view;
 
+import com.example.entity.Company;
+import com.example.entity.CompanyVerificationStatus;
+import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.service.JobPostingService;
-import com.example.entity.JobPosting;
 import com.example.view.component.JobPostingForm;
 import com.example.view.component.JobPostingGrid;
 
@@ -82,6 +84,41 @@ public class PemberiLamaranView extends VerticalLayout {
                 );
 
                 add(title, description, noCompanyInfo, tableLowongan, backButton);
+                return;
+            }
+
+            Company company = currentUser.getCompany();
+            CompanyVerificationStatus status = company.getVerificationStatus();
+
+            // Guard: Company berstatus PENDING belum boleh mengakses fitur operasional lowongan
+            if (status == CompanyVerificationStatus.PENDING) {
+                Paragraph pendingInfo = new Paragraph(
+                        "Perusahaan Anda sedang dalam proses verifikasi. "
+                        + "Fitur pengelolaan lowongan pekerjaan belum dapat diakses."
+                );
+
+                Button backButton = new Button(
+                        "Kembali ke Halaman Utama",
+                        event -> UI.getCurrent().navigate("")
+                );
+
+                add(title, pendingInfo, backButton);
+                return;
+            }
+
+            // Guard: Fail-closed untuk status non-VERIFIED lainnya (REJECTED atau null)
+            if (status != CompanyVerificationStatus.VERIFIED) {
+                Paragraph nonVerifiedInfo = new Paragraph(
+                        "Perusahaan Anda belum terverifikasi. "
+                        + "Fitur pengelolaan lowongan pekerjaan belum dapat diakses."
+                );
+
+                Button backButton = new Button(
+                        "Kembali ke Halaman Utama",
+                        event -> UI.getCurrent().navigate("")
+                );
+
+                add(title, nonVerifiedInfo, backButton);
                 return;
             }
 

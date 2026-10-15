@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.vaadin.flow.component.Html;
@@ -136,19 +137,22 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         dashLabel.addClassName("employer-nav-label");
 
         employerDashboardLink.add(dashIcon, dashLabel);
+        sidebarContent.add(employerDashboardLink);
 
-        employerJobPostingsLink = new RouterLink();
-        employerJobPostingsLink.setRoute(PemberiLamaranView.class);
-        employerJobPostingsLink.addClassName("employer-nav-item");
+        if (isCurrentUserCompanyVerified()) {
+            employerJobPostingsLink = new RouterLink();
+            employerJobPostingsLink.setRoute(PemberiLamaranView.class);
+            employerJobPostingsLink.addClassName("employer-nav-item");
 
-        Html jobsIcon = new Html("<iconify-icon icon=\"lucide:file-text\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
+            Html jobsIcon = new Html("<iconify-icon icon=\"lucide:file-text\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
 
-        Span jobsLabel = new Span("Job Postings");
-        jobsLabel.addClassName("employer-nav-label");
+            Span jobsLabel = new Span("Job Postings");
+            jobsLabel.addClassName("employer-nav-label");
 
-        employerJobPostingsLink.add(jobsIcon, jobsLabel);
+            employerJobPostingsLink.add(jobsIcon, jobsLabel);
 
-        sidebarContent.add(employerDashboardLink, employerJobPostingsLink);
+            sidebarContent.add(employerJobPostingsLink);
+        }
 
         drawerLayout.add(brandArea, sidebarContent);
         addToDrawer(drawerLayout);
@@ -275,20 +279,36 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     }
 
     private void updateEmployerNavActiveState(String path) {
-        if (employerDashboardLink == null || employerJobPostingsLink == null) {
-            return;
+        if (employerDashboardLink != null) {
+            employerDashboardLink.removeClassName("employer-nav-item-active");
+            if (path == null || path.isBlank()) {
+                employerDashboardLink.addClassName("employer-nav-item-active");
+            }
         }
 
-        employerDashboardLink.removeClassName("employer-nav-item-active");
-        employerJobPostingsLink.removeClassName("employer-nav-item-active");
-
-        if (path == null || path.isBlank()) {
-            employerDashboardLink.addClassName("employer-nav-item-active");
-        } else if (path.startsWith("pemberi-lamaran")) {
-            employerJobPostingsLink.addClassName("employer-nav-item-active");
+        if (employerJobPostingsLink != null) {
+            employerJobPostingsLink.removeClassName("employer-nav-item-active");
+            if (path != null && path.startsWith("pemberi-lamaran")) {
+                employerJobPostingsLink.addClassName("employer-nav-item-active");
+            }
         }
     }
 
+    private boolean isCurrentUserCompanyVerified() {
+        String userEmail = authenticationContext.getPrincipalName().orElse(null);
+        if (userEmail == null) {
+            return false;
+        }
+
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+
+        User user = userOptional.get();
+        return user.getCompany() != null
+                && user.getCompany().getVerificationStatus() == CompanyVerificationStatus.VERIFIED;
+    }
 
     private void createHeader() {
         DrawerToggle drawerToggle = new DrawerToggle();
@@ -326,7 +346,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             navLayout.add(applicationsLink, applicantLink);
         }
 
-        if (isPemberiLamaran || isAdmin) {
+        if (isAdmin || (isPemberiLamaran && isCurrentUserCompanyVerified())) {
             RouterLink employerLink = new RouterLink("Employer Area", PemberiLamaranView.class);
             navLayout.add(employerLink);
         }
