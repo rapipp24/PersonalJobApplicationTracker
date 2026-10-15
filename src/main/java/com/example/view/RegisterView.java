@@ -10,9 +10,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -87,6 +92,8 @@ public class RegisterView extends VerticalLayout {
     // Task 2: Pencarian Existing Company
     private final ComboBox<Company> companySearch = new ComboBox<>("Search Company");
     private final VerticalLayout existingCompanyContainer = new VerticalLayout();
+
+    private final Button registerButton = new Button("Register");
 
     public RegisterView(RegistrationService registrationService) {
         this.registrationService = registrationService;
@@ -300,10 +307,10 @@ public class RegisterView extends VerticalLayout {
             updateCompanyRegistrationVisibility();
         });
 
-        Button registerButton = new Button("Register");
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         registerButton.setWidthFull();
         registerButton.addClassName("auth-submit-btn");
+        registerButton.setDisableOnClick(true);
 
         HorizontalLayout loginLayout = new HorizontalLayout(
                 new Span("Already have an account?"),
@@ -317,6 +324,7 @@ public class RegisterView extends VerticalLayout {
             boolean isValid = binder.writeBeanIfValid(formData);
 
             if (!isValid) {
+                resetRegisterButton();
                 return;
             }
 
@@ -381,11 +389,13 @@ public class RegisterView extends VerticalLayout {
                     }
 
                     if (!companyFormValid) {
+                        resetRegisterButton();
                         return;
                     }
 
                     String emailValue = formData.getEmail().trim();
                     if (registrationService.emailExists(emailValue)) {
+                        resetRegisterButton();
                         Notification.show("Email is already registered.");
                         return;
                     }
@@ -399,9 +409,9 @@ public class RegisterView extends VerticalLayout {
 
                     try {
                         registrationService.registerEmployerWithNewCompany(formData);
-                        Notification.show("Registration successful. Please log in.");
-                        UI.getCurrent().navigate(LoginView.class);
+                        showCompanyRegistrationSuccessDialog();
                     } catch (IllegalStateException ex) {
+                        resetRegisterButton();
                         String msg = ex.getMessage();
                         Notification.show(msg);
                         if (msg != null && msg.contains("Join Existing Company")) {
@@ -409,12 +419,14 @@ public class RegisterView extends VerticalLayout {
                             updateCompanyRegistrationVisibility();
                         }
                     } catch (Exception ex) {
+                        resetRegisterButton();
                         Notification.show(ex.getMessage());
                     }
                     return;
                 } else if (regType == CompanyRegistrationType.JOIN_EXISTING_COMPANY) {
                     Company selectedCompany = companySearch.getValue();
                     if (selectedCompany == null || selectedCompany.getId() == null) {
+                        resetRegisterButton();
                         companySearch.setErrorMessage("Silakan pilih perusahaan terlebih dahulu.");
                         companySearch.setInvalid(true);
                         return;
@@ -425,6 +437,7 @@ public class RegisterView extends VerticalLayout {
 
                     String emailValue = formData.getEmail().trim();
                     if (registrationService.emailExists(emailValue)) {
+                        resetRegisterButton();
                         Notification.show("Email is already registered.");
                         return;
                     }
@@ -432,6 +445,7 @@ public class RegisterView extends VerticalLayout {
                     formData.setSelectedCompanyId(selectedCompany.getId());
                     formData.setCompanyName(selectedCompany.getName());
 
+                    resetRegisterButton();
                     Notification.show("Perusahaan telah dipilih. Proses pengajuan bergabung dengan perusahaan belum tersedia.");
                     return;
                 }
@@ -440,6 +454,7 @@ public class RegisterView extends VerticalLayout {
             // Flow pendaftaran PELAMAR (Applicant) tetap normal
             String emailValue = formData.getEmail().trim();
             if (registrationService.emailExists(emailValue)) {
+                resetRegisterButton();
                 Notification.show("Email is already registered.");
                 return;
             }
@@ -457,6 +472,7 @@ public class RegisterView extends VerticalLayout {
                 Notification.show("Registration successful. Please log in.");
                 UI.getCurrent().navigate(LoginView.class);
             } catch (Exception ex) {
+                resetRegisterButton();
                 Notification.show(ex.getMessage());
             }
         });
@@ -535,5 +551,129 @@ public class RegisterView extends VerticalLayout {
         companySearch.setErrorMessage(null);
 
         companyRegistrationType.setValue(CompanyRegistrationType.REGISTER_NEW_COMPANY);
+    }
+
+    private void showCompanyRegistrationSuccessDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setModal(true);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        dialog.setWidth("440px");
+        dialog.setMaxWidth("92vw");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+        layout.setSpacing(false);
+        layout.setAlignItems(Alignment.CENTER);
+        layout.getStyle()
+                .set("text-align", "center")
+                .set("padding", "32px 24px 28px 24px")
+                .set("box-sizing", "border-box");
+
+        // Icon Container (Circular light green badge with Success Checkmark icon)
+        Div iconContainer = new Div();
+        iconContainer.getStyle()
+                .set("width", "52px")
+                .set("height", "52px")
+                .set("border-radius", "50%")
+                .set("background-color", "#DCFCE7")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
+                .set("margin", "0 auto 16px auto")
+                .set("border", "3px solid #FFFFFF")
+                .set("box-shadow", "0 0 0 4px rgba(220, 252, 231, 0.6), 0 4px 10px rgba(0, 0, 0, 0.06)");
+
+        Icon checkIcon = VaadinIcon.CHECK.create();
+        checkIcon.setSize("24px");
+        checkIcon.setColor("#15803D");
+        iconContainer.add(checkIcon);
+
+        // Title
+        H2 title = new H2("Company Registration Submitted");
+        title.getStyle()
+                .set("margin", "0 0 8px 0")
+                .set("font-size", "20px")
+                .set("font-weight", "700")
+                .set("color", "#0F172A")
+                .set("line-height", "1.3");
+
+        // Subtitle
+        Paragraph subtitle = new Paragraph("Your company has been successfully registered and is currently under verification.");
+        subtitle.getStyle()
+                .set("margin", "0 0 20px 0")
+                .set("font-size", "14px")
+                .set("color", "#64748B")
+                .set("line-height", "1.5");
+
+        // Estimated Review Time Box
+        Div reviewTimeBox = new Div();
+        reviewTimeBox.setWidthFull();
+        reviewTimeBox.getStyle()
+                .set("background-color", "#F8FAFC")
+                .set("border", "1px solid #E2E8F0")
+                .set("border-radius", "10px")
+                .set("padding", "12px 16px")
+                .set("margin", "0 0 16px 0")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
+                .set("gap", "8px")
+                .set("box-sizing", "border-box");
+
+        Icon hourglassIcon = VaadinIcon.HOURGLASS.create();
+        hourglassIcon.setSize("16px");
+        hourglassIcon.setColor("#1E293B");
+
+        Span reviewTimeText = new Span("Estimated Review Time: 1–3 Business Days");
+        reviewTimeText.getStyle()
+                .set("font-size", "14px")
+                .set("font-weight", "600")
+                .set("color", "#1E293B");
+
+        reviewTimeBox.add(hourglassIcon, reviewTimeText);
+
+        // Supporting Information
+        Paragraph supportingInfo = new Paragraph("Please wait for approval from the application administrator. No further action is required at this time.");
+        supportingInfo.getStyle()
+                .set("margin", "0 0 24px 0")
+                .set("font-size", "13.5px")
+                .set("color", "#64748B")
+                .set("line-height", "1.5");
+
+        // Primary Button (Got It)
+        Button gotItButton = new Button("Got It");
+        gotItButton.setWidthFull();
+        gotItButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        gotItButton.getStyle()
+                .set("height", "44px")
+                .set("font-weight", "600")
+                .set("border-radius", "8px")
+                .set("background-color", "#1E293B")
+                .set("color", "#FFFFFF")
+                .set("cursor", "pointer");
+
+        gotItButton.addClickListener(event -> {
+            dialog.close();
+            resetRegisterButton();
+            UI.getCurrent().navigate(LoginView.class);
+        });
+
+        layout.add(
+                iconContainer,
+                title,
+                subtitle,
+                reviewTimeBox,
+                supportingInfo,
+                gotItButton
+        );
+
+        dialog.add(layout);
+        dialog.open();
+    }
+
+    private void resetRegisterButton() {
+        registerButton.setEnabled(true);
+        registerButton.setText("Register");
     }
 }
