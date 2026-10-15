@@ -219,15 +219,26 @@ public class RegisterView extends VerticalLayout {
         newCompanyContainer.setVisible(false);
 
         companyName.setWidthFull();
+        companyName.setHelperText("Enter the official company name. Example: PT Muara Buana");
+
         industry.setLabel("Industry *");
         industry.setPlaceholder("Pilih Industri");
         industry.setItems(INDUSTRY_OPTIONS);
         industry.setWidthFull();
+        industry.setHelperText("Select the company's primary industry.");
+
         companyLocation.setWidthFull();
+        companyLocation.setHelperText("Enter the main location of the company. Example: Bandar Lampung");
+
         website.setWidthFull();
+        website.setHelperText("Enter the official company website if available. Example: https://company.com");
+
         officialContact.setWidthFull();
+        officialContact.setHelperText("Use an official company email if available. Example: hr@company.com or contact@company.com");
+
         description.setWidthFull();
         description.setMinHeight("80px");
+        description.setHelperText("Briefly describe the company's main business activities.");
 
         newCompanyContainer.add(
                 companyName,
@@ -386,7 +397,20 @@ public class RegisterView extends VerticalLayout {
                     formData.setOfficialContact(contactVal);
                     formData.setDescription(descVal);
 
-                    Notification.show("Data perusahaan sudah lengkap. Proses pendaftaran perusahaan baru belum tersedia.");
+                    try {
+                        registrationService.registerEmployerWithNewCompany(formData);
+                        Notification.show("Registration successful. Please log in.");
+                        UI.getCurrent().navigate(LoginView.class);
+                    } catch (IllegalStateException ex) {
+                        String msg = ex.getMessage();
+                        Notification.show(msg);
+                        if (msg != null && msg.contains("Join Existing Company")) {
+                            companyRegistrationType.setValue(CompanyRegistrationType.JOIN_EXISTING_COMPANY);
+                            updateCompanyRegistrationVisibility();
+                        }
+                    } catch (Exception ex) {
+                        Notification.show(ex.getMessage());
+                    }
                     return;
                 } else if (regType == CompanyRegistrationType.JOIN_EXISTING_COMPANY) {
                     Company selectedCompany = companySearch.getValue();
