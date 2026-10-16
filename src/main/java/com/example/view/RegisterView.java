@@ -445,8 +445,13 @@ public class RegisterView extends VerticalLayout {
                     formData.setSelectedCompanyId(selectedCompany.getId());
                     formData.setCompanyName(selectedCompany.getName());
 
-                    resetRegisterButton();
-                    Notification.show("Perusahaan telah dipilih. Proses pengajuan bergabung dengan perusahaan belum tersedia.");
+                    try {
+                        registrationService.registerEmployerWithExistingCompany(formData);
+                        showJoinCompanySuccessDialog(selectedCompany.getName());
+                    } catch (Exception ex) {
+                        resetRegisterButton();
+                        Notification.show(ex.getMessage());
+                    }
                     return;
                 }
             }
@@ -664,6 +669,93 @@ public class RegisterView extends VerticalLayout {
                 title,
                 subtitle,
                 reviewTimeBox,
+                supportingInfo,
+                gotItButton
+        );
+
+        dialog.add(layout);
+        dialog.open();
+    }
+
+    private void showJoinCompanySuccessDialog(String companyName) {
+        Dialog dialog = new Dialog();
+        dialog.setModal(true);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        dialog.setWidth("440px");
+        dialog.setMaxWidth("92vw");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(false);
+        layout.setSpacing(false);
+        layout.setAlignItems(Alignment.CENTER);
+        layout.getStyle()
+                .set("text-align", "center")
+                .set("padding", "32px 24px 28px 24px")
+                .set("box-sizing", "border-box");
+
+        Div iconContainer = new Div();
+        iconContainer.getStyle()
+                .set("width", "52px")
+                .set("height", "52px")
+                .set("border-radius", "50%")
+                .set("background-color", "#DCFCE7")
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
+                .set("margin", "0 auto 16px auto")
+                .set("border", "3px solid #FFFFFF")
+                .set("box-shadow", "0 0 0 4px rgba(220, 252, 231, 0.6), 0 4px 10px rgba(0, 0, 0, 0.06)");
+
+        Icon checkIcon = VaadinIcon.CHECK.create();
+        checkIcon.setSize("24px");
+        checkIcon.setColor("#15803D");
+        iconContainer.add(checkIcon);
+
+        H2 title = new H2("Permintaan Bergabung Terkirim");
+        title.getStyle()
+                .set("margin", "0 0 8px 0")
+                .set("font-size", "20px")
+                .set("font-weight", "700")
+                .set("color", "#0F172A")
+                .set("line-height", "1.3");
+
+        String compText = (companyName != null && !companyName.trim().isEmpty()) ? companyName : "perusahaan";
+        Paragraph subtitle = new Paragraph("Permintaan Anda untuk bergabung dengan " + compText + " berhasil dikirim.");
+        subtitle.getStyle()
+                .set("margin", "0 0 16px 0")
+                .set("font-size", "14px")
+                .set("color", "#64748B")
+                .set("line-height", "1.5");
+
+        Paragraph supportingInfo = new Paragraph("Status keanggotaan Anda saat ini adalah PENDING. Silakan tunggu persetujuan dari administrator perusahaan sebelum mengakses area Employer.");
+        supportingInfo.getStyle()
+                .set("margin", "0 0 24px 0")
+                .set("font-size", "13.5px")
+                .set("color", "#475569")
+                .set("line-height", "1.5");
+
+        Button gotItButton = new Button("Got It");
+        gotItButton.setWidthFull();
+        gotItButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        gotItButton.getStyle()
+                .set("height", "44px")
+                .set("font-weight", "600")
+                .set("border-radius", "8px")
+                .set("background-color", "#1E293B")
+                .set("color", "#FFFFFF")
+                .set("cursor", "pointer");
+
+        gotItButton.addClickListener(event -> {
+            dialog.close();
+            resetRegisterButton();
+            UI.getCurrent().navigate(LoginView.class);
+        });
+
+        layout.add(
+                iconContainer,
+                title,
+                subtitle,
                 supportingInfo,
                 gotItButton
         );

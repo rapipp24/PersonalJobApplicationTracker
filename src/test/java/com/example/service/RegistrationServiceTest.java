@@ -4,6 +4,7 @@ import com.example.dto.CompanyRegistrationType;
 import com.example.dto.RegistrationFormData;
 import com.example.entity.Company;
 import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.Role;
 import com.example.entity.User;
@@ -15,6 +16,7 @@ import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -462,5 +464,232 @@ public class RegistrationServiceTest {
         assertEquals("Company tersebut sedang dalam proses verifikasi.", ex.getMessage());
         verify(companyRepository, never()).save(any(Company.class));
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyBerhasil() {
+        Long companyId = 55L;
+        Company verifiedCompany = new Company();
+        verifiedCompany.setId(companyId);
+        verifiedCompany.setName("PT Mitra Sejahtera");
+        verifiedCompany.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setConfirmPassword("password123");
+        formData.setAccountType(Role.PEMBERI_LAMARAN);
+        formData.setCompanyRegistrationType(CompanyRegistrationType.JOIN_EXISTING_COMPANY);
+        formData.setSelectedCompanyId(companyId);
+        formData.setCompanyName("PT Mitra Sejahtera");
+
+        String encodedPassword = "$2a$10$encodedPasswordHashJoin";
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(verifiedCompany));
+        when(passwordEncoder.encode("password123")).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = registrationService.registerEmployerWithExistingCompany(formData);
+
+        assertNotNull(result);
+        assertEquals("Karyawan Baru", result.getName());
+        assertEquals("karyawan@example.com", result.getEmail());
+        assertEquals(encodedPassword, result.getPassword());
+        assertEquals(Role.PEMBERI_LAMARAN, result.getRole());
+        assertEquals(verifiedCompany, result.getCompany());
+        assertEquals(CompanyPermission.MEMBER, result.getCompanyPermission());
+        assertEquals(CompanyMembershipStatus.PENDING, result.getMembershipStatus());
+
+        verify(passwordEncoder).encode("password123");
+        verify(userRepository).save(any(User.class));
+        verify(companyRepository, never()).save(any(Company.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyIdNullDitolak() {
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(null);
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Company must be selected.", ex.getMessage());
+        verify(companyRepository, never()).findById(any());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyTidakDitemukanDitolak() {
+        Long companyId = 999L;
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(companyId);
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Selected company not found.", ex.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyStatusPendingDitolak() {
+        Long companyId = 77L;
+        Company pendingCompany = new Company();
+        pendingCompany.setId(companyId);
+        pendingCompany.setName("PT Belum Verified");
+        pendingCompany.setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(companyId);
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(pendingCompany));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Only VERIFIED companies can be joined.", ex.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyStatusRejectedDitolak() {
+        Long companyId = 88L;
+        Company rejectedCompany = new Company();
+        rejectedCompany.setId(companyId);
+        rejectedCompany.setName("PT Ditolak");
+        rejectedCompany.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(companyId);
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(rejectedCompany));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Only VERIFIED companies can be joined.", ex.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyStatusNullDitolak() {
+        Long companyId = 89L;
+        Company nullStatusCompany = new Company();
+        nullStatusCompany.setId(companyId);
+        nullStatusCompany.setName("PT Status Null");
+        nullStatusCompany.setVerificationStatus(null);
+
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("karyawan@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(companyId);
+
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(nullStatusCompany));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Only VERIFIED companies can be joined.", ex.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyDuplicateEmailDitolak() {
+        RegistrationFormData formData = new RegistrationFormData();
+        formData.setFullName("Karyawan Baru");
+        formData.setEmail("duplikat@example.com");
+        formData.setPassword("password123");
+        formData.setSelectedCompanyId(55L);
+
+        when(userRepository.existsByEmail("duplikat@example.com")).thenReturn(true);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(formData)
+        );
+
+        assertEquals("Email is already registered.", ex.getMessage());
+        verify(companyRepository, never()).findById(any());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterEmployerWithExistingCompanyFieldWajibKosongDitolak() {
+        // formData null
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(null)
+        );
+
+        // email null / kosong
+        RegistrationFormData noEmail = new RegistrationFormData();
+        noEmail.setFullName("Karyawan");
+        noEmail.setPassword("password123");
+        noEmail.setEmail("");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(noEmail)
+        );
+
+        // password kosong
+        RegistrationFormData noPassword = new RegistrationFormData();
+        noPassword.setFullName("Karyawan");
+        noPassword.setEmail("karyawan@example.com");
+        noPassword.setPassword("");
+        noPassword.setSelectedCompanyId(1L);
+        Company comp = new Company();
+        comp.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+        when(userRepository.existsByEmail("karyawan@example.com")).thenReturn(false);
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(comp));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(noPassword)
+        );
+
+        // fullName kosong
+        RegistrationFormData noName = new RegistrationFormData();
+        noName.setFullName("");
+        noName.setEmail("karyawan@example.com");
+        noName.setPassword("password123");
+        noName.setSelectedCompanyId(1L);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> registrationService.registerEmployerWithExistingCompany(noName)
+        );
     }
 }

@@ -3,6 +3,7 @@ package com.example.service;
 import com.example.dto.RegistrationFormData;
 import com.example.entity.Company;
 import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.Role;
 import com.example.entity.User;
@@ -161,6 +162,56 @@ public class RegistrationService {
         user.setCompany(savedCompany);
         user.setCompanyPermission(null);
         user.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User registerEmployerWithExistingCompany(RegistrationFormData formData) {
+        if (formData == null) {
+            throw new IllegalArgumentException("Registration data cannot be null.");
+        }
+
+        String email = formData.getEmail() != null ? formData.getEmail().trim() : "";
+        if (email.isEmpty()) {
+            throw new IllegalArgumentException("Email is required.");
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalStateException("Email is already registered.");
+        }
+
+        Long companyId = formData.getSelectedCompanyId();
+        if (companyId == null) {
+            throw new IllegalArgumentException("Company must be selected.");
+        }
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new IllegalArgumentException("Selected company not found."));
+
+        if (company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Only VERIFIED companies can be joined.");
+        }
+
+        String rawPassword = formData.getPassword() != null ? formData.getPassword() : "";
+        if (rawPassword.isEmpty()) {
+            throw new IllegalArgumentException("Password is required.");
+        }
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+
+        String fullName = formData.getFullName() != null ? formData.getFullName().trim() : "";
+        if (fullName.isEmpty()) {
+            throw new IllegalArgumentException("Full Name is required.");
+        }
+
+        User user = new User();
+        user.setName(fullName);
+        user.setEmail(email);
+        user.setPassword(encodedPassword);
+        user.setRole(Role.PEMBERI_LAMARAN);
+        user.setCompany(company);
+        user.setMembershipStatus(CompanyMembershipStatus.PENDING);
+        user.setCompanyPermission(CompanyPermission.MEMBER);
 
         return userRepository.save(user);
     }
