@@ -1,5 +1,7 @@
 package com.example.service;
 
+import com.example.entity.Company;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
@@ -111,8 +113,11 @@ public class JobPostingServiceTest {
 
     @Test
     void harusBisaSimpanDanAmbilLowongan() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+
         JobPosting jobPosting = new JobPosting();
         jobPosting.setPosition("Frontend Developer");
+        jobPosting.setEmployer(employer);
 
         when(jobPostingRepository.save(any(JobPosting.class))).thenReturn(jobPosting);
 
@@ -180,5 +185,174 @@ public class JobPostingServiceTest {
         assertTrue(hasilTanpaId.isEmpty());
 
         verify(jobPostingRepository, never()).findByEmployer(any());
+    }
+
+    private User createEmployerWithCompanyStatus(CompanyVerificationStatus status) {
+        Company company = new Company();
+        company.setName("PT Test Company");
+        company.setVerificationStatus(status);
+
+        User employer = new User();
+        employer.setId(1L);
+        employer.setName("Test Employer");
+        employer.setCompany(company);
+
+        return employer;
+    }
+
+    @Test
+    void harusBisaSimpanLowonganJikaCompanyVerified() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(employer);
+
+        when(jobPostingRepository.save(any(JobPosting.class))).thenReturn(jobPosting);
+
+        JobPosting saved = jobPostingService.simpanLowongan(jobPosting);
+
+        assertNotNull(saved);
+        verify(jobPostingRepository).save(jobPosting);
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyPending() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.PENDING);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyRejected() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.REJECTED);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyNull() {
+        User employer = new User();
+        employer.setId(1L);
+        employer.setCompany(null);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Akun employer belum terhubung dengan data perusahaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaVerificationStatusNull() {
+        User employer = createEmployerWithCompanyStatus(null);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaEmployerNull() {
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Backend Developer");
+        jobPosting.setEmployer(null);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Employer tidak boleh null untuk menyimpan lowongan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaJobPostingNull() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> jobPostingService.simpanLowongan(null)
+        );
+
+        assertEquals("Lowongan pekerjaan tidak boleh null", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusBisaAktivasiLowonganJikaCompanyVerified() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setId(10L);
+        jobPosting.setPosition("QA Engineer");
+        jobPosting.setActive(false);
+        jobPosting.setEmployer(employer);
+
+        // Aksi publish / aktivasi kembali
+        jobPosting.setActive(true);
+
+        when(jobPostingRepository.save(any(JobPosting.class))).thenReturn(jobPosting);
+
+        JobPosting saved = jobPostingService.simpanLowongan(jobPosting);
+
+        assertNotNull(saved);
+        assertTrue(saved.isActive());
+        verify(jobPostingRepository).save(jobPosting);
+    }
+
+    @Test
+    void harusMenolakAktivasiLowonganJikaCompanyPending() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.PENDING);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setId(10L);
+        jobPosting.setPosition("QA Engineer");
+        jobPosting.setActive(false);
+        jobPosting.setEmployer(employer);
+
+        // Aksi publish / aktivasi kembali
+        jobPosting.setActive(true);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
     }
 }

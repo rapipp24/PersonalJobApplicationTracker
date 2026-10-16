@@ -1,5 +1,7 @@
 package com.example.service;
 
+import com.example.entity.Company;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
@@ -34,6 +36,25 @@ public class JobPostingService {
     }
 
     public JobPosting simpanLowongan(JobPosting jobPosting) {
+        if (jobPosting == null) {
+            throw new IllegalArgumentException("Lowongan pekerjaan tidak boleh null");
+        }
+
+        User employer = jobPosting.getEmployer();
+        if (employer == null) {
+            throw new IllegalStateException("Employer tidak boleh null untuk menyimpan lowongan");
+        }
+
+        Company company = employer.getCompany();
+        if (company == null) {
+            throw new IllegalStateException("Akun employer belum terhubung dengan data perusahaan");
+        }
+
+        CompanyVerificationStatus verificationStatus = company.getVerificationStatus();
+        if (verificationStatus != CompanyVerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan");
+        }
+
         return repository.save(jobPosting);
     }
 
