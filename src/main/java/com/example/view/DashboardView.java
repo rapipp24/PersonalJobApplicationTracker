@@ -1,6 +1,7 @@
 package com.example.view;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
@@ -81,23 +82,51 @@ public class DashboardView extends VerticalLayout {
         if (isPemberiLamaran) {
             Company company = currentUser.getCompany();
 
+            // 1. Cek keberadaan Company
             if (company == null) {
                 showNoCompanyState();
                 return;
             }
 
-            CompanyVerificationStatus status = company.getVerificationStatus();
+            CompanyVerificationStatus verificationStatus = company.getVerificationStatus();
 
-            if (status == CompanyVerificationStatus.PENDING) {
-                showPendingVerificationState();
+            // 2. Cek Company PENDING
+            if (verificationStatus == CompanyVerificationStatus.PENDING) {
+                showPendingVerificationState(company);
                 return;
             }
 
-            if (status != CompanyVerificationStatus.VERIFIED) {
-                showNonVerifiedState();
+            // 3. Cek Company REJECTED
+            if (verificationStatus == CompanyVerificationStatus.REJECTED) {
+                showCompanyRejectedState(company);
                 return;
             }
 
+            // 4. Fail-closed untuk status verification selain VERIFIED
+            if (verificationStatus != CompanyVerificationStatus.VERIFIED) {
+                showNonVerifiedState(company);
+                return;
+            }
+
+            // 5. Cek Membership Status (hanya dievaluasi jika Company sudah VERIFIED)
+            CompanyMembershipStatus membershipStatus = currentUser.getMembershipStatus();
+
+            if (membershipStatus == CompanyMembershipStatus.PENDING) {
+                showMembershipPendingState(company);
+                return;
+            }
+
+            if (membershipStatus == CompanyMembershipStatus.REJECTED) {
+                showMembershipRejectedState(company);
+                return;
+            }
+
+            if (membershipStatus != CompanyMembershipStatus.ACTIVE) {
+                showMembershipNonActiveState(company);
+                return;
+            }
+
+            // 6. Hanya jika Company VERIFIED dan Membership ACTIVE
             EmployerDashboard employerDashboard = new EmployerDashboard();
             List<JobPosting> jobPostings = jobPostingService.findByEmployer(currentUser);
             List<JobApplication> applications = jobApplicationService.findByEmployer(currentUser);
@@ -112,44 +141,22 @@ public class DashboardView extends VerticalLayout {
         add(applicantDashboard);
     }
 
-    private void showPendingVerificationState() {
-        Div card = new Div();
-        card.getStyle()
-                .set("background-color", "#FFFFFF")
-                .set("border", "1px solid #E2E8F0")
-                .set("border-radius", "12px")
-                .set("padding", "32px")
-                .set("max-width", "560px")
-                .set("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.05)");
+    private void showPendingVerificationState(Company company) {
+        Div card = createBaseStatusCard();
 
-        Div iconWrapper = new Div();
-        iconWrapper.getStyle()
-                .set("width", "48px")
-                .set("height", "48px")
-                .set("border-radius", "50%")
-                .set("background-color", "#FEF3C7")
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "center")
-                .set("margin-bottom", "16px");
-
+        Div iconWrapper = createIconWrapper("#FEF3C7");
         Icon clockIcon = VaadinIcon.CLOCK.create();
         clockIcon.setSize("24px");
         clockIcon.setColor("#D97706");
         iconWrapper.add(clockIcon);
 
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Company Verification: PENDING", "#FEF3C7", "#92400E");
+
         H2 title = new H2("Company Verification in Progress");
-        title.getStyle()
-                .set("margin", "0 0 8px 0")
-                .set("font-size", "20px")
-                .set("font-weight", "700")
-                .set("color", "#0F172A");
+        applyTitleStyle(title);
 
         Paragraph subtitle = new Paragraph("Your company is currently under verification.");
-        subtitle.getStyle()
-                .set("margin", "0 0 20px 0")
-                .set("font-size", "14px")
-                .set("color", "#64748B");
+        applySubtitleStyle(subtitle);
 
         Div reviewBox = new Div();
         reviewBox.getStyle()
@@ -175,24 +182,137 @@ public class DashboardView extends VerticalLayout {
         reviewBox.add(boxIcon, reviewText);
 
         Paragraph desc = new Paragraph("Please wait for approval from the application administrator. No further action is required at this time.");
-        desc.getStyle()
+        applyDescStyle(desc);
+
+        card.add(iconWrapper, companyMeta, title, subtitle, reviewBox, desc);
+        add(card);
+    }
+
+    private void showCompanyRejectedState(Company company) {
+        Div card = createBaseStatusCard();
+
+        Div iconWrapper = createIconWrapper("#FEE2E2");
+        Icon closeIcon = VaadinIcon.CLOSE_CIRCLE.create();
+        closeIcon.setSize("24px");
+        closeIcon.setColor("#DC2626");
+        iconWrapper.add(closeIcon);
+
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Company Verification: REJECTED", "#FEE2E2", "#991B1B");
+
+        H2 title = new H2("Company Verification Rejected");
+        applyTitleStyle(title);
+
+        Paragraph subtitle = new Paragraph("Perusahaan Anda tidak lolos verifikasi dari administrator aplikasi.");
+        applySubtitleStyle(subtitle);
+
+        Div reasonBox = new Div();
+        reasonBox.getStyle()
+                .set("background-color", "#FEF2F2")
+                .set("border", "1px solid #FECACA")
+                .set("border-radius", "8px")
+                .set("padding", "14px 16px")
+                .set("margin-bottom", "16px");
+
+        Span reasonLabel = new Span("Rejection Reason:");
+        reasonLabel.getStyle()
+                .set("font-size", "13px")
+                .set("font-weight", "700")
+                .set("color", "#991B1B")
+                .set("display", "block")
+                .set("margin-bottom", "4px");
+
+        String reasonContent = company.getRejectionReason();
+        if (reasonContent == null || reasonContent.trim().isEmpty()) {
+            reasonContent = "Alasan penolakan tidak dicantumkan oleh administrator.";
+        }
+
+        Paragraph reasonText = new Paragraph(reasonContent);
+        reasonText.getStyle()
                 .set("margin", "0")
                 .set("font-size", "13px")
-                .set("color", "#64748B")
+                .set("color", "#7F1D1D")
                 .set("line-height", "1.5");
 
-        card.add(iconWrapper, title, subtitle, reviewBox, desc);
+        reasonBox.add(reasonLabel, reasonText);
+
+        Paragraph desc = new Paragraph("You currently do not have access to the Employer area. Silakan hubungi administrator aplikasi jika Anda memerlukan bantuan lebih lanjut.");
+        applyDescStyle(desc);
+
+        card.add(iconWrapper, companyMeta, title, subtitle, reasonBox, desc);
+        add(card);
+    }
+
+    private void showMembershipPendingState(Company company) {
+        Div card = createBaseStatusCard();
+
+        Div iconWrapper = createIconWrapper("#FEF3C7");
+        Icon clockIcon = VaadinIcon.CLOCK.create();
+        clockIcon.setSize("24px");
+        clockIcon.setColor("#D97706");
+        iconWrapper.add(clockIcon);
+
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Membership Status: PENDING", "#FEF3C7", "#92400E");
+
+        H2 title = new H2("Membership Approval Pending");
+        applyTitleStyle(title);
+
+        Paragraph subtitle = new Paragraph("Your request to join this company is waiting for approval.");
+        applySubtitleStyle(subtitle);
+
+        Paragraph desc = new Paragraph("Please wait for approval from the company administrator. You will be able to access the Employer area once your membership is activated.");
+        applyDescStyle(desc);
+
+        card.add(iconWrapper, companyMeta, title, subtitle, desc);
+        add(card);
+    }
+
+    private void showMembershipRejectedState(Company company) {
+        Div card = createBaseStatusCard();
+
+        Div iconWrapper = createIconWrapper("#FEE2E2");
+        Icon closeIcon = VaadinIcon.CLOSE_CIRCLE.create();
+        closeIcon.setSize("24px");
+        closeIcon.setColor("#DC2626");
+        iconWrapper.add(closeIcon);
+
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Membership Status: REJECTED", "#FEE2E2", "#991B1B");
+
+        H2 title = new H2("Membership Request Rejected");
+        applyTitleStyle(title);
+
+        Paragraph subtitle = new Paragraph("Your request to join this company was rejected.");
+        applySubtitleStyle(subtitle);
+
+        Paragraph desc = new Paragraph("You currently do not have access to the Employer area. Silakan hubungi administrator perusahaan terkait.");
+        applyDescStyle(desc);
+
+        card.add(iconWrapper, companyMeta, title, subtitle, desc);
+        add(card);
+    }
+
+    private void showMembershipNonActiveState(Company company) {
+        Div card = createBaseStatusCard();
+
+        Div iconWrapper = createIconWrapper("#F1F5F9");
+        Icon infoIcon = VaadinIcon.INFO_CIRCLE.create();
+        infoIcon.setSize("24px");
+        infoIcon.setColor("#475569");
+        iconWrapper.add(infoIcon);
+
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Membership Status: INACTIVE", "#F1F5F9", "#475569");
+
+        H2 title = new H2("Status Keanggotaan Belum Aktif");
+        applyTitleStyle(title);
+
+        Paragraph desc = new Paragraph("Akun Anda belum memiliki akses aktif ke perusahaan ini. Silakan hubungi administrator perusahaan untuk mengaktifkan keanggotaan Anda.");
+        applyDescStyle(desc);
+
+        card.add(iconWrapper, companyMeta, title, desc);
         add(card);
     }
 
     private void showNoCompanyState() {
-        Div card = new Div();
-        card.getStyle()
-                .set("background-color", "#FFFFFF")
-                .set("border", "1px solid #E2E8F0")
-                .set("border-radius", "8px")
-                .set("padding", "24px")
-                .set("max-width", "560px");
+        Div card = createBaseStatusCard();
 
         H3 title = new H3("Data Perusahaan Tidak Ditemukan");
         title.getStyle()
@@ -201,23 +321,16 @@ public class DashboardView extends VerticalLayout {
                 .set("color", "#0F172A");
 
         Paragraph msg = new Paragraph("Akun Anda belum terhubung dengan data perusahaan. Silakan hubungi administrator.");
-        msg.getStyle()
-                .set("margin", "0")
-                .set("font-size", "14px")
-                .set("color", "#64748B");
+        applyDescStyle(msg);
 
         card.add(title, msg);
         add(card);
     }
 
-    private void showNonVerifiedState() {
-        Div card = new Div();
-        card.getStyle()
-                .set("background-color", "#FFFFFF")
-                .set("border", "1px solid #E2E8F0")
-                .set("border-radius", "8px")
-                .set("padding", "24px")
-                .set("max-width", "560px");
+    private void showNonVerifiedState(Company company) {
+        Div card = createBaseStatusCard();
+
+        Div companyMeta = createCompanyMetaHeader(company.getName(), "Verification Status: UNVERIFIED", "#F1F5F9", "#475569");
 
         H3 title = new H3("Akses Belum Tersedia");
         title.getStyle()
@@ -226,12 +339,86 @@ public class DashboardView extends VerticalLayout {
                 .set("color", "#0F172A");
 
         Paragraph msg = new Paragraph("Perusahaan Anda belum terverifikasi untuk mengakses area employer.");
-        msg.getStyle()
-                .set("margin", "0")
+        applyDescStyle(msg);
+
+        card.add(companyMeta, title, msg);
+        add(card);
+    }
+
+    private Div createBaseStatusCard() {
+        Div card = new Div();
+        card.getStyle()
+                .set("background-color", "#FFFFFF")
+                .set("border", "1px solid #E2E8F0")
+                .set("border-radius", "12px")
+                .set("padding", "32px")
+                .set("max-width", "560px")
+                .set("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.05)");
+        return card;
+    }
+
+    private Div createIconWrapper(String bgColor) {
+        Div iconWrapper = new Div();
+        iconWrapper.getStyle()
+                .set("width", "48px")
+                .set("height", "48px")
+                .set("border-radius", "50%")
+                .set("background-color", bgColor)
+                .set("display", "flex")
+                .set("align-items", "center")
+                .set("justify-content", "center")
+                .set("margin-bottom", "16px");
+        return iconWrapper;
+    }
+
+    private Div createCompanyMetaHeader(String companyName, String statusBadgeText, String badgeBgColor, String badgeTextColor) {
+        Div metaLayout = new Div();
+        metaLayout.getStyle()
+                .set("display", "flex")
+                .set("flex-wrap", "wrap")
+                .set("align-items", "center")
+                .set("gap", "8px")
+                .set("margin-bottom", "12px");
+
+        Span companyNameSpan = new Span(companyName);
+        companyNameSpan.getStyle()
+                .set("font-size", "14px")
+                .set("font-weight", "600")
+                .set("color", "#0F172A");
+
+        Span statusBadge = new Span(statusBadgeText);
+        statusBadge.getStyle()
+                .set("font-size", "12px")
+                .set("font-weight", "600")
+                .set("padding", "2px 8px")
+                .set("border-radius", "4px")
+                .set("background-color", badgeBgColor)
+                .set("color", badgeTextColor);
+
+        metaLayout.add(companyNameSpan, statusBadge);
+        return metaLayout;
+    }
+
+    private void applyTitleStyle(H2 title) {
+        title.getStyle()
+                .set("margin", "0 0 8px 0")
+                .set("font-size", "20px")
+                .set("font-weight", "700")
+                .set("color", "#0F172A");
+    }
+
+    private void applySubtitleStyle(Paragraph subtitle) {
+        subtitle.getStyle()
+                .set("margin", "0 0 16px 0")
                 .set("font-size", "14px")
                 .set("color", "#64748B");
+    }
 
-        card.add(title, msg);
-        add(card);
+    private void applyDescStyle(Paragraph desc) {
+        desc.getStyle()
+                .set("margin", "0")
+                .set("font-size", "13px")
+                .set("color", "#64748B")
+                .set("line-height", "1.5");
     }
 }

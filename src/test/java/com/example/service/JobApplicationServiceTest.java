@@ -1,6 +1,9 @@
 package com.example.service;
 
 import com.example.entity.ApplicationStatus;
+import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -147,13 +150,24 @@ public class JobApplicationServiceTest {
         verify(repository).existsByApplicantAndJobPosting(pelamar, lowongan);
     }
 
+    private User createValidActiveEmployer(Long id) {
+        Company company = new Company();
+        company.setName("PT Winosa Digital");
+        company.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+
+        User employer = new User();
+        employer.setId(id);
+        employer.setCompany(company);
+        employer.setMembershipStatus(CompanyMembershipStatus.ACTIVE);
+        return employer;
+    }
+
     @Test
     void harusBisaMengambilPelamarBerdasarkanJobPostingMilikEmployer() {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -181,11 +195,8 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employerPemilik = new User();
-        employerPemilik.setId(1L);
-
-        User employerLain = new User();
-        employerLain.setId(2L);
+        User employerPemilik = createValidActiveEmployer(1L);
+        User employerLain = createValidActiveEmployer(2L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -204,8 +215,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -225,8 +235,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -304,8 +313,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -331,8 +339,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -357,8 +364,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -467,8 +473,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
@@ -588,5 +593,319 @@ public class JobApplicationServiceTest {
 
         assertEquals(2, hasil.size());
         verify(repository).findByJobPostingEmployerOrderByApplicationDateDesc(employer);
+    }
+
+    @Test
+    void testUpdateStatusAllowedJikaCompanyVerifiedDanMembershipActive() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+        when(repository.save(any(JobApplication.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        JobApplication result = service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED);
+
+        assertEquals(ApplicationStatus.OFFERED, result.getStatus());
+        verify(repository).save(jobApplication);
+    }
+
+    @Test
+    void testUpdateStatusDeniedJikaCompanyPending() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.getCompany().setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk mengubah status pelamar", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateStatusDeniedJikaCompanyRejected() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.getCompany().setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk mengubah status pelamar", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateStatusDeniedJikaMembershipPending() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateStatusDeniedJikaMembershipRejected() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(CompanyMembershipStatus.REJECTED);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateStatusDeniedJikaMembershipNull() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(null);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.updateStatus(jobApplication, employer, ApplicationStatus.OFFERED)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusBisaMengambilPelamarJikaCompanyVerifiedDanMembershipActiveDanOwner() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        JobApplication app1 = new JobApplication();
+        app1.setPosition("Backend Dev");
+        app1.setJobPosting(lowongan);
+
+        when(repository.findByJobPostingOrderByApplicationDateDesc(lowongan))
+                .thenReturn(List.of(app1));
+
+        List<JobApplication> hasil = service.findByJobPosting(lowongan, employer);
+
+        assertEquals(1, hasil.size());
+        verify(repository).findByJobPostingOrderByApplicationDateDesc(lowongan);
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaCompanyVerifiedTapiMembershipPending() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findByJobPosting(lowongan, employer)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaCompanyVerifiedTapiMembershipRejected() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(CompanyMembershipStatus.REJECTED);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findByJobPosting(lowongan, employer)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaCompanyVerifiedTapiMembershipNull() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(null);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findByJobPosting(lowongan, employer)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaCompanyPending() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.getCompany().setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findByJobPosting(lowongan, employer)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk melihat data pelamar", ex.getMessage());
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaCompanyRejected() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.getCompany().setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findByJobPosting(lowongan, employer)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk melihat data pelamar", ex.getMessage());
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarBukanOwnerWalaupunVerifiedDanActive() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employerPemilik = createValidActiveEmployer(1L);
+        User employerLain = createValidActiveEmployer(2L);
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employerPemilik);
+
+        assertThrows(
+                SecurityException.class,
+                () -> service.findByJobPosting(lowongan, employerLain)
+        );
+
+        verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
     }
 }

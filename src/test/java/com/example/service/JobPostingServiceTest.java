@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -196,6 +197,9 @@ public class JobPostingServiceTest {
         employer.setId(1L);
         employer.setName("Test Employer");
         employer.setCompany(company);
+        if (status == CompanyVerificationStatus.VERIFIED) {
+            employer.setMembershipStatus(CompanyMembershipStatus.ACTIVE);
+        }
 
         return employer;
     }
@@ -346,6 +350,95 @@ public class JobPostingServiceTest {
 
         // Aksi publish / aktivasi kembali
         jobPosting.setActive(true);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusBisaSimpanLowonganJikaCompanyVerifiedDanMembershipActive() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+        employer.setMembershipStatus(CompanyMembershipStatus.ACTIVE);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Fullstack Developer");
+        jobPosting.setEmployer(employer);
+
+        when(jobPostingRepository.save(any(JobPosting.class))).thenReturn(jobPosting);
+
+        JobPosting saved = jobPostingService.simpanLowongan(jobPosting);
+
+        assertNotNull(saved);
+        verify(jobPostingRepository).save(jobPosting);
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyVerifiedTapiMembershipPending() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+        employer.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Fullstack Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyVerifiedTapiMembershipRejected() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+        employer.setMembershipStatus(CompanyMembershipStatus.REJECTED);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Fullstack Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyVerifiedTapiMembershipNull() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.VERIFIED);
+        employer.setMembershipStatus(null);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Fullstack Developer");
+        jobPosting.setEmployer(employer);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> jobPostingService.simpanLowongan(jobPosting)
+        );
+
+        assertEquals("Status membership employer belum aktif", ex.getMessage());
+        verify(jobPostingRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakSimpanLowonganJikaCompanyPendingDanMembershipPending() {
+        User employer = createEmployerWithCompanyStatus(CompanyVerificationStatus.PENDING);
+        employer.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        JobPosting jobPosting = new JobPosting();
+        jobPosting.setPosition("Fullstack Developer");
+        jobPosting.setEmployer(employer);
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,

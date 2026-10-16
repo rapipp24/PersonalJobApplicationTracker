@@ -1,6 +1,9 @@
 package com.example.service;
 
 import java.util.List;
+import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -122,9 +125,20 @@ public class JobApplicationService {
         if (jobPosting == null || jobPosting.getId() == null) {
             return List.of();
         }
+
         if (jobPosting.getEmployer() == null || employer == null || !jobPosting.getEmployer().getId().equals(employer.getId())) {
             throw new SecurityException("Anda tidak memiliki hak untuk melihat pelamar lowongan ini");
         }
+
+        Company company = employer.getCompany();
+        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Perusahaan harus berstatus VERIFIED untuk melihat data pelamar");
+        }
+
+        if (employer.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
+            throw new IllegalStateException("Status membership employer belum aktif");
+        }
+
         return repository.findByJobPostingOrderByApplicationDateDesc(jobPosting);
     }
 
@@ -159,6 +173,15 @@ public class JobApplicationService {
         if (existingApplication.getJobPosting().getEmployer().getId() == null
                 || !existingApplication.getJobPosting().getEmployer().getId().equals(employer.getId())) {
             throw new SecurityException("Anda tidak memiliki hak untuk mengubah status lamaran ini");
+        }
+
+        Company company = employer.getCompany();
+        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Perusahaan harus berstatus VERIFIED untuk mengubah status pelamar");
+        }
+
+        if (employer.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
+            throw new IllegalStateException("Status membership employer belum aktif");
         }
 
         if (newStatus == null) {

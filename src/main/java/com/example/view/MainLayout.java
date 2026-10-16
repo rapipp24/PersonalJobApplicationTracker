@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
@@ -139,7 +140,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         employerDashboardLink.add(dashIcon, dashLabel);
         sidebarContent.add(employerDashboardLink);
 
-        if (isCurrentUserCompanyVerified()) {
+        if (isCurrentEmployerActive()) {
             employerJobPostingsLink = new RouterLink();
             employerJobPostingsLink.setRoute(PemberiLamaranView.class);
             employerJobPostingsLink.addClassName("employer-nav-item");
@@ -294,7 +295,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         }
     }
 
-    private boolean isCurrentUserCompanyVerified() {
+    private boolean isCurrentEmployerActive() {
         String userEmail = authenticationContext.getPrincipalName().orElse(null);
         if (userEmail == null) {
             return false;
@@ -307,7 +308,8 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         User user = userOptional.get();
         return user.getCompany() != null
-                && user.getCompany().getVerificationStatus() == CompanyVerificationStatus.VERIFIED;
+                && user.getCompany().getVerificationStatus() == CompanyVerificationStatus.VERIFIED
+                && user.getMembershipStatus() == CompanyMembershipStatus.ACTIVE;
     }
 
     private void createHeader() {
@@ -346,7 +348,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             navLayout.add(applicationsLink, applicantLink);
         }
 
-        if (isAdmin || (isPemberiLamaran && isCurrentUserCompanyVerified())) {
+        if (isAdmin || (isPemberiLamaran && isCurrentEmployerActive())) {
             RouterLink employerLink = new RouterLink("Employer Area", PemberiLamaranView.class);
             navLayout.add(employerLink);
         }

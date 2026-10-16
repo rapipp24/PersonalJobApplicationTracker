@@ -1,6 +1,9 @@
 package com.example.config;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyPermission;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.Role;
 import com.example.entity.User;
@@ -66,18 +69,44 @@ public class DataInitializer implements CommandLineRunner {
             pemberi.setPassword(passwordEncoder.encode(testUserPassword));
             pemberi.setRole(Role.PEMBERI_LAMARAN);
             pemberi.setCompany(testCompany);
+            pemberi.setMembershipStatus(CompanyMembershipStatus.ACTIVE);
+            pemberi.setCompanyPermission(CompanyPermission.COMPANY_ADMIN);
 
             pemberi = userRepository.save(pemberi);
             System.out.println("Created development user: pemberi@example.com");
         } else {
             pemberi = pemberiOptional.get();
+            boolean pemberiUpdated = false;
 
-            // Jika user test sudah ada tapi belum mempunyai Company, lengkapi
-            if (pemberi.getCompany() == null) {
-                Company testCompany = getOrCreateTestCompany();
-                pemberi.setCompany(testCompany);
+            // Ambil Company milik pemberi atau buat jika belum ada
+            Company company = pemberi.getCompany();
+            if (company == null) {
+                company = getOrCreateTestCompany();
+                pemberi.setCompany(company);
+                pemberiUpdated = true;
+            }
+
+            // Backfill legacy null verificationStatus untuk development Test Company tanpa menimpa status non-null
+            if (company != null && "PT Test Employer".equals(company.getName()) && company.getVerificationStatus() == null) {
+                company.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+                companyRepository.save(company);
+            }
+
+            // Backfill legacy null membershipStatus tanpa menimpa status non-null
+            if (pemberi.getMembershipStatus() == null) {
+                pemberi.setMembershipStatus(CompanyMembershipStatus.ACTIVE);
+                pemberiUpdated = true;
+            }
+
+            // Backfill legacy null companyPermission tanpa menimpa permission non-null
+            if (pemberi.getCompanyPermission() == null) {
+                pemberi.setCompanyPermission(CompanyPermission.COMPANY_ADMIN);
+                pemberiUpdated = true;
+            }
+
+            if (pemberiUpdated) {
                 pemberi = userRepository.save(pemberi);
-                System.out.println("Updated development user with company: pemberi@example.com");
+                System.out.println("Updated development user baseline: pemberi@example.com");
             }
         }
 
@@ -106,11 +135,17 @@ public class DataInitializer implements CommandLineRunner {
     private Company getOrCreateTestCompany() {
         Optional<Company> existingCompany = companyRepository.findByName("PT Test Employer");
         if (existingCompany.isPresent()) {
-            return existingCompany.get();
+            Company company = existingCompany.get();
+            if (company.getVerificationStatus() == null) {
+                company.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+                return companyRepository.save(company);
+            }
+            return company;
         }
 
         Company newCompany = new Company();
         newCompany.setName("PT Test Employer");
+        newCompany.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
         return companyRepository.save(newCompany);
     }
 }

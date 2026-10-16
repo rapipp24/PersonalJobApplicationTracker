@@ -1,6 +1,7 @@
 package com.example.view;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -119,6 +120,23 @@ public class PemberiLamaranView extends VerticalLayout {
                 );
 
                 add(title, nonVerifiedInfo, backButton);
+                return;
+            }
+
+            // Guard: Membership harus ACTIVE untuk mengakses fitur operasional lowongan
+            CompanyMembershipStatus membershipStatus = currentUser.getMembershipStatus();
+            if (membershipStatus != CompanyMembershipStatus.ACTIVE) {
+                Paragraph membershipInfo = new Paragraph(
+                        "Status keanggotaan perusahaan Anda belum aktif. "
+                        + "Fitur pengelolaan lowongan pekerjaan belum dapat diakses."
+                );
+
+                Button backButton = new Button(
+                        "Kembali ke Halaman Utama",
+                        event -> UI.getCurrent().navigate("")
+                );
+
+                add(title, membershipInfo, backButton);
                 return;
             }
 

@@ -2,6 +2,7 @@ package com.example.view;
 
 import com.example.entity.ApplicationStatus;
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
@@ -66,8 +67,10 @@ public class JobApplicantsView extends VerticalLayout implements HasUrlParameter
         User currentUser = getCurrentUser();
         Company company = currentUser.getCompany();
 
-        // Guard: Akses pelamar hanya untuk Employer dengan Company yang sudah VERIFIED
-        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+        // Guard: Akses pelamar hanya untuk Employer dengan Company VERIFIED dan Membership ACTIVE
+        if (company == null
+                || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED
+                || currentUser.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
             event.forwardTo(DashboardView.class);
             return;
         }

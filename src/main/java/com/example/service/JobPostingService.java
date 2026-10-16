@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -53,6 +54,11 @@ public class JobPostingService {
         CompanyVerificationStatus verificationStatus = company.getVerificationStatus();
         if (verificationStatus != CompanyVerificationStatus.VERIFIED) {
             throw new IllegalStateException("Perusahaan harus berstatus VERIFIED untuk menyimpan lowongan pekerjaan");
+        }
+
+        CompanyMembershipStatus membershipStatus = employer.getMembershipStatus();
+        if (membershipStatus != CompanyMembershipStatus.ACTIVE) {
+            throw new IllegalStateException("Status membership employer belum aktif");
         }
 
         return repository.save(jobPosting);
