@@ -1,6 +1,7 @@
 package com.example.view;
 
 import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
@@ -33,6 +34,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
     private RouterLink employerDashboardLink;
     private RouterLink employerJobPostingsLink;
+    private RouterLink employerMemberRequestsLink;
     private boolean isEmployer = false;
 
     private RouterLink applicantDashboardLink;
@@ -153,6 +155,21 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             employerJobPostingsLink.add(jobsIcon, jobsLabel);
 
             sidebarContent.add(employerJobPostingsLink);
+        }
+
+        if (isCurrentCompanyAdmin()) {
+            employerMemberRequestsLink = new RouterLink();
+            employerMemberRequestsLink.setRoute(CompanyMemberRequestsView.class);
+            employerMemberRequestsLink.addClassName("employer-nav-item");
+
+            Html membersIcon = new Html("<iconify-icon icon=\"lucide:users\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
+
+            Span membersLabel = new Span("Member Requests");
+            membersLabel.addClassName("employer-nav-label");
+
+            employerMemberRequestsLink.add(membersIcon, membersLabel);
+
+            sidebarContent.add(employerMemberRequestsLink);
         }
 
         drawerLayout.add(brandArea, sidebarContent);
@@ -289,8 +306,15 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         if (employerJobPostingsLink != null) {
             employerJobPostingsLink.removeClassName("employer-nav-item-active");
-            if (path != null && path.startsWith("pemberi-lamaran")) {
+            if (path != null && path.startsWith("pemberi-lamaran") && !path.startsWith("pemberi-lamaran/member-requests")) {
                 employerJobPostingsLink.addClassName("employer-nav-item-active");
+            }
+        }
+
+        if (employerMemberRequestsLink != null) {
+            employerMemberRequestsLink.removeClassName("employer-nav-item-active");
+            if (path != null && path.startsWith("pemberi-lamaran/member-requests")) {
+                employerMemberRequestsLink.addClassName("employer-nav-item-active");
             }
         }
     }
@@ -310,6 +334,24 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         return user.getCompany() != null
                 && user.getCompany().getVerificationStatus() == CompanyVerificationStatus.VERIFIED
                 && user.getMembershipStatus() == CompanyMembershipStatus.ACTIVE;
+    }
+
+    private boolean isCurrentCompanyAdmin() {
+        String userEmail = authenticationContext.getPrincipalName().orElse(null);
+        if (userEmail == null) {
+            return false;
+        }
+
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+
+        User user = userOptional.get();
+        return user.getCompany() != null
+                && user.getCompany().getVerificationStatus() == CompanyVerificationStatus.VERIFIED
+                && user.getMembershipStatus() == CompanyMembershipStatus.ACTIVE
+                && user.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN;
     }
 
     private void createHeader() {

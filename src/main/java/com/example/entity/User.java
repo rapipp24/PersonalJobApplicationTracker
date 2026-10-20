@@ -14,6 +14,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "app_user")
 public class User {
@@ -51,6 +53,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "membership_status")
     private CompanyMembershipStatus membershipStatus;
+
+    @Column(name = "membership_requested_at")
+    private LocalDateTime membershipRequestedAt;
 
     public User() {
     }
@@ -124,5 +129,13 @@ public class User {
 
     public void setMembershipStatus(CompanyMembershipStatus membershipStatus) {
         this.membershipStatus = membershipStatus;
+    }
+
+    public LocalDateTime getMembershipRequestedAt() {
+        return membershipRequestedAt;
+    }
+
+    public void setMembershipRequestedAt(LocalDateTime membershipRequestedAt) {
+        this.membershipRequestedAt = membershipRequestedAt;
     }
 }

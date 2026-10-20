@@ -501,6 +501,7 @@ public class RegistrationServiceTest {
         assertEquals(verifiedCompany, result.getCompany());
         assertEquals(CompanyPermission.MEMBER, result.getCompanyPermission());
         assertEquals(CompanyMembershipStatus.PENDING, result.getMembershipStatus());
+        assertNotNull(result.getMembershipRequestedAt());
 
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
