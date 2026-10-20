@@ -151,8 +151,13 @@ public class JobApplicationServiceTest {
     }
 
     private User createValidActiveEmployer(Long id) {
+        return createValidActiveEmployer(id, 1L, "PT Winosa Digital");
+    }
+
+    private User createValidActiveEmployer(Long id, Long companyId, String companyName) {
         Company company = new Company();
-        company.setName("PT Winosa Digital");
+        company.setId(companyId);
+        company.setName(companyName);
         company.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
 
         User employer = new User();
@@ -172,6 +177,7 @@ public class JobApplicationServiceTest {
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
         lowongan.setEmployer(employer);
+        lowongan.setCompany(employer.getCompany());
 
         JobApplication app1 = new JobApplication();
         app1.setPosition("Backend Dev");
@@ -191,20 +197,47 @@ public class JobApplicationServiceTest {
     }
 
     @Test
-    void harusMenolakMengambilPelamarJikaEmployerBukanPemilik() {
+    void harusBisaMengambilPelamarOlehEmployerSatuCompany() {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employerPemilik = createValidActiveEmployer(1L);
-        User employerLain = createValidActiveEmployer(2L);
+        User employerPemilik = createValidActiveEmployer(1L, 1L, "PT Winosa Digital");
+        User employerSatuCompany = createValidActiveEmployer(2L, 1L, "PT Winosa Digital");
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
         lowongan.setEmployer(employerPemilik);
+        lowongan.setCompany(employerPemilik.getCompany());
+
+        JobApplication app1 = new JobApplication();
+        app1.setPosition("Backend Dev");
+        app1.setJobPosting(lowongan);
+
+        when(repository.findByJobPostingOrderByApplicationDateDesc(lowongan))
+                .thenReturn(List.of(app1));
+
+        List<JobApplication> hasil = service.findByJobPosting(lowongan, employerSatuCompany);
+
+        assertEquals(1, hasil.size());
+        verify(repository).findByJobPostingOrderByApplicationDateDesc(lowongan);
+    }
+
+    @Test
+    void harusMenolakMengambilPelamarJikaEmployerBedaCompany() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employerPemilik = createValidActiveEmployer(1L, 1L, "PT Winosa Digital");
+        User employerBedaCompany = createValidActiveEmployer(2L, 2L, "PT Lain");
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employerPemilik);
+        lowongan.setCompany(employerPemilik.getCompany());
 
         assertThrows(
                 SecurityException.class,
-                () -> service.findByJobPosting(lowongan, employerLain)
+                () -> service.findByJobPosting(lowongan, employerBedaCompany)
         );
 
         verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
@@ -256,19 +289,44 @@ public class JobApplicationServiceTest {
     }
 
     @Test
-    void testUpdateStatusDitolakUntukEmployerLain() {
+    void testUpdateStatusBerhasilOlehEmployerSatuCompany() {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employerPemilik = new User();
-        employerPemilik.setId(1L);
-
-        User employerLain = new User();
-        employerLain.setId(2L);
+        User employerPemilik = createValidActiveEmployer(1L, 1L, "PT Winosa");
+        User colleague = createValidActiveEmployer(2L, 1L, "PT Winosa");
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
         lowongan.setEmployer(employerPemilik);
+        lowongan.setCompany(employerPemilik.getCompany());
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setId(100L);
+        jobApplication.setJobPosting(lowongan);
+        jobApplication.setStatus(ApplicationStatus.APPLIED);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(jobApplication));
+        when(repository.save(any(JobApplication.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        JobApplication result = service.updateStatus(jobApplication, colleague, ApplicationStatus.INTERVIEW);
+
+        assertEquals(ApplicationStatus.INTERVIEW, result.getStatus());
+        verify(repository).save(jobApplication);
+    }
+
+    @Test
+    void testUpdateStatusDitolakUntukEmployerBedaCompany() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employerPemilik = createValidActiveEmployer(1L, 1L, "PT Winosa");
+        User employerLain = createValidActiveEmployer(2L, 2L, "PT Lain");
+
+        JobPosting lowongan = new JobPosting();
+        lowongan.setId(10L);
+        lowongan.setEmployer(employerPemilik);
+        lowongan.setCompany(employerPemilik.getCompany());
 
         JobApplication jobApplication = new JobApplication();
         jobApplication.setId(100L);
@@ -290,8 +348,7 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employer = new User();
-        employer.setId(1L);
+        User employer = createValidActiveEmployer(1L);
 
         JobApplication legacyApplication = new JobApplication();
         legacyApplication.setId(100L);
@@ -389,19 +446,18 @@ public class JobApplicationServiceTest {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employerA = new User();
-        employerA.setId(1L);
-
-        User employerB = new User();
-        employerB.setId(2L);
+        User employerA = createValidActiveEmployer(1L, 1L, "PT A");
+        User employerB = createValidActiveEmployer(2L, 2L, "PT B");
 
         JobPosting postingB = new JobPosting();
         postingB.setId(20L);
         postingB.setEmployer(employerB);
+        postingB.setCompany(employerB.getCompany());
 
         JobPosting postingA = new JobPosting();
         postingA.setId(10L);
         postingA.setEmployer(employerA);
+        postingA.setCompany(employerA.getCompany());
 
         // Record asli di database terikat ke lowongan milik Employer B
         JobApplication existingApplication = new JobApplication();
@@ -890,16 +946,17 @@ public class JobApplicationServiceTest {
     }
 
     @Test
-    void harusMenolakMengambilPelamarBukanOwnerWalaupunVerifiedDanActive() {
+    void harusMenolakMengambilPelamarBedaCompanyWalaupunVerifiedDanActive() {
         JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
         JobApplicationService service = new JobApplicationService(repository);
 
-        User employerPemilik = createValidActiveEmployer(1L);
-        User employerLain = createValidActiveEmployer(2L);
+        User employerPemilik = createValidActiveEmployer(1L, 1L, "PT A");
+        User employerLain = createValidActiveEmployer(2L, 2L, "PT B");
 
         JobPosting lowongan = new JobPosting();
         lowongan.setId(10L);
         lowongan.setEmployer(employerPemilik);
+        lowongan.setCompany(employerPemilik.getCompany());
 
         assertThrows(
                 SecurityException.class,
@@ -907,5 +964,25 @@ public class JobApplicationServiceTest {
         );
 
         verify(repository, never()).findByJobPostingOrderByApplicationDateDesc(any());
+    }
+
+    @Test
+    void testFindByCompanyMengambilSemuaLamaranSatuCompany() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        Company company = new Company();
+        company.setId(1L);
+
+        JobApplication app = new JobApplication();
+        app.setId(10L);
+
+        when(repository.findByJobPostingCompanyOrderByApplicationDateDesc(company))
+                .thenReturn(List.of(app));
+
+        List<JobApplication> hasil = service.findByCompany(company);
+
+        assertEquals(1, hasil.size());
+        verify(repository).findByJobPostingCompanyOrderByApplicationDateDesc(company);
     }
 }

@@ -128,8 +128,8 @@ public class DashboardView extends VerticalLayout {
 
             // 6. Hanya jika Company VERIFIED dan Membership ACTIVE
             EmployerDashboard employerDashboard = new EmployerDashboard();
-            List<JobPosting> jobPostings = jobPostingService.findByEmployer(currentUser);
-            List<JobApplication> applications = jobApplicationService.findByEmployer(currentUser);
+            List<JobPosting> jobPostings = jobPostingService.findByCompany(company);
+            List<JobApplication> applications = jobApplicationService.findByCompany(company);
             employerDashboard.updateData(currentUser, jobPostings, applications);
             add(employerDashboard);
             return;

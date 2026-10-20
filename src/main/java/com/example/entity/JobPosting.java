@@ -58,6 +58,10 @@ public class JobPosting {
     @JoinColumn(name = "employer_id", nullable = false)
     private User employer; //user yang membuat job posting (employe)
 
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
+
     public JobPosting() {
     }
 
@@ -163,5 +167,13 @@ public class JobPosting {
 
     public void setEmployer(User employer) {
         this.employer = employer;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 }

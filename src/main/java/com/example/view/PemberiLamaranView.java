@@ -2,6 +2,7 @@ package com.example.view;
 
 import com.example.entity.Company;
 import com.example.entity.CompanyMembershipStatus;
+import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -12,9 +13,11 @@ import com.example.view.component.JobPostingGrid;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -182,13 +185,41 @@ public class PemberiLamaranView extends VerticalLayout {
     }
 
     private void configureEmployerGrid() {
+        User currentUser = getCurrentUser();
+
         tableLowongan.addItemClickListener(event -> {
             JobPosting selectedJobPosting = event.getItem();
+            if (!canManageJobPosting(selectedJobPosting, currentUser)) {
+                Notification.show("Hanya pembuat lowongan atau Admin Perusahaan yang dapat mengedit lowongan ini.");
+                resetForm();
+                return;
+            }
             form.setJobPosting(selectedJobPosting);
         });
 
         tableLowongan.addStatusColumn();
-        tableLowongan.addActiveActionColumn(this::handleToggleActive);
+
+        tableLowongan.addComponentColumn(jobPosting -> {
+            if (!canManageJobPosting(jobPosting, currentUser)) {
+                Span noAction = new Span("-");
+                return noAction;
+            }
+
+            Button actionButton = new Button();
+            actionButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+
+            if (jobPosting.isActive()) {
+                actionButton.setText("Deactivate");
+                actionButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            } else {
+                actionButton.setText("Activate");
+                actionButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            }
+
+            actionButton.addClickListener(event -> handleToggleActive(jobPosting));
+            return actionButton;
+        }).setHeader("Aksi");
+
         tableLowongan.addApplicantsActionColumn(this::handleViewApplicants);
     }
 
@@ -204,10 +235,23 @@ public class PemberiLamaranView extends VerticalLayout {
     }
 
     private void handleSave(JobPosting posting) {
-        jobPostingService.simpanLowongan(posting);
-        Notification.show("Lowongan berhasil disimpan");
-        resetForm();
-        refreshTableLowongan();
+        User currentUser = getCurrentUser();
+
+        if (posting.getId() != null && !canManageJobPosting(posting, currentUser)) {
+            Notification.show("Anda tidak memiliki hak untuk mengubah lowongan ini.");
+            return;
+        }
+
+        try {
+            jobPostingService.simpanLowongan(posting, currentUser);
+            Notification.show("Lowongan berhasil disimpan");
+            resetForm();
+            refreshTableLowongan();
+        } catch (SecurityException se) {
+            Notification.show("Akses ditolak: " + se.getMessage());
+        } catch (Exception ex) {
+            Notification.show("Gagal menyimpan lowongan: " + ex.getMessage());
+        }
     }
 
     private void handleCancel() {
@@ -223,8 +267,8 @@ public class PemberiLamaranView extends VerticalLayout {
 
         User currentUser = getCurrentUser();
 
-        // Validasi kepemilikan lowongan
-        if (posting.getEmployer() == null || !posting.getEmployer().getId().equals(currentUser.getId())) {
+        // Validasi hak pengelolaan lowongan
+        if (!canManageJobPosting(posting, currentUser)) {
             Notification.show("Anda tidak memiliki hak untuk menghapus lowongan ini.");
             return;
         }
@@ -279,6 +323,7 @@ public class PemberiLamaranView extends VerticalLayout {
         jobPosting.setEmployer(currentUser);
 
         if (currentUser.getCompany() != null) {
+            jobPosting.setCompany(currentUser.getCompany());
             jobPosting.setCompanyName(currentUser.getCompany().getName());
         }
 
@@ -294,8 +339,9 @@ public class PemberiLamaranView extends VerticalLayout {
                 authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isPemberiLamaran) {
+            User currentUser = getCurrentUser();
             tableLowongan.setItems(
-                    jobPostingService.findByEmployer(getCurrentUser())
+                    jobPostingService.findByCompany(currentUser.getCompany())
             );
         }
 
@@ -307,6 +353,12 @@ public class PemberiLamaranView extends VerticalLayout {
     }
 
     private void handleToggleActive(JobPosting jobPosting) {
+        User currentUser = getCurrentUser();
+        if (!canManageJobPosting(jobPosting, currentUser)) {
+            Notification.show("Anda tidak memiliki hak untuk mengubah status lowongan ini.");
+            return;
+        }
+
         if (jobPosting.isActive()) {
             ConfirmDialog dialog = new ConfirmDialog();
             dialog.setHeader("Nonaktifkan Lowongan");
@@ -318,7 +370,7 @@ public class PemberiLamaranView extends VerticalLayout {
 
             dialog.addConfirmListener(event -> {
                 jobPosting.setActive(false);
-                jobPostingService.simpanLowongan(jobPosting);
+                jobPostingService.simpanLowongan(jobPosting, currentUser);
                 Notification.show("Job posting dinonaktifkan.");
                 resetForm();
                 refreshTableLowongan();
@@ -327,10 +379,21 @@ public class PemberiLamaranView extends VerticalLayout {
             dialog.open();
         } else {
             jobPosting.setActive(true);
-            jobPostingService.simpanLowongan(jobPosting);
+            jobPostingService.simpanLowongan(jobPosting, currentUser);
             Notification.show("Job posting diaktifkan.");
             resetForm();
             refreshTableLowongan();
         }
+    }
+
+    private boolean canManageJobPosting(JobPosting jobPosting, User currentUser) {
+        if (jobPosting == null || currentUser == null) {
+            return false;
+        }
+        if (jobPosting.getEmployer() != null && currentUser.getId() != null
+                && jobPosting.getEmployer().getId().equals(currentUser.getId())) {
+            return true;
+        }
+        return currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN;
     }
 }

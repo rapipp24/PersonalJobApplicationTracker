@@ -1,5 +1,6 @@
 package com.example.repository;
 
+import com.example.entity.Company;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
@@ -20,4 +21,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     List<JobApplication> findByJobPostingOrderByApplicationDateDesc(JobPosting jobPosting);
 
     List<JobApplication> findByJobPostingEmployerOrderByApplicationDateDesc(User employer);
+
+    List<JobApplication> findByJobPostingCompanyOrderByApplicationDateDesc(Company company);
 }

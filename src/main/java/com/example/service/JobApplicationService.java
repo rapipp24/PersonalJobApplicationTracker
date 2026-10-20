@@ -126,8 +126,8 @@ public class JobApplicationService {
             return List.of();
         }
 
-        if (jobPosting.getEmployer() == null || employer == null || !jobPosting.getEmployer().getId().equals(employer.getId())) {
-            throw new SecurityException("Anda tidak memiliki hak untuk melihat pelamar lowongan ini");
+        if (employer == null || employer.getId() == null) {
+            throw new IllegalArgumentException("Employer tidak valid");
         }
 
         Company company = employer.getCompany();
@@ -137,6 +137,15 @@ public class JobApplicationService {
 
         if (employer.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
             throw new IllegalStateException("Status membership employer belum aktif");
+        }
+
+        Company postingCompany = getJobPostingCompany(jobPosting);
+        if (postingCompany == null || postingCompany.getId() == null || company.getId() == null) {
+            throw new SecurityException("Anda tidak memiliki hak untuk melihat pelamar lowongan ini");
+        }
+
+        if (!postingCompany.getId().equals(company.getId())) {
+            throw new SecurityException("Anda tidak memiliki hak untuk melihat pelamar lowongan ini");
         }
 
         return repository.findByJobPostingOrderByApplicationDateDesc(jobPosting);
@@ -162,17 +171,8 @@ public class JobApplicationService {
             throw new IllegalStateException("Lamaran tidak terhubung dengan lowongan kerja");
         }
 
-        if (existingApplication.getJobPosting().getEmployer() == null) {
-            throw new IllegalStateException("Lowongan tidak memiliki pemberi lamaran yang valid");
-        }
-
         if (employer == null || employer.getId() == null) {
             throw new IllegalArgumentException("Employer tidak valid");
-        }
-
-        if (existingApplication.getJobPosting().getEmployer().getId() == null
-                || !existingApplication.getJobPosting().getEmployer().getId().equals(employer.getId())) {
-            throw new SecurityException("Anda tidak memiliki hak untuk mengubah status lamaran ini");
         }
 
         Company company = employer.getCompany();
@@ -182,6 +182,16 @@ public class JobApplicationService {
 
         if (employer.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
             throw new IllegalStateException("Status membership employer belum aktif");
+        }
+
+        JobPosting jobPosting = existingApplication.getJobPosting();
+        Company postingCompany = getJobPostingCompany(jobPosting);
+        if (postingCompany == null || postingCompany.getId() == null || company.getId() == null) {
+            throw new SecurityException("Anda tidak memiliki hak untuk mengubah status lamaran ini");
+        }
+
+        if (!postingCompany.getId().equals(company.getId())) {
+            throw new SecurityException("Anda tidak memiliki hak untuk mengubah status lamaran ini");
         }
 
         if (newStatus == null) {
@@ -197,5 +207,26 @@ public class JobApplicationService {
             return List.of();
         }
         return repository.findByJobPostingEmployerOrderByApplicationDateDesc(employer);
+    }
+
+    public List<JobApplication> findByCompany(Company company) {
+        if (company == null || company.getId() == null) {
+            return List.of();
+        }
+        return repository.findByJobPostingCompanyOrderByApplicationDateDesc(company);
+    }
+
+    Company getJobPostingCompany(JobPosting jobPosting) {
+        if (jobPosting == null) {
+            return null;
+        }
+        Company company = jobPosting.getCompany();
+        if (company != null) {
+            return company;
+        }
+        if (jobPosting.getEmployer() != null) {
+            return jobPosting.getEmployer().getCompany();
+        }
+        return null;
     }
 }

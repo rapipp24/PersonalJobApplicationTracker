@@ -88,8 +88,17 @@ public class JobApplicantsView extends VerticalLayout implements HasUrlParameter
 
         JobPosting jobPosting = postingOptional.get();
 
-        // Validasi keamanan: hanya employer pemilik lowongan yang boleh melihat
-        if (jobPosting.getEmployer() == null || !jobPosting.getEmployer().getId().equals(currentUser.getId())) {
+        Company postingCompany = jobPosting.getCompany();
+        if (postingCompany == null && jobPosting.getEmployer() != null) {
+            postingCompany = jobPosting.getEmployer().getCompany();
+        }
+
+        if (postingCompany == null || postingCompany.getId() == null || company.getId() == null) {
+            event.forwardTo(PemberiLamaranView.class);
+            return;
+        }
+
+        if (!postingCompany.getId().equals(company.getId())) {
             event.forwardTo(PemberiLamaranView.class);
             return;
         }
