@@ -3,9 +3,11 @@ package com.example.view;
 import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
+import com.example.entity.Role;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.vaadin.flow.component.Html;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -41,6 +43,8 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private RouterLink applicantBrowseJobsLink;
     private RouterLink applicantApplicationsLink;
     private boolean isApplicant = false;
+
+    private Span accountNameSpan;
 
     public MainLayout(
             AuthenticationContext authenticationContext,
@@ -289,7 +293,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         if (path == null || path.isBlank()) {
             applicantDashboardLink.addClassName("applicant-nav-item-active");
-        } else if (path.startsWith("pelamar")) {
+        } else if (path.startsWith("pelamar") && !path.startsWith("pelamar/profile")) {
             applicantBrowseJobsLink.addClassName("applicant-nav-item-active");
         } else if (path.startsWith("applications")) {
             applicantApplicationsLink.addClassName("applicant-nav-item-active");
@@ -418,18 +422,27 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         Html userIcon = new Html("<iconify-icon icon=\"lucide:user-round\" class=\"user-account-icon\"></iconify-icon>");
 
-        Span nameSpan = new Span(userName);
-        nameSpan.addClassName("account-user-name");
+        accountNameSpan = new Span(userName);
+        accountNameSpan.addClassName("account-user-name");
 
         Html dropdownIcon = new Html("<iconify-icon icon=\"lucide:chevron-down\" class=\"account-dropdown-icon\"></iconify-icon>");
 
-        HorizontalLayout accountContent = new HorizontalLayout(userIcon, nameSpan, dropdownIcon);
+        HorizontalLayout accountContent = new HorizontalLayout(userIcon, accountNameSpan, dropdownIcon);
         accountContent.setAlignItems(Alignment.CENTER);
         accountContent.addClassName("account-menu-content");
 
         MenuItem accountItem = accountMenu.addItem(accountContent);
+        if (currentUser.isPresent() && currentUser.get().getRole() == Role.PELAMAR) {
+            accountItem.getSubMenu().addItem("Profile & Settings", event -> UI.getCurrent().navigate(ApplicantProfileView.class));
+        }
         accountItem.getSubMenu().addItem("Logout", event -> authenticationContext.logout());
 
         return accountMenu;
+    }
+
+    public void updateCurrentUserDisplayName(String newName) {
+        if (accountNameSpan != null && newName != null && !newName.isBlank()) {
+            accountNameSpan.setText(newName.trim());
+        }
     }
 }
