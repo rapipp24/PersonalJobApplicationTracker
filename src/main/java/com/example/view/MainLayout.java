@@ -310,7 +310,9 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
         if (employerJobPostingsLink != null) {
             employerJobPostingsLink.removeClassName("employer-nav-item-active");
-            if (path != null && path.startsWith("pemberi-lamaran") && !path.startsWith("pemberi-lamaran/member-requests")) {
+            if (path != null && path.startsWith("pemberi-lamaran")
+                    && !path.startsWith("pemberi-lamaran/member-requests")
+                    && !path.startsWith("pemberi-lamaran/settings")) {
                 employerJobPostingsLink.addClassName("employer-nav-item-active");
             }
         }
@@ -434,6 +436,8 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         MenuItem accountItem = accountMenu.addItem(accountContent);
         if (currentUser.isPresent() && currentUser.get().getRole() == Role.PELAMAR) {
             accountItem.getSubMenu().addItem("Profile & Settings", event -> UI.getCurrent().navigate(ApplicantProfileView.class));
+        } else if (currentUser.isPresent() && currentUser.get().getRole() == Role.PEMBERI_LAMARAN) {
+            accountItem.getSubMenu().addItem("Profile & Settings", event -> UI.getCurrent().navigate(EmployerSettingsView.class));
         }
         accountItem.getSubMenu().addItem("Logout", event -> authenticationContext.logout());
 
