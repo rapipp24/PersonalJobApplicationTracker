@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,6 +44,15 @@ public class JobApplication{
     @ManyToOne
     @JoinColumn(name = "job_posting_id")
     private JobPosting jobPosting;
+
+    @Column(length = 30)
+    private String phone;
+
+    @Column(length = 255)
+    private String linkedIn;
+
+    @Column(length = 255)
+    private String portfolio;
 
     public Long getId() {
         return id;
@@ -122,6 +132,30 @@ public class JobApplication{
 
     public void setJobPosting(JobPosting jobPosting) {
         this.jobPosting = jobPosting;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getLinkedIn() {
+        return linkedIn;
+    }
+
+    public void setLinkedIn(String linkedIn) {
+        this.linkedIn = linkedIn;
+    }
+
+    public String getPortfolio() {
+        return portfolio;
+    }
+
+    public void setPortfolio(String portfolio) {
+        this.portfolio = portfolio;
     }
 }
 

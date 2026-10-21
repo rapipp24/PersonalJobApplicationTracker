@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.entity.ApplicantProfile;
 import com.example.entity.ApplicationStatus;
 import com.example.entity.ApplicationTipe;
 import com.example.entity.JobApplication;
@@ -7,6 +8,7 @@ import com.example.entity.JobPosting;
 import com.example.entity.JobTipe;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
+import com.example.service.ApplicantProfileService;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
 import com.vaadin.flow.component.Html;
@@ -44,12 +46,14 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
     private final JobApplicationService jobApplicationService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
+    private final ApplicantProfileService applicantProfileService;
 
     private JobPosting currentJob;
     private User currentUser;
 
     private TextField phoneField;
     private TextField linkedInField;
+    private TextField portfolioField;
     private String uploadedFileName;
     private Div fileBadgeContainer;
 
@@ -57,11 +61,13 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
             JobPostingService jobPostingService,
             JobApplicationService jobApplicationService,
             AuthenticationContext authenticationContext,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ApplicantProfileService applicantProfileService) {
         this.jobPostingService = jobPostingService;
         this.jobApplicationService = jobApplicationService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
+        this.applicantProfileService = applicantProfileService;
 
         addClassName("applicant-apply-page");
         setPadding(false);
@@ -230,13 +236,18 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
                 createReadOnlyField(currentUser.getEmail() != null ? currentUser.getEmail() : "-", "lucide:mail")
         );
 
-        // 3. Phone Number (Editable, Required in UI)
+        // Prefill contact data from ApplicantProfile
+        ApplicantProfile profile = applicantProfileService.getOrCreateProfile(currentUser);
+
+        // 3. Phone Number (Editable, Required in UI, max 30)
         phoneField = new TextField();
         phoneField.addClassName("applicant-apply-input");
         phoneField.addClassName("applicant-apply-input-editable");
         phoneField.setPlaceholder("+62 8xx xxxx xxxx");
+        phoneField.setMaxLength(30);
         phoneField.setPrefixComponent(new Html("<iconify-icon icon=\"lucide:phone\" class=\"applicant-apply-field-icon\"></iconify-icon>"));
         phoneField.setWidthFull();
+        phoneField.setValue(profile.getPhone() != null ? profile.getPhone() : "");
 
         Div phoneWrapper = createFieldWrapper(
                 "Phone Number *",
@@ -245,22 +256,42 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
                 phoneField
         );
 
-        // 4. Portfolio / LinkedIn URL (Editable, Optional)
+        // 4. LinkedIn URL (Editable, Optional, max 255)
         linkedInField = new TextField();
         linkedInField.addClassName("applicant-apply-input");
         linkedInField.addClassName("applicant-apply-input-editable");
         linkedInField.setPlaceholder("https://linkedin.com/in/username");
-        linkedInField.setPrefixComponent(new Html("<iconify-icon icon=\"lucide:link\" class=\"applicant-apply-field-icon\"></iconify-icon>"));
+        linkedInField.setMaxLength(255);
+        linkedInField.setPrefixComponent(new Html("<iconify-icon icon=\"lucide:linkedin\" class=\"applicant-apply-field-icon\"></iconify-icon>"));
         linkedInField.setWidthFull();
+        linkedInField.setValue(profile.getLinkedIn() != null ? profile.getLinkedIn() : "");
 
         Div linkedInWrapper = createFieldWrapper(
-                "Portfolio / LinkedIn URL",
+                "LinkedIn URL",
                 "Optional",
                 "applicant-apply-badge-optional",
                 linkedInField
         );
 
-        fieldGrid.add(nameWrapper, emailWrapper, phoneWrapper, linkedInWrapper);
+        // 5. Portfolio URL (Editable, Optional, max 255)
+        portfolioField = new TextField();
+        portfolioField.addClassName("applicant-apply-input");
+        portfolioField.addClassName("applicant-apply-input-editable");
+        portfolioField.setPlaceholder("https://yourportfolio.com");
+        portfolioField.setMaxLength(255);
+        portfolioField.setPrefixComponent(new Html("<iconify-icon icon=\"lucide:globe\" class=\"applicant-apply-field-icon\"></iconify-icon>"));
+        portfolioField.setWidthFull();
+        portfolioField.setValue(profile.getPortfolio() != null ? profile.getPortfolio() : "");
+
+        Div portfolioWrapper = createFieldWrapper(
+                "Portfolio URL",
+                "Optional",
+                "applicant-apply-badge-optional",
+                portfolioField
+        );
+        portfolioWrapper.getStyle().set("grid-column", "1 / -1");
+
+        fieldGrid.add(nameWrapper, emailWrapper, phoneWrapper, linkedInWrapper, portfolioWrapper);
         section1.add(sec1Header, sec1Subtitle, fieldGrid);
         content.add(section1);
 
@@ -498,14 +529,25 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
             return;
         }
 
-        String phone = phoneField.getValue();
-        if (phone == null || phone.trim().isEmpty()) {
+        String rawPhone = phoneField.getValue();
+        if (rawPhone == null || rawPhone.trim().isEmpty()) {
             phoneField.setInvalid(true);
             phoneField.setErrorMessage("Phone number is required");
             Notification.show("Silakan isi nomor telepon Anda");
             return;
         }
         phoneField.setInvalid(false);
+
+        String trimmedPhone = rawPhone.trim();
+        if (trimmedPhone.length() > 30) {
+            phoneField.setInvalid(true);
+            phoneField.setErrorMessage("Nomor telepon tidak boleh melebihi 30 karakter");
+            Notification.show("Nomor telepon tidak boleh melebihi 30 karakter");
+            return;
+        }
+
+        String finalLinkedIn = normalizeOptionalField(linkedInField.getValue(), 255);
+        String finalPortfolio = normalizeOptionalField(portfolioField.getValue(), 255);
 
         // Save application using existing backend mapping
         JobApplication jobApplication = new JobApplication();
@@ -516,11 +558,28 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         jobApplication.settipeKerja(currentJob.getTipeKerja());
         jobApplication.setApplicationDate(LocalDate.now());
         jobApplication.setStatus(ApplicationStatus.APPLIED);
+        jobApplication.setPhone(trimmedPhone);
+        jobApplication.setLinkedIn(finalLinkedIn);
+        jobApplication.setPortfolio(finalPortfolio);
 
         jobApplicationService.simpanLamaran(jobApplication);
 
         Notification.show("Lamaran berhasil dikirim");
         UI.getCurrent().navigate(ApplicationsView.class);
+    }
+
+    private String normalizeOptionalField(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.length() > maxLength) {
+            return trimmed.substring(0, maxLength);
+        }
+        return trimmed;
     }
 
     private User getCurrentUser() {

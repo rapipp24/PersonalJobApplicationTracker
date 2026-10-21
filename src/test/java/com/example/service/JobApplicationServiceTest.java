@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.entity.ApplicantProfile;
 import com.example.entity.ApplicationStatus;
 import com.example.entity.Company;
 import com.example.entity.CompanyMembershipStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -984,5 +986,79 @@ public class JobApplicationServiceTest {
 
         assertEquals(1, hasil.size());
         verify(repository).findByJobPostingCompanyOrderByApplicationDateDesc(company);
+    }
+
+    @Test
+    void harusBisaMenyimpanLamaranDenganSnapshotKontak() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setPhone("08123456789");
+        jobApplication.setLinkedIn("https://linkedin.com/in/budi");
+        jobApplication.setPortfolio("https://budi.dev");
+
+        when(repository.save(any(JobApplication.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        JobApplication saved = service.simpanLamaran(jobApplication);
+
+        assertEquals("08123456789", saved.getPhone());
+        assertEquals("https://linkedin.com/in/budi", saved.getLinkedIn());
+        assertEquals("https://budi.dev", saved.getPortfolio());
+        verify(repository).save(jobApplication);
+    }
+
+    @Test
+    void harusBisaMenyimpanLamaranDenganSnapshotKontakOpsionalNull() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setPhone("08123456789");
+        jobApplication.setLinkedIn(null);
+        jobApplication.setPortfolio(null);
+
+        when(repository.save(any(JobApplication.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        JobApplication saved = service.simpanLamaran(jobApplication);
+
+        assertEquals("08123456789", saved.getPhone());
+        assertNull(saved.getLinkedIn());
+        assertNull(saved.getPortfolio());
+        verify(repository).save(jobApplication);
+    }
+
+    @Test
+    void harusMemastikanSnapshotKontakJobApplicationIndependenDariPerubahanApplicantProfile() {
+        User applicant = new User();
+        applicant.setId(10L);
+        applicant.setName("Pelamar Budi");
+
+        ApplicantProfile profile = new ApplicantProfile(applicant);
+        profile.setPhone("0811111111");
+        profile.setLinkedIn("https://linkedin.com/in/profile-lama");
+        profile.setPortfolio("https://profile-lama.dev");
+
+        // Lamaran dibuat dengan nilai form custom (snapshot)
+        JobApplication jobApplication = new JobApplication();
+        jobApplication.setApplicant(applicant);
+        jobApplication.setPhone("0822222222"); // custom edit di form
+        jobApplication.setLinkedIn("https://linkedin.com/in/form-custom");
+        jobApplication.setPortfolio("https://form-custom.dev");
+
+        // Setelah submit, pelamar mengubah profilnya di kemudian hari
+        profile.setPhone("0899999999");
+        profile.setLinkedIn("https://linkedin.com/in/profile-baru");
+        profile.setPortfolio("https://profile-baru.dev");
+
+        // Snapshot pada JobApplication harus tetap menyimpan nilai saat apply
+        assertEquals("0822222222", jobApplication.getPhone());
+        assertEquals("https://linkedin.com/in/form-custom", jobApplication.getLinkedIn());
+        assertEquals("https://form-custom.dev", jobApplication.getPortfolio());
+
+        // Dan profil terpisah menyimpan nilainya sendiri
+        assertEquals("0899999999", profile.getPhone());
+        assertEquals("https://linkedin.com/in/profile-baru", profile.getLinkedIn());
+        assertEquals("https://profile-baru.dev", profile.getPortfolio());
     }
 }
