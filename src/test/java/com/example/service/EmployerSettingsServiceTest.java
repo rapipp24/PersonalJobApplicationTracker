@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.entity.Company;
+import com.example.entity.CompanyMembershipStatus;
 import com.example.entity.CompanyPermission;
 import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.Role;
@@ -13,10 +14,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -81,6 +86,19 @@ public class EmployerSettingsServiceTest {
         user.setEmail("budi@pelamar.com");
         user.setPassword("encodedPassword");
         user.setRole(Role.PELAMAR);
+        return user;
+    }
+
+    private User createInitialRegistrantUser(Company company) {
+        User user = new User();
+        user.setId(4L);
+        user.setName("Registrant Employer");
+        user.setEmail("registrant@mandiri.com");
+        user.setPassword("encodedOldPassword");
+        user.setRole(Role.PEMBERI_LAMARAN);
+        user.setCompanyPermission(null);
+        user.setMembershipStatus(CompanyMembershipStatus.PENDING);
+        user.setCompany(company);
         return user;
     }
 
@@ -530,5 +548,296 @@ public class EmployerSettingsServiceTest {
                 admin, "PT Sukses", "Industri", "Lokasi", null, "kontak", longDescription));
 
         verify(companyRepository, never()).save(any());
+    }
+
+    // ==========================================
+    // 5. RESUBMIT & INITIAL REGISTRANT TESTS (Section 32)
+    // ==========================================
+
+    @Test
+    void harusBisaUpdateCompanyProfileOlehInitialRegistrantSaatStatusRejected() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+        company.setRejectionReason("Website tidak valid");
+
+        User registrant = createInitialRegistrantUser(company);
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(registrant));
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Company updated = service.updateCompanyProfile(
+                registrant,
+                "PT Diperbaiki",
+                "Teknologi",
+                "Bandung",
+                "https://diperbaiki.com",
+                "info@diperbaiki.com",
+                "Deskripsi diperbaiki"
+        );
+
+        assertNotNull(updated);
+        assertEquals("PT Diperbaiki", updated.getName());
+        assertEquals("Bandung", updated.getLocation());
+        assertEquals(CompanyVerificationStatus.REJECTED, updated.getVerificationStatus());
+        assertEquals("Website tidak valid", updated.getRejectionReason()); // Alasan penolakan tidak hilang saat save profile
+        verify(companyRepository).save(company);
+    }
+
+    @Test
+    void harusMenolakUpdateCompanyProfileOlehInitialRegistrantSaatStatusPending() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        User registrant = createInitialRegistrantUser(company);
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(registrant));
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.updateCompanyProfile(
+                registrant,
+                "PT Pending",
+                "Teknologi",
+                "Bandung",
+                null,
+                "info@pending.com",
+                "Deskripsi"
+        ));
+
+        assertEquals("Hanya COMPANY_ADMIN yang berhak mengubah profil perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakUpdateCompanyProfileJikaPermissionNullTetapiBukanInitialRegistrant() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        User actualRegistrant = createInitialRegistrantUser(company);
+        User fakeRegistrant = createInitialRegistrantUser(company);
+        fakeRegistrant.setId(99L);
+        fakeRegistrant.setEmail("fake@mandiri.com");
+
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(actualRegistrant));
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.updateCompanyProfile(
+                fakeRegistrant,
+                "PT Fake",
+                "Teknologi",
+                "Bandung",
+                null,
+                "info@fake.com",
+                "Deskripsi"
+        ));
+
+        assertEquals("Hanya COMPANY_ADMIN yang berhak mengubah profil perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusBisaResubmitCompanyVerificationOlehInitialRegistrantSaatStatusRejected() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+        company.setRejectionReason("Legalitas belum lengkap");
+
+        User registrant = createInitialRegistrantUser(company);
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(registrant));
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Company resubmitted = service.resubmitCompanyVerification(registrant);
+
+        assertNotNull(resubmitted);
+        assertEquals(CompanyVerificationStatus.PENDING, resubmitted.getVerificationStatus());
+        assertNull(resubmitted.getRejectionReason()); // rejectionReason dibersihkan saat resubmit
+        verify(companyRepository).save(company);
+    }
+
+    @Test
+    void harusBisaResubmitCompanyVerificationOlehCompanyAdminSaatStatusRejected() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+        company.setRejectionReason("Kontak perusahaan tidak aktif");
+
+        User admin = createEmployerAdminUser(company);
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Company resubmitted = service.resubmitCompanyVerification(admin);
+
+        assertNotNull(resubmitted);
+        assertEquals(CompanyVerificationStatus.PENDING, resubmitted.getVerificationStatus());
+        assertNull(resubmitted.getRejectionReason());
+        verify(companyRepository).save(company);
+    }
+
+    @Test
+    void harusMenolakResubmitOlehMember() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        User member = createEmployerMemberUser(company);
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.resubmitCompanyVerification(member));
+        assertEquals("Hanya COMPANY_ADMIN atau pendaftar awal yang berhak mengajukan ulang verifikasi perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakResubmitOlehUserPermissionNullTetapiBukanInitialRegistrant() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        User actualRegistrant = createInitialRegistrantUser(company);
+        User unauthorizedUser = createInitialRegistrantUser(company);
+        unauthorizedUser.setId(99L);
+        unauthorizedUser.setEmail("unauthorized@mandiri.com");
+
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(actualRegistrant));
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.resubmitCompanyVerification(unauthorizedUser));
+        assertEquals("Hanya COMPANY_ADMIN atau pendaftar awal yang berhak mengajukan ulang verifikasi perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakResubmitSaatStatusCompanyPending() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        User admin = createEmployerAdminUser(company);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> service.resubmitCompanyVerification(admin));
+        assertEquals("Hanya perusahaan dengan status REJECTED yang dapat diajukan ulang verifikasinya", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakResubmitSaatStatusCompanyVerified() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.VERIFIED);
+
+        User admin = createEmployerAdminUser(company);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> service.resubmitCompanyVerification(admin));
+        assertEquals("Hanya perusahaan dengan status REJECTED yang dapat diajukan ulang verifikasinya", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakResubmitJikaCompanyNull() {
+        User adminWithoutCompany = createEmployerAdminUser(null);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> service.resubmitCompanyVerification(adminWithoutCompany));
+        assertEquals("Akun employer belum terhubung dengan perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMenolakResubmitOlehNonEmployer() {
+        User applicant = createApplicantUser();
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.resubmitCompanyVerification(applicant));
+        assertEquals("Hanya employer yang dapat mengakses layanan ini", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMemastikanCompanyTargetResubmitBerasalDariCurrentUserCompany() {
+        Company companyA = createVerifiedCompany();
+        companyA.setId(10L);
+        companyA.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        User adminA = createEmployerAdminUser(companyA);
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Company result = service.resubmitCompanyVerification(adminA);
+
+        assertEquals(10L, result.getId());
+        assertEquals(CompanyVerificationStatus.PENDING, result.getVerificationStatus());
+        verify(companyRepository).save(companyA);
+    }
+
+    @Test
+    void harusMempertahankanStatusRejectedDanRejectionReasonSaatSaveCompanyProfile() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+        company.setRejectionReason("Dokumen pendukung buram");
+
+        User admin = createEmployerAdminUser(company);
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Company updated = service.updateCompanyProfile(
+                admin,
+                "PT Diperbaiki Admin",
+                "Industri",
+                "Lokasi",
+                null,
+                "kontak",
+                "deskripsi"
+        );
+
+        assertEquals(CompanyVerificationStatus.REJECTED, updated.getVerificationStatus());
+        assertEquals("Dokumen pendukung buram", updated.getRejectionReason());
+        verify(companyRepository).save(company);
+    }
+
+    @Test
+    void harusMenolakResubmitJikaAdaLebihDariSatuEmployerDanPermissionNull() {
+        Company company = createVerifiedCompany();
+        company.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+
+        User user1 = createInitialRegistrantUser(company);
+        User user2 = createInitialRegistrantUser(company);
+        user2.setId(5L);
+
+        when(userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN)).thenReturn(List.of(user1, user2));
+
+        SecurityException ex = assertThrows(SecurityException.class, () -> service.resubmitCompanyVerification(user1));
+        assertEquals("Hanya COMPANY_ADMIN atau pendaftar awal yang berhak mengajukan ulang verifikasi perusahaan", ex.getMessage());
+        verify(companyRepository, never()).save(any());
+    }
+
+    @Test
+    void harusMemastikanCapabilityCanEditDanCanResubmitSesuaiStatusDanPermission() {
+        Company verifiedCompany = createVerifiedCompany();
+        User admin = createEmployerAdminUser(verifiedCompany);
+        User member = createEmployerMemberUser(verifiedCompany);
+
+        // 1. COMPANY_ADMIN pada VERIFIED: canEdit = true, canResubmit = false
+        assertTrue(service.canEditCompanyProfile(admin));
+        assertFalse(service.canResubmitVerification(admin));
+
+        // 2. MEMBER pada VERIFIED: canEdit = false, canResubmit = false
+        assertFalse(service.canEditCompanyProfile(member));
+        assertFalse(service.canResubmitVerification(member));
+
+        // 3. COMPANY_ADMIN pada REJECTED: canEdit = true, canResubmit = true
+        Company rejectedCompany = createVerifiedCompany();
+        rejectedCompany.setVerificationStatus(CompanyVerificationStatus.REJECTED);
+        User adminRejected = createEmployerAdminUser(rejectedCompany);
+        assertTrue(service.canEditCompanyProfile(adminRejected));
+        assertTrue(service.canResubmitVerification(adminRejected));
+
+        // 4. INITIAL REGISTRANT pada REJECTED: canEdit = true, canResubmit = true
+        User registrantRejected = createInitialRegistrantUser(rejectedCompany);
+        when(userRepository.findByCompanyAndRole(rejectedCompany, Role.PEMBERI_LAMARAN))
+                .thenReturn(List.of(registrantRejected));
+        assertTrue(service.canEditCompanyProfile(registrantRejected));
+        assertTrue(service.canResubmitVerification(registrantRejected));
+
+        // 5. INITIAL REGISTRANT pada PENDING: canEdit = false, canResubmit = false
+        Company pendingCompany = createVerifiedCompany();
+        pendingCompany.setVerificationStatus(CompanyVerificationStatus.PENDING);
+        User registrantPending = createInitialRegistrantUser(pendingCompany);
+        when(userRepository.findByCompanyAndRole(pendingCompany, Role.PEMBERI_LAMARAN))
+                .thenReturn(List.of(registrantPending));
+        assertFalse(service.canEditCompanyProfile(registrantPending));
+        assertFalse(service.canResubmitVerification(registrantPending));
+
+        // 6. MEMBER pada REJECTED: canEdit = false, canResubmit = false
+        User memberRejected = createEmployerMemberUser(rejectedCompany);
+        assertFalse(service.canEditCompanyProfile(memberRejected));
+        assertFalse(service.canResubmitVerification(memberRejected));
+
+        // 7. Null checks
+        assertFalse(service.canEditCompanyProfile(null));
+        assertFalse(service.canResubmitVerification(null));
+        assertFalse(service.canEditCompanyProfile(createApplicantUser()));
+        assertFalse(service.canResubmitVerification(createApplicantUser()));
     }
 }

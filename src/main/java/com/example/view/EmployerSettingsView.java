@@ -46,6 +46,9 @@ public class EmployerSettingsView extends VerticalLayout {
     private final TextField officialContactField = new TextField("Official Company Email / Contact");
     private final TextArea descriptionField = new TextArea("Company Description");
     private final Span verificationStatusBadge = new Span();
+    private final Button resubmitVerificationButton = new Button("Ajukan Ulang Verifikasi");
+    private final Div rejectionReasonBox = new Div();
+    private final Paragraph rejectionReasonText = new Paragraph();
     private final Button saveCompanyButton = new Button("Save Company Profile");
     private final Paragraph noCompanyNotice = new Paragraph("Akun Anda belum terhubung dengan perusahaan.");
 
@@ -117,7 +120,39 @@ public class EmployerSettingsView extends VerticalLayout {
 
         Span statusLabel = new Span("Verification Status: ");
         statusLabel.getStyle().set("font-weight", "600").set("font-size", "0.875rem");
-        statusLayout.add(statusLabel, verificationStatusBadge);
+
+        resubmitVerificationButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+        resubmitVerificationButton.getStyle().set("margin-left", "12px");
+        resubmitVerificationButton.setVisible(false);
+        resubmitVerificationButton.addClickListener(event -> handleResubmitVerification());
+
+        statusLayout.add(statusLabel, verificationStatusBadge, resubmitVerificationButton);
+
+        // Rejection Reason Box
+        rejectionReasonBox.setWidthFull();
+        rejectionReasonBox.getStyle()
+                .set("background-color", "#FEF2F2")
+                .set("border", "1px solid #FECACA")
+                .set("border-radius", "8px")
+                .set("padding", "12px 16px")
+                .set("margin-bottom", "16px");
+
+        Span rejectionReasonLabel = new Span("Alasan Penolakan:");
+        rejectionReasonLabel.getStyle()
+                .set("font-size", "13px")
+                .set("font-weight", "700")
+                .set("color", "#991B1B")
+                .set("display", "block")
+                .set("margin-bottom", "4px");
+
+        rejectionReasonText.getStyle()
+                .set("margin", "0")
+                .set("font-size", "13px")
+                .set("color", "#7F1D1D")
+                .set("line-height", "1.5");
+
+        rejectionReasonBox.add(rejectionReasonLabel, rejectionReasonText);
+        rejectionReasonBox.setVisible(false);
 
         // Form Fields
         companyNameField.setWidthFull();
@@ -164,7 +199,7 @@ public class EmployerSettingsView extends VerticalLayout {
                 .set("margin-top", "8px");
         noCompanyNotice.setVisible(false);
 
-        section.add(sectionTitle, sectionDesc, statusLayout, noCompanyNotice, companyForm, saveCompanyButton);
+        section.add(sectionTitle, sectionDesc, statusLayout, rejectionReasonBox, noCompanyNotice, companyForm, saveCompanyButton);
         add(section);
     }
 
@@ -257,6 +292,8 @@ public class EmployerSettingsView extends VerticalLayout {
             officialContactField.setVisible(false);
             descriptionField.setVisible(false);
             saveCompanyButton.setVisible(false);
+            resubmitVerificationButton.setVisible(false);
+            rejectionReasonBox.setVisible(false);
             verificationStatusBadge.setText("NO COMPANY");
             applyBadgeStyle(verificationStatusBadge, "#F1F5F9", "#475569");
             return;
@@ -277,29 +314,51 @@ public class EmployerSettingsView extends VerticalLayout {
         officialContactField.setValue(company.getOfficialContact() != null ? company.getOfficialContact() : "");
         descriptionField.setValue(company.getDescription() != null ? company.getDescription() : "");
 
-        // Set verification status badge
+        // Set verification status badge and rejection reason box
         CompanyVerificationStatus status = company.getVerificationStatus();
         if (status == CompanyVerificationStatus.VERIFIED) {
             verificationStatusBadge.setText("VERIFIED");
             applyBadgeStyle(verificationStatusBadge, "#DEF7EC", "#03543F");
+            rejectionReasonBox.setVisible(false);
         } else if (status == CompanyVerificationStatus.REJECTED) {
             verificationStatusBadge.setText("REJECTED");
             applyBadgeStyle(verificationStatusBadge, "#FEE2E2", "#991B1B");
+            String reason = company.getRejectionReason();
+            if (reason == null || reason.trim().isEmpty()) {
+                reason = "Alasan penolakan tidak dicantumkan oleh administrator.";
+            }
+            rejectionReasonText.setText(reason);
+            rejectionReasonBox.setVisible(true);
         } else {
             verificationStatusBadge.setText("PENDING");
             applyBadgeStyle(verificationStatusBadge, "#FEF3C7", "#92400E");
+            rejectionReasonBox.setVisible(false);
         }
 
-        // Set editable vs read-only based on permission
-        boolean isCompanyAdmin = currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN;
-        companyNameField.setReadOnly(!isCompanyAdmin);
-        industryField.setReadOnly(!isCompanyAdmin);
-        locationField.setReadOnly(!isCompanyAdmin);
-        websiteField.setReadOnly(!isCompanyAdmin);
-        officialContactField.setReadOnly(!isCompanyAdmin);
-        descriptionField.setReadOnly(!isCompanyAdmin);
+        // Set editable vs read-only based on capability
+        boolean canEdit = employerSettingsService.canEditCompanyProfile(currentUser);
+        boolean canResubmit = employerSettingsService.canResubmitVerification(currentUser);
 
-        saveCompanyButton.setVisible(isCompanyAdmin);
+        companyNameField.setReadOnly(!canEdit);
+        industryField.setReadOnly(!canEdit);
+        locationField.setReadOnly(!canEdit);
+        websiteField.setReadOnly(!canEdit);
+        officialContactField.setReadOnly(!canEdit);
+        descriptionField.setReadOnly(!canEdit);
+
+        saveCompanyButton.setVisible(canEdit);
+        resubmitVerificationButton.setVisible(canResubmit);
+    }
+
+    private void handleResubmitVerification() {
+        try {
+            User currentUser = getCurrentUser();
+            employerSettingsService.resubmitCompanyVerification(currentUser);
+            Notification.show("Pengajuan ulang verifikasi berhasil dikirim", 3000, Notification.Position.BOTTOM_START);
+            loadUserData();
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
+            Notification.show(ex.getMessage(), 4000, Notification.Position.BOTTOM_START);
+        }
     }
 
     private void applyBadgeStyle(Span badge, String bgColor, String textColor) {

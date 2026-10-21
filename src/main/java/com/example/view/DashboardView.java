@@ -7,11 +7,15 @@ import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
+import com.example.service.EmployerSettingsService;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
 import com.example.view.component.ApplicantDashboard;
 import com.example.view.component.AdminDashboard;
 import com.example.view.component.EmployerDashboard;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -36,16 +40,19 @@ public class DashboardView extends VerticalLayout {
     private final JobPostingService jobPostingService;
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
+    private final EmployerSettingsService employerSettingsService;
 
     public DashboardView(
             JobApplicationService jobApplicationService,
             JobPostingService jobPostingService,
             AuthenticationContext authenticationContext,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            EmployerSettingsService employerSettingsService) {
         this.jobApplicationService = jobApplicationService;
         this.jobPostingService = jobPostingService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
+        this.employerSettingsService = employerSettingsService;
 
         addClassName("view-container");
         setWidthFull();
@@ -98,7 +105,7 @@ public class DashboardView extends VerticalLayout {
 
             // 3. Cek Company REJECTED
             if (verificationStatus == CompanyVerificationStatus.REJECTED) {
-                showCompanyRejectedState(company);
+                showCompanyRejectedState(currentUser, company);
                 return;
             }
 
@@ -188,7 +195,7 @@ public class DashboardView extends VerticalLayout {
         add(card);
     }
 
-    private void showCompanyRejectedState(Company company) {
+    private void showCompanyRejectedState(User currentUser, Company company) {
         Div card = createBaseStatusCard();
 
         Div iconWrapper = createIconWrapper("#FEE2E2");
@@ -235,10 +242,24 @@ public class DashboardView extends VerticalLayout {
 
         reasonBox.add(reasonLabel, reasonText);
 
-        Paragraph desc = new Paragraph("You currently do not have access to the Employer area. Silakan hubungi administrator aplikasi jika Anda memerlukan bantuan lebih lanjut.");
-        applyDescStyle(desc);
+        boolean canEdit = employerSettingsService.canEditCompanyProfile(currentUser);
 
-        card.add(iconWrapper, companyMeta, title, subtitle, reasonBox, desc);
+        Paragraph guidance = new Paragraph();
+        applyDescStyle(guidance);
+
+        if (canEdit) {
+            guidance.setText("Silakan perbaiki informasi perusahaan sesuai alasan penolakan di atas. Setelah data diperbarui, Anda dapat mengajukan ulang perusahaan untuk diverifikasi.");
+
+            Button editProfileButton = new Button("Perbaiki Company Profile", event -> UI.getCurrent().navigate(EmployerSettingsView.class));
+            editProfileButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            editProfileButton.getStyle().set("margin-top", "16px");
+
+            card.add(iconWrapper, companyMeta, title, subtitle, reasonBox, guidance, editProfileButton);
+        } else {
+            guidance.setText("Profil perusahaan perlu diperbaiki sebelum verifikasi dapat diajukan kembali. Silakan hubungi Company Admin.");
+            card.add(iconWrapper, companyMeta, title, subtitle, reasonBox, guidance);
+        }
+
         add(card);
     }
 

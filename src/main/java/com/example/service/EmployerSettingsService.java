@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.entity.Company;
 import com.example.entity.CompanyPermission;
+import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.Role;
 import com.example.entity.User;
 import com.example.repository.CompanyRepository;
@@ -9,6 +10,8 @@ import com.example.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class EmployerSettingsService {
@@ -38,6 +41,35 @@ public class EmployerSettingsService {
         return company;
     }
 
+    @Transactional(readOnly = true)
+    public boolean canEditCompanyProfile(User currentUser) {
+        if (currentUser == null || currentUser.getRole() != Role.PEMBERI_LAMARAN) {
+            return false;
+        }
+        Company company = currentUser.getCompany();
+        if (company == null) {
+            return false;
+        }
+        if (currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN) {
+            return true;
+        }
+        return company.getVerificationStatus() == CompanyVerificationStatus.REJECTED
+                && isInitialCompanyRegistrant(currentUser, company);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canResubmitVerification(User currentUser) {
+        if (currentUser == null || currentUser.getRole() != Role.PEMBERI_LAMARAN) {
+            return false;
+        }
+        Company company = currentUser.getCompany();
+        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.REJECTED) {
+            return false;
+        }
+        return currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN
+                || isInitialCompanyRegistrant(currentUser, company);
+    }
+
     @Transactional
     public Company updateCompanyProfile(
             User currentUser,
@@ -55,7 +87,11 @@ public class EmployerSettingsService {
             throw new IllegalStateException("Akun employer belum terhubung dengan perusahaan");
         }
 
-        if (currentUser.getCompanyPermission() != CompanyPermission.COMPANY_ADMIN) {
+        boolean isCompanyAdmin = currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN;
+        boolean isAllowedRegistrant = company.getVerificationStatus() == CompanyVerificationStatus.REJECTED
+                && isInitialCompanyRegistrant(currentUser, company);
+
+        if (!isCompanyAdmin && !isAllowedRegistrant) {
             throw new SecurityException("Hanya COMPANY_ADMIN yang berhak mengubah profil perusahaan");
         }
 
@@ -72,6 +108,32 @@ public class EmployerSettingsService {
         company.setWebsite(normalizedWebsite);
         company.setOfficialContact(trimmedContact);
         company.setDescription(trimmedDesc);
+
+        return companyRepository.save(company);
+    }
+
+    @Transactional
+    public Company resubmitCompanyVerification(User currentUser) {
+        validateEmployer(currentUser);
+
+        Company company = currentUser.getCompany();
+        if (company == null) {
+            throw new IllegalStateException("Akun employer belum terhubung dengan perusahaan");
+        }
+
+        boolean isCompanyAdmin = currentUser.getCompanyPermission() == CompanyPermission.COMPANY_ADMIN;
+        boolean isRegistrant = isInitialCompanyRegistrant(currentUser, company);
+
+        if (!isCompanyAdmin && !isRegistrant) {
+            throw new SecurityException("Hanya COMPANY_ADMIN atau pendaftar awal yang berhak mengajukan ulang verifikasi perusahaan");
+        }
+
+        if (company.getVerificationStatus() != CompanyVerificationStatus.REJECTED) {
+            throw new IllegalStateException("Hanya perusahaan dengan status REJECTED yang dapat diajukan ulang verifikasinya");
+        }
+
+        company.setVerificationStatus(CompanyVerificationStatus.PENDING);
+        company.setRejectionReason(null);
 
         return companyRepository.save(company);
     }
@@ -127,6 +189,30 @@ public class EmployerSettingsService {
         if (user.getRole() != Role.PEMBERI_LAMARAN) {
             throw new SecurityException("Hanya employer yang dapat mengakses layanan ini");
         }
+    }
+
+    private boolean isInitialCompanyRegistrant(User user, Company company) {
+        if (user == null || company == null) {
+            return false;
+        }
+        if (user.getRole() != Role.PEMBERI_LAMARAN) {
+            return false;
+        }
+        if (user.getCompanyPermission() != null) {
+            return false;
+        }
+        List<User> employers = userRepository.findByCompanyAndRole(company, Role.PEMBERI_LAMARAN);
+        if (employers.size() != 1) {
+            return false;
+        }
+        User registrant = employers.get(0);
+        if (user.getId() != null && registrant.getId() != null) {
+            return user.getId().equals(registrant.getId());
+        }
+        if (user.getEmail() != null && registrant.getEmail() != null) {
+            return user.getEmail().equalsIgnoreCase(registrant.getEmail());
+        }
+        return user == registrant;
     }
 
     private String validateRequired(String value, int maxLength, String fieldName) {
