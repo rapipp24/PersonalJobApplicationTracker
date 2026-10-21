@@ -54,6 +54,18 @@ public class JobApplication{
     @Column(length = 255)
     private String portfolio;
 
+    @Column(name = "resume_storage_key", length = 255)
+    private String resumeStorageKey;
+
+    @Column(name = "resume_original_filename", length = 255)
+    private String resumeOriginalFilename;
+
+    @Column(name = "resume_content_type", length = 100)
+    private String resumeContentType;
+
+    @Column(name = "resume_file_size")
+    private Long resumeFileSize;
+
     public Long getId() {
         return id;
     }
@@ -156,6 +168,38 @@ public class JobApplication{
 
     public void setPortfolio(String portfolio) {
         this.portfolio = portfolio;
+    }
+
+    public String getResumeStorageKey() {
+        return resumeStorageKey;
+    }
+
+    public void setResumeStorageKey(String resumeStorageKey) {
+        this.resumeStorageKey = resumeStorageKey;
+    }
+
+    public String getResumeOriginalFilename() {
+        return resumeOriginalFilename;
+    }
+
+    public void setResumeOriginalFilename(String resumeOriginalFilename) {
+        this.resumeOriginalFilename = resumeOriginalFilename;
+    }
+
+    public String getResumeContentType() {
+        return resumeContentType;
+    }
+
+    public void setResumeContentType(String resumeContentType) {
+        this.resumeContentType = resumeContentType;
+    }
+
+    public Long getResumeFileSize() {
+        return resumeFileSize;
+    }
+
+    public void setResumeFileSize(Long resumeFileSize) {
+        this.resumeFileSize = resumeFileSize;
     }
 }
 

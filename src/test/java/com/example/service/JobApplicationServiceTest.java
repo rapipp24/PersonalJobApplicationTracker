@@ -13,14 +13,18 @@ import com.example.repository.JobApplicationRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -1060,5 +1064,303 @@ public class JobApplicationServiceTest {
         assertEquals("0899999999", profile.getPhone());
         assertEquals("https://linkedin.com/in/profile-baru", profile.getLinkedIn());
         assertEquals("https://profile-baru.dev", profile.getPortfolio());
+    }
+
+    // ==========================================
+    // PENGUJIAN PENYIMPANAN CV PERMANEN
+    // ==========================================
+
+    @Test
+    void harusBisaMenyimpanLamaranDenganCvDanMetadata() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+        app.setPhone("08123456789");
+
+        InputStream stream = new ByteArrayInputStream("PDF content".getBytes());
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-123.pdf",
+                "my_cv.pdf",
+                "application/pdf",
+                2048L
+        );
+
+        when(storageService.store(any(InputStream.class), any(), any())).thenReturn(mockResult);
+        when(repository.save(any(JobApplication.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        JobApplication saved = service.simpanLamaranDenganCv(app, stream, "my_cv.pdf", "application/pdf");
+
+        assertNotNull(saved);
+        assertEquals("resumes/uuid-123.pdf", saved.getResumeStorageKey());
+        assertEquals("my_cv.pdf", saved.getResumeOriginalFilename());
+        assertEquals("application/pdf", saved.getResumeContentType());
+        assertEquals(2048L, saved.getResumeFileSize());
+        assertEquals("08123456789", saved.getPhone());
+
+        verify(storageService).store(stream, "my_cv.pdf", "application/pdf");
+        verify(repository).save(app);
+    }
+
+    @Test
+    void harusMembatalkanPenyimpananLamaranJikaStorageGagal() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF content".getBytes());
+        when(storageService.store(any(), any(), any())).thenThrow(new IllegalStateException("Disk I/O error"));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Disk I/O error", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusMenghapusCvJikaDatabaseSaveGagal() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF content".getBytes());
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-123.pdf",
+                "my_cv.pdf",
+                "application/pdf",
+                2048L
+        );
+
+        when(storageService.store(any(), any(), any())).thenReturn(mockResult);
+        when(repository.save(any(JobApplication.class))).thenThrow(new RuntimeException("Database connection timeout"));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "my_cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Database connection timeout", ex.getMessage());
+        // Memastikan compensating delete dipanggil untuk membersihkan orphan file
+        verify(storageService).delete("resumes/uuid-123.pdf");
+    }
+
+    @Test
+    void harusMenolakLamaranTanpaCv() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.simpanLamaranDenganCv(app, null, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("File CV wajib diunggah", ex.getMessage());
+        verify(storageService, never()).store(any(), any(), any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusTidakMenyimpanCvJikaLowonganTidakAktif() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting inactivePosting = new JobPosting();
+        inactivePosting.setId(10L);
+        inactivePosting.setActive(false);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(inactivePosting);
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Lowongan ini sudah tidak aktif", ex.getMessage());
+        verify(storageService, never()).store(any(), any(), any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusTidakMenyimpanCvJikaPelamarSudahPernahMelamar() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        when(repository.existsByApplicantAndJobPosting(applicant, posting)).thenReturn(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Anda sudah melamar lowongan ini", ex.getMessage());
+        verify(storageService, never()).store(any(), any(), any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusMempertahankanSnapshotKontakExistingSaatSimpanDenganCv() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+        app.setPhone("0811223344");
+        app.setLinkedIn("https://linkedin.com/in/test");
+        app.setPortfolio("https://test.dev");
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-999.pdf",
+                "cv.pdf",
+                "application/pdf",
+                1000L
+        );
+
+        when(storageService.store(any(), any(), any())).thenReturn(mockResult);
+        when(repository.save(any(JobApplication.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        JobApplication saved = service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf");
+
+        assertEquals("0811223344", saved.getPhone());
+        assertEquals("https://linkedin.com/in/test", saved.getLinkedIn());
+        assertEquals("https://test.dev", saved.getPortfolio());
+        assertEquals("resumes/uuid-999.pdf", saved.getResumeStorageKey());
+    }
+
+    @Test
+    void harusAmanMenghadapiDataHistorisLamaranDenganCvNull() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        JobApplication legacyApp = new JobApplication();
+        legacyApp.setId(5L);
+        legacyApp.setCompanyName("PT Lama");
+        legacyApp.setPosition("Java Dev");
+        legacyApp.setResumeStorageKey(null);
+        legacyApp.setResumeOriginalFilename(null);
+        legacyApp.setResumeContentType(null);
+        legacyApp.setResumeFileSize(null);
+
+        when(repository.findAll()).thenReturn(List.of(legacyApp));
+
+        List<JobApplication> results = service.findAll();
+        assertEquals(1, results.size());
+        assertNull(results.get(0).getResumeStorageKey());
+    }
+
+    @Test
+    void harusTetapMelemparErrorDatabaseMeskipunCompensatingDeleteGagal() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-fail.pdf",
+                "cv.pdf",
+                "application/pdf",
+                1000L
+        );
+
+        when(storageService.store(any(), any(), any())).thenReturn(mockResult);
+        when(repository.save(any(JobApplication.class))).thenThrow(new RuntimeException("Fatal DB Error"));
+        doThrow(new RuntimeException("Disk Permission Error saat delete")).when(storageService).delete("resumes/uuid-fail.pdf");
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Fatal DB Error", ex.getMessage());
+        verify(storageService).delete("resumes/uuid-fail.pdf");
     }
 }

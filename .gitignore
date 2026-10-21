@@ -27,3 +27,6 @@ logs/
 
 # Accidental temporary files
 oword*
+
+# Local private file storage
+storage/

@@ -32,6 +32,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import jakarta.annotation.security.RolesAllowed;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -54,7 +55,9 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
     private TextField phoneField;
     private TextField linkedInField;
     private TextField portfolioField;
-    private String uploadedFileName;
+    private MemoryBuffer cvBuffer;
+    private String uploadedResumeFilename;
+    private String uploadedResumeContentType;
     private Div fileBadgeContainer;
 
     public ApplyJobView(
@@ -102,7 +105,9 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
 
         this.currentJob = job;
         this.currentUser = user;
-        this.uploadedFileName = null;
+        this.uploadedResumeFilename = null;
+        this.uploadedResumeContentType = null;
+        this.cvBuffer = null;
 
         removeAll();
         buildView();
@@ -395,8 +400,9 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         Paragraph uploadHint = new Paragraph("PDF / DOCX, max 5 MB");
         uploadHint.addClassName("applicant-apply-upload-hint");
 
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
+        cvBuffer = new MemoryBuffer();
+        Upload upload = new Upload(cvBuffer);
+        upload.setMaxFiles(1);
         upload.setAcceptedFileTypes(".pdf", ".docx", "application/pdf");
         upload.setMaxFileSize(5 * 1024 * 1024);
         upload.addClassName("applicant-apply-upload-component");
@@ -406,11 +412,12 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         fileBadgeContainer.setVisible(false);
 
         upload.addSucceededListener(event -> {
-            uploadedFileName = event.getFileName();
+            uploadedResumeFilename = event.getFileName();
+            uploadedResumeContentType = event.getMIMEType();
             fileBadgeContainer.removeAll();
 
             Html fileIcon = new Html("<iconify-icon icon=\"lucide:file-text\" class=\"applicant-apply-file-icon\"></iconify-icon>");
-            Span fileNameSpan = new Span(uploadedFileName);
+            Span fileNameSpan = new Span(uploadedResumeFilename);
             fileNameSpan.addClassName("applicant-apply-file-name");
 
             Span readyBadge = new Span("✓ File selected");
@@ -418,6 +425,15 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
 
             fileBadgeContainer.add(fileIcon, fileNameSpan, readyBadge);
             fileBadgeContainer.setVisible(true);
+        });
+
+        upload.addFileRemovedListener(event -> {
+            resetUploadedCv(upload);
+        });
+
+        upload.addFailedListener(event -> {
+            resetUploadedCv(upload);
+            Notification.show("Gagal mengunggah file CV. Silakan coba lagi.");
         });
 
         upload.addFileRejectedListener(event -> {
@@ -428,6 +444,17 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         uploadContainer.add(uploadDropBox);
 
         return uploadContainer;
+    }
+
+    private void resetUploadedCv(Upload upload) {
+        this.uploadedResumeFilename = null;
+        this.uploadedResumeContentType = null;
+        this.cvBuffer = new MemoryBuffer();
+        upload.setReceiver(this.cvBuffer);
+        if (fileBadgeContainer != null) {
+            fileBadgeContainer.removeAll();
+            fileBadgeContainer.setVisible(false);
+        }
     }
 
     private Div createJobSummary() {
@@ -549,6 +576,12 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         String finalLinkedIn = normalizeOptionalField(linkedInField.getValue(), 255);
         String finalPortfolio = normalizeOptionalField(portfolioField.getValue(), 255);
 
+        if (uploadedResumeFilename == null || uploadedResumeFilename.trim().isEmpty()
+                || cvBuffer == null || cvBuffer.getFileData() == null) {
+            Notification.show("Silakan unggah file CV Anda terlebih dahulu");
+            return;
+        }
+
         // Save application using existing backend mapping
         JobApplication jobApplication = new JobApplication();
         jobApplication.setApplicant(currentUser);
@@ -562,10 +595,21 @@ public class ApplyJobView extends VerticalLayout implements HasUrlParameter<Long
         jobApplication.setLinkedIn(finalLinkedIn);
         jobApplication.setPortfolio(finalPortfolio);
 
-        jobApplicationService.simpanLamaran(jobApplication);
+        try (InputStream cvInputStream = cvBuffer.getInputStream()) {
+            jobApplicationService.simpanLamaranDenganCv(
+                    jobApplication,
+                    cvInputStream,
+                    uploadedResumeFilename,
+                    uploadedResumeContentType
+            );
 
-        Notification.show("Lamaran berhasil dikirim");
-        UI.getCurrent().navigate(ApplicationsView.class);
+            Notification.show("Lamaran berhasil dikirim");
+            UI.getCurrent().navigate(ApplicationsView.class);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            Notification.show(ex.getMessage());
+        } catch (Exception ex) {
+            Notification.show("Gagal mengirim lamaran. Silakan coba lagi.");
+        }
     }
 
     private String normalizeOptionalField(String value, int maxLength) {

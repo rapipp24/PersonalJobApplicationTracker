@@ -9,15 +9,29 @@ import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
 import com.example.entity.ApplicationStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
 
 @Service
 public class JobApplicationService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(JobApplicationService.class);
+
     private final JobApplicationRepository repository;
-    
-    public JobApplicationService(JobApplicationRepository repository) {
+    private final ResumeStorageService resumeStorageService;
+
+    @Autowired
+    public JobApplicationService(JobApplicationRepository repository, ResumeStorageService resumeStorageService) {
         this.repository = repository;
+        this.resumeStorageService = resumeStorageService;
+    }
+
+    public JobApplicationService(JobApplicationRepository repository) {
+        this(repository, null);
     }
 
     public List<JobApplication> findAll() {
@@ -104,6 +118,64 @@ public class JobApplicationService {
 
     public JobApplication simpanLamaran(JobApplication jobApplication) {
         return repository.save(jobApplication);
+    }
+
+    public JobApplication simpanLamaranDenganCv(
+            JobApplication jobApplication,
+            InputStream resumeInputStream,
+            String originalFilename,
+            String contentType
+    ) {
+        if (jobApplication == null) {
+            throw new IllegalArgumentException("Lamaran tidak boleh null");
+        }
+        if (jobApplication.getApplicant() == null) {
+            throw new IllegalArgumentException("Pelamar tidak boleh null");
+        }
+        if (jobApplication.getJobPosting() == null) {
+            throw new IllegalArgumentException("Lowongan kerja tidak boleh null");
+        }
+        if (!jobApplication.getJobPosting().isActive()) {
+            throw new IllegalStateException("Lowongan ini sudah tidak aktif");
+        }
+        if (hasApplied(jobApplication.getApplicant(), jobApplication.getJobPosting())) {
+            throw new IllegalStateException("Anda sudah melamar lowongan ini");
+        }
+        if (resumeInputStream == null) {
+            throw new IllegalArgumentException("File CV wajib diunggah");
+        }
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nama file CV tidak boleh kosong");
+        }
+        if (resumeStorageService == null) {
+            throw new IllegalStateException("Layanan penyimpanan CV tidak tersedia");
+        }
+
+        // 1. Simpan file CV ke private storage
+        ResumeStorageResult storageResult = resumeStorageService.store(
+                resumeInputStream,
+                originalFilename,
+                contentType
+        );
+
+        // 2. Set metadata CV ke JobApplication
+        jobApplication.setResumeStorageKey(storageResult.storageKey());
+        jobApplication.setResumeOriginalFilename(storageResult.originalFilename());
+        jobApplication.setResumeContentType(storageResult.contentType());
+        jobApplication.setResumeFileSize(storageResult.fileSize());
+
+        // 3. Simpan ke database dengan compensating cleanup jika DB save gagal
+        try {
+            return repository.save(jobApplication);
+        } catch (RuntimeException databaseException) {
+            try {
+                resumeStorageService.delete(storageResult.storageKey());
+            } catch (RuntimeException cleanupException) {
+                log.warn("Gagal menghapus file CV saat kompensasi kegagalan database: {}", storageResult.storageKey(), cleanupException);
+                databaseException.addSuppressed(cleanupException);
+            }
+            throw databaseException;
+        }
     }
 
     public void hapusLamaran(JobApplication jobApplication) {
