@@ -10,11 +10,14 @@ import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -1264,6 +1267,186 @@ public class JobApplicationServiceTest {
         assertEquals("Anda sudah melamar lowongan ini", ex.getMessage());
         verify(storageService, never()).store(any(), any(), any());
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusMenerjemahkanDbUniqueConstraintMenjadiErrorRamahSaatSimpanDenganCv() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        when(repository.existsByApplicantAndJobPosting(applicant, posting)).thenReturn(false);
+
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-race.pdf",
+                "cv.pdf",
+                "application/pdf",
+                2048L
+        );
+        when(storageService.store(any(InputStream.class), any(), any())).thenReturn(mockResult);
+
+        ConstraintViolationException cve = new ConstraintViolationException(
+                "duplicate key value violates unique constraint",
+                new SQLException("ERROR: duplicate key value", "23505"),
+                "uk_job_application_applicant_job_posting"
+        );
+        DataIntegrityViolationException dive = new DataIntegrityViolationException(
+                "could not execute statement [uk_job_application_applicant_job_posting]",
+                cve
+        );
+        when(repository.save(any(JobApplication.class))).thenThrow(dive);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals("Anda sudah melamar lowongan ini", ex.getMessage());
+        verify(storageService).delete("resumes/uuid-race.pdf");
+    }
+
+    @Test
+    void harusTetapMelemparOriginalExceptionDanHapusCvJikaDbErrorBukanDuplicate() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setActive(true);
+
+        when(repository.existsByApplicantAndJobPosting(applicant, posting)).thenReturn(false);
+
+        ResumeStorageResult mockResult = new ResumeStorageResult(
+                "resumes/uuid-other.pdf",
+                "cv.pdf",
+                "application/pdf",
+                2048L
+        );
+        when(storageService.store(any(InputStream.class), any(), any())).thenReturn(mockResult);
+
+        ConstraintViolationException cve = new ConstraintViolationException(
+                "foreign key violation",
+                new SQLException("ERROR: fk violation", "23503"),
+                "fk_some_other_table"
+        );
+        DataIntegrityViolationException dive = new DataIntegrityViolationException(
+                "could not execute statement [fk_some_other_table]",
+                cve
+        );
+        when(repository.save(any(JobApplication.class))).thenThrow(dive);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        InputStream stream = new ByteArrayInputStream("PDF".getBytes());
+
+        DataIntegrityViolationException ex = assertThrows(
+                DataIntegrityViolationException.class,
+                () -> service.simpanLamaranDenganCv(app, stream, "cv.pdf", "application/pdf")
+        );
+
+        assertEquals(dive, ex);
+        verify(storageService).delete("resumes/uuid-other.pdf");
+    }
+
+    @Test
+    void harusMenolakSimpanLamaranJikaPelamarDanJobPostingSudahMelamar() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+
+        when(repository.existsByApplicantAndJobPosting(applicant, posting)).thenReturn(true);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaran(app)
+        );
+
+        assertEquals("Anda sudah melamar lowongan ini", ex.getMessage());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void harusMenerjemahkanDbUniqueConstraintMenjadiErrorRamahSaatSimpanLamaranBiasa() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+
+        when(repository.existsByApplicantAndJobPosting(applicant, posting)).thenReturn(false);
+
+        ConstraintViolationException cve = new ConstraintViolationException(
+                "duplicate key value",
+                new SQLException("ERROR: duplicate key", "23505"),
+                "uk_job_application_applicant_job_posting"
+        );
+        DataIntegrityViolationException dive = new DataIntegrityViolationException("duplicate", cve);
+        when(repository.save(any(JobApplication.class))).thenThrow(dive);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(posting);
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.simpanLamaran(app)
+        );
+
+        assertEquals("Anda sudah melamar lowongan ini", ex.getMessage());
+    }
+
+    @Test
+    void harusTetapBisaMenyimpanLamaranManualDenganJobPostingNull() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User applicant = new User();
+        applicant.setId(1L);
+
+        JobApplication app = new JobApplication();
+        app.setApplicant(applicant);
+        app.setJobPosting(null);
+        app.setCompanyName("PT External Manual");
+        app.setPosition("Backend Engineer");
+
+        when(repository.save(app)).thenReturn(app);
+
+        JobApplication saved = service.simpanLamaran(app);
+
+        assertNotNull(saved);
+        verify(repository).save(app);
+        verify(repository, never()).existsByApplicantAndJobPosting(any(), any());
     }
 
     @Test

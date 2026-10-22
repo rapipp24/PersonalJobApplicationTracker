@@ -9,11 +9,19 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
 @Entity
+@Table(
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_job_application_applicant_job_posting",
+        columnNames = {"applicant_id", "job_posting_id"}
+    )
+)
 public class JobApplication{
 
     @Id

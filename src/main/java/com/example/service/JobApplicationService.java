@@ -9,6 +9,7 @@ import com.example.entity.JobPosting;
 import com.example.entity.User;
 import com.example.repository.JobApplicationRepository;
 import com.example.entity.ApplicationStatus;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +118,19 @@ public class JobApplicationService {
     }
 
     public JobApplication simpanLamaran(JobApplication jobApplication) {
-        return repository.save(jobApplication);
+        if (jobApplication != null && jobApplication.getApplicant() != null && jobApplication.getJobPosting() != null) {
+            if (hasApplied(jobApplication.getApplicant(), jobApplication.getJobPosting())) {
+                throw new IllegalStateException("Anda sudah melamar lowongan ini");
+            }
+        }
+        try {
+            return repository.save(jobApplication);
+        } catch (RuntimeException databaseException) {
+            if (isDuplicateApplicationConstraint(databaseException)) {
+                throw new IllegalStateException("Anda sudah melamar lowongan ini");
+            }
+            throw databaseException;
+        }
     }
 
     public JobApplication simpanLamaranDenganCv(
@@ -174,8 +187,30 @@ public class JobApplicationService {
                 log.warn("Gagal menghapus file CV saat kompensasi kegagalan database: {}", storageResult.storageKey(), cleanupException);
                 databaseException.addSuppressed(cleanupException);
             }
+            if (isDuplicateApplicationConstraint(databaseException)) {
+                throw new IllegalStateException("Anda sudah melamar lowongan ini");
+            }
             throw databaseException;
         }
+    }
+
+    private boolean isDuplicateApplicationConstraint(Throwable throwable) {
+        final String targetConstraint = "uk_job_application_applicant_job_posting";
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof ConstraintViolationException cve) {
+                String constraintName = cve.getConstraintName();
+                if (constraintName != null && constraintName.equalsIgnoreCase(targetConstraint)) {
+                    return true;
+                }
+            }
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase().contains(targetConstraint)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     public void hapusLamaran(JobApplication jobApplication) {
