@@ -34,6 +34,10 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
 
+    private RouterLink adminDashboardLink;
+    private RouterLink adminVerificationLink;
+    private boolean isAdminUser = false;
+
     private RouterLink employerDashboardLink;
     private RouterLink employerJobPostingsLink;
     private RouterLink employerMemberRequestsLink;
@@ -56,13 +60,20 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
         boolean isPelamar = authenticationContext.hasRole("PELAMAR");
 
-        if (isPemberiLamaran && !isAdmin) {
+        if (isAdmin) {
+            this.isAdminUser = true;
+            addClassName("employer-app-layout");
+            addClassName("admin-app-layout");
+            setPrimarySection(Section.DRAWER);
+            createAdminHeader();
+            createAdminDrawer();
+        } else if (isPemberiLamaran) {
             this.isEmployer = true;
             addClassName("employer-app-layout");
             setPrimarySection(Section.DRAWER);
             createEmployerHeader();
             createEmployerDrawer();
-        } else if (isPelamar && !isAdmin) {
+        } else if (isPelamar) {
             this.isApplicant = true;
             addClassName("applicant-app-layout");
             setPrimarySection(Section.DRAWER);
@@ -73,6 +84,145 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
             createHeader();
             createDrawer();
         }
+    }
+
+    private void createAdminHeader() {
+        DrawerToggle drawerToggle = new DrawerToggle();
+        drawerToggle.addClassName("employer-drawer-toggle");
+
+        Div spacer = new Div();
+
+        MenuBar accountMenu = createAccountMenu();
+
+        HorizontalLayout header = new HorizontalLayout(
+                drawerToggle,
+                spacer,
+                accountMenu
+        );
+
+        header.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        header.expand(spacer);
+        header.setWidthFull();
+        header.addClassNames("py-0", "px-m");
+        header.addClassName("employer-navbar-header");
+
+        addToNavbar(header);
+    }
+
+    private void createAdminDrawer() {
+        VerticalLayout drawerLayout = new VerticalLayout();
+        drawerLayout.setPadding(false);
+        drawerLayout.setSpacing(false);
+        drawerLayout.setWidthFull();
+        drawerLayout.addClassName("employer-sidebar-layout");
+
+        // 1. BRAND AREA
+        Div brandArea = new Div();
+        brandArea.addClassName("employer-sidebar-brand");
+
+        Div brandContainer = new Div();
+        brandContainer.getStyle()
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("gap", "4px")
+                .set("width", "100%");
+
+        Span brandTitle = new Span("Job Application Tracker");
+        brandTitle.addClassName("employer-brand-title");
+
+        Span brandSubtitle = new Span("PLATFORM ADMIN");
+        brandSubtitle.getStyle()
+                .set("font-size", "0.7rem")
+                .set("font-weight", "700")
+                .set("letter-spacing", "0.06em")
+                .set("color", "#64748B")
+                .set("text-transform", "uppercase")
+                .set("line-height", "1.2");
+
+        brandContainer.add(brandTitle, brandSubtitle);
+        brandArea.add(brandContainer);
+
+        // 2. SIDEBAR CONTENT
+        Div sidebarContent = new Div();
+        sidebarContent.addClassName("employer-sidebar-content");
+
+        // SECTION 1: PLATFORM MANAGEMENT
+        Span platformMgmtHeader = createAdminNavSectionHeader("PLATFORM MANAGEMENT");
+        sidebarContent.add(platformMgmtHeader);
+
+        // 1. Dashboard
+        adminDashboardLink = new RouterLink();
+        adminDashboardLink.setRoute(DashboardView.class);
+        adminDashboardLink.addClassName("employer-nav-item");
+        Html dashIcon = new Html("<iconify-icon icon=\"lucide:layout-dashboard\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
+        Span dashLabel = new Span("Dashboard");
+        dashLabel.addClassName("employer-nav-label");
+        adminDashboardLink.add(dashIcon, dashLabel);
+        sidebarContent.add(adminDashboardLink);
+
+        // 2. Company Verification
+        adminVerificationLink = new RouterLink();
+        adminVerificationLink.setRoute(AdminView.class);
+        adminVerificationLink.addClassName("employer-nav-item");
+        Html verifyIcon = new Html("<iconify-icon icon=\"lucide:shield-check\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
+        Span verifyLabel = new Span("Company Verification");
+        verifyLabel.addClassName("employer-nav-label");
+        adminVerificationLink.add(verifyIcon, verifyLabel);
+        sidebarContent.add(adminVerificationLink);
+
+        // 3. Companies (Future Phase 2 - Visual / Non-navigable)
+        Div companiesItem = createDisabledAdminNavItem("lucide:building-2", "Companies");
+        sidebarContent.add(companiesItem);
+
+        // 4. Users (Future Phase 3 - Visual / Non-navigable)
+        Div usersItem = createDisabledAdminNavItem("lucide:users", "Users");
+        sidebarContent.add(usersItem);
+
+        // SECTION 2: PLATFORM MONITORING
+        Span platformMonHeader = createAdminNavSectionHeader("PLATFORM MONITORING");
+        sidebarContent.add(platformMonHeader);
+
+        // 5. Job Postings (Future Phase 5 - Visual / Non-navigable)
+        Div jobPostingsItem = createDisabledAdminNavItem("lucide:briefcase", "Job Postings");
+        sidebarContent.add(jobPostingsItem);
+
+        // 6. Applications (Future Phase 5 - Visual / Non-navigable)
+        Div applicationsItem = createDisabledAdminNavItem("lucide:file-text", "Applications");
+        sidebarContent.add(applicationsItem);
+
+        drawerLayout.add(brandArea, sidebarContent);
+        addToDrawer(drawerLayout);
+    }
+
+    private Span createAdminNavSectionHeader(String text) {
+        Span header = new Span(text);
+        header.getStyle()
+                .set("font-size", "0.68rem")
+                .set("font-weight", "700")
+                .set("letter-spacing", "0.05em")
+                .set("color", "#64748B")
+                .set("text-transform", "uppercase")
+                .set("padding", "14px 14px 6px 14px")
+                .set("display", "block");
+        return header;
+    }
+
+    private Div createDisabledAdminNavItem(String iconName, String labelText) {
+        Div item = new Div();
+        item.addClassName("employer-nav-item");
+        item.getStyle()
+                .set("color", "#94A3B8")
+                .set("cursor", "default")
+                .set("opacity", "0.75")
+                .set("pointer-events", "none");
+
+        Html icon = new Html("<iconify-icon icon=\"" + iconName + "\" style=\"font-size: 1.15rem; color: #94A3B8; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;\"></iconify-icon>");
+        Span label = new Span(labelText);
+        label.addClassName("employer-nav-label");
+        label.getStyle().set("color", "#94A3B8");
+
+        item.add(icon, label);
+        return item;
     }
 
     private void createEmployerHeader() {
@@ -275,10 +425,27 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
         String path = event.getLocation().getPath();
-        if (isEmployer) {
+        if (isAdminUser) {
+            updateAdminNavActiveState(path);
+        } else if (isEmployer) {
             updateEmployerNavActiveState(path);
         } else if (isApplicant) {
             updateApplicantNavActiveState(path);
+        }
+    }
+
+    private void updateAdminNavActiveState(String path) {
+        if (adminDashboardLink == null || adminVerificationLink == null) {
+            return;
+        }
+
+        adminDashboardLink.removeClassName("employer-nav-item-active");
+        adminVerificationLink.removeClassName("employer-nav-item-active");
+
+        if (path == null || path.isBlank()) {
+            adminDashboardLink.addClassName("employer-nav-item-active");
+        } else if (path.startsWith("admin")) {
+            adminVerificationLink.addClassName("employer-nav-item-active");
         }
     }
 

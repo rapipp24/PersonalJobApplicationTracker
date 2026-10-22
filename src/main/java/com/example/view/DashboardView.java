@@ -6,7 +6,11 @@ import com.example.entity.CompanyVerificationStatus;
 import com.example.entity.JobApplication;
 import com.example.entity.JobPosting;
 import com.example.entity.User;
+import com.example.repository.CompanyRepository;
+import com.example.repository.JobApplicationRepository;
+import com.example.repository.JobPostingRepository;
 import com.example.repository.UserRepository;
+import com.example.service.CompanyVerificationService;
 import com.example.service.EmployerSettingsService;
 import com.example.service.JobApplicationService;
 import com.example.service.JobPostingService;
@@ -41,18 +45,30 @@ public class DashboardView extends VerticalLayout {
     private final AuthenticationContext authenticationContext;
     private final UserRepository userRepository;
     private final EmployerSettingsService employerSettingsService;
+    private final CompanyRepository companyRepository;
+    private final CompanyVerificationService companyVerificationService;
+    private final JobPostingRepository jobPostingRepository;
+    private final JobApplicationRepository jobApplicationRepository;
 
     public DashboardView(
             JobApplicationService jobApplicationService,
             JobPostingService jobPostingService,
             AuthenticationContext authenticationContext,
             UserRepository userRepository,
-            EmployerSettingsService employerSettingsService) {
+            EmployerSettingsService employerSettingsService,
+            CompanyRepository companyRepository,
+            CompanyVerificationService companyVerificationService,
+            JobPostingRepository jobPostingRepository,
+            JobApplicationRepository jobApplicationRepository) {
         this.jobApplicationService = jobApplicationService;
         this.jobPostingService = jobPostingService;
         this.authenticationContext = authenticationContext;
         this.userRepository = userRepository;
         this.employerSettingsService = employerSettingsService;
+        this.companyRepository = companyRepository;
+        this.companyVerificationService = companyVerificationService;
+        this.jobPostingRepository = jobPostingRepository;
+        this.jobApplicationRepository = jobApplicationRepository;
 
         addClassName("view-container");
         setWidthFull();
@@ -71,16 +87,30 @@ public class DashboardView extends VerticalLayout {
     }
 
     private void createDashboard() {
-        H2 title = new H2("Dashboard Ringkasan");
-
         boolean isAdmin = authenticationContext.hasRole("ADMIN");
         boolean isPemberiLamaran = authenticationContext.hasRole("PEMBERI_LAMARAN");
 
         if (isAdmin) {
             AdminDashboard dashboard = new AdminDashboard();
-            List<JobApplication> data = jobApplicationService.findAll();
-            dashboard.updateData(data);
-            add(title, dashboard);
+            long platformUsers = userRepository.count();
+            long registeredCompanies = companyRepository.count();
+            List<Company> pendingCompanies = companyVerificationService.getPendingCompanies();
+            long pendingVerification = pendingCompanies.size();
+            long totalJobPostings = jobPostingRepository.count();
+            long activeJobPostings = jobPostingService.findActiveJobPostings().size();
+            long totalApplications = jobApplicationRepository.count();
+
+            dashboard.updateData(
+                    platformUsers,
+                    registeredCompanies,
+                    pendingVerification,
+                    totalJobPostings,
+                    activeJobPostings,
+                    totalApplications,
+                    pendingCompanies,
+                    companyVerificationService
+            );
+            add(dashboard);
             return;
         }
 
