@@ -162,9 +162,17 @@ public class JobApplicantsView extends VerticalLayout implements HasUrlParameter
         grid.addComponentColumn(this::createApplicationStatusBadge).setHeader("Status");
 
         grid.addComponentColumn(app -> {
+            Button detailButton = new Button("Detail", event -> {
+                UI.getCurrent().navigate(ApplicantDetailView.class, app.getId());
+            });
+            detailButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+
             Button ubahStatusButton = new Button("Ubah Status", event -> openUpdateStatusDialog(app));
             ubahStatusButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-            return ubahStatusButton;
+
+            HorizontalLayout actions = new HorizontalLayout(detailButton, ubahStatusButton);
+            actions.setSpacing(true);
+            return actions;
         }).setHeader("Aksi");
 
         grid.setWidthFull();

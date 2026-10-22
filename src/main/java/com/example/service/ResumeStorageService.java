@@ -10,5 +10,7 @@ public interface ResumeStorageService {
             String contentType
     );
 
+    InputStream load(String storageKey);
+
     void delete(String storageKey);
 }

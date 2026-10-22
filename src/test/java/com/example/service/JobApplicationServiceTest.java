@@ -1363,4 +1363,214 @@ public class JobApplicationServiceTest {
         assertEquals("Fatal DB Error", ex.getMessage());
         verify(storageService).delete("resumes/uuid-fail.pdf");
     }
+
+    @Test
+    void harusBisaMengambilDetailLamaranUntukEmployerSatuCompany() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L, 1L, "PT Solusi");
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setEmployer(employer);
+        posting.setCompany(employer.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(posting);
+        app.setPhone("081234567890");
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        JobApplication result = service.findApplicationForEmployer(100L, employer);
+
+        assertNotNull(result);
+        assertEquals(100L, result.getId());
+        assertEquals("081234567890", result.getPhone());
+        verify(repository).findById(100L);
+    }
+
+    @Test
+    void harusMenolakDetailLamaranDariCompanyLain() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employerA = createValidActiveEmployer(1L, 1L, "PT A");
+        User employerB = createValidActiveEmployer(2L, 2L, "PT B");
+
+        JobPosting postingA = new JobPosting();
+        postingA.setId(10L);
+        postingA.setEmployer(employerA);
+        postingA.setCompany(employerA.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(postingA);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        assertThrows(
+                SecurityException.class,
+                () -> service.findApplicationForEmployer(100L, employerB)
+        );
+    }
+
+    @Test
+    void harusMenolakDetailJikaCompanyEmployerBelumVerified() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.getCompany().setVerificationStatus(CompanyVerificationStatus.PENDING);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setEmployer(employer);
+        posting.setCompany(employer.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(posting);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findApplicationForEmployer(100L, employer)
+        );
+        assertTrue(ex.getMessage().contains("VERIFIED"));
+    }
+
+    @Test
+    void harusMenolakDetailJikaMembershipEmployerTidakActive() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+        employer.setMembershipStatus(CompanyMembershipStatus.PENDING);
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setEmployer(employer);
+        posting.setCompany(employer.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(posting);
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.findApplicationForEmployer(100L, employer)
+        );
+        assertTrue(ex.getMessage().contains("membership"));
+    }
+
+    @Test
+    void harusMenanganiApplicationTidakDitemukanDenganAman() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        JobApplicationService service = new JobApplicationService(repository);
+
+        User employer = createValidActiveEmployer(1L);
+
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.findApplicationForEmployer(999L, employer)
+        );
+        assertTrue(ex.getMessage().contains("tidak ditemukan"));
+    }
+
+    @Test
+    void harusBisaMembukaStreamCvUntukEmployerSatuCompany() throws Exception {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User employer = createValidActiveEmployer(1L, 1L, "PT Sukses");
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setEmployer(employer);
+        posting.setCompany(employer.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(posting);
+        app.setResumeStorageKey("resumes/real-uuid.pdf");
+        app.setResumeOriginalFilename("CV_Pelamar.pdf");
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+        when(storageService.load("resumes/real-uuid.pdf"))
+                .thenReturn(new ByteArrayInputStream("konten cv asli".getBytes()));
+
+        try (InputStream stream = service.loadResumeStreamForEmployer(100L, employer)) {
+            assertNotNull(stream);
+            byte[] bytes = stream.readAllBytes();
+            assertEquals("konten cv asli", new String(bytes));
+        }
+
+        verify(storageService).load("resumes/real-uuid.pdf");
+    }
+
+    @Test
+    void harusMenolakDownloadCvDariCompanyLain() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User employerA = createValidActiveEmployer(1L, 1L, "PT A");
+        User employerB = createValidActiveEmployer(2L, 2L, "PT B");
+
+        JobPosting postingA = new JobPosting();
+        postingA.setId(10L);
+        postingA.setEmployer(employerA);
+        postingA.setCompany(employerA.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(postingA);
+        app.setResumeStorageKey("resumes/secret.pdf");
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        assertThrows(
+                SecurityException.class,
+                () -> service.loadResumeStreamForEmployer(100L, employerB)
+        );
+
+        verify(storageService, never()).load(any());
+    }
+
+    @Test
+    void harusMenolakDownloadJikaCvTidakTersedia() {
+        JobApplicationRepository repository = Mockito.mock(JobApplicationRepository.class);
+        ResumeStorageService storageService = Mockito.mock(ResumeStorageService.class);
+        JobApplicationService service = new JobApplicationService(repository, storageService);
+
+        User employer = createValidActiveEmployer(1L, 1L, "PT A");
+
+        JobPosting posting = new JobPosting();
+        posting.setId(10L);
+        posting.setEmployer(employer);
+        posting.setCompany(employer.getCompany());
+
+        JobApplication app = new JobApplication();
+        app.setId(100L);
+        app.setJobPosting(posting);
+        app.setResumeStorageKey(null); // tidak ada CV
+
+        when(repository.findById(100L)).thenReturn(Optional.of(app));
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.loadResumeStreamForEmployer(100L, employer)
+        );
+
+        assertTrue(ex.getMessage().contains("tidak tersedia"));
+        verify(storageService, never()).load(any());
+    }
 }

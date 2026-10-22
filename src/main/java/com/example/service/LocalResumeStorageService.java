@@ -88,6 +88,29 @@ public class LocalResumeStorageService implements ResumeStorageService {
     }
 
     @Override
+    public InputStream load(String storageKey) {
+        if (storageKey == null || storageKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("Storage key tidak boleh kosong");
+        }
+
+        Path target = storageRoot.resolve(storageKey.trim()).normalize();
+        if (!target.startsWith(storageRoot)) {
+            throw new SecurityException("Akses file di luar storage root ditolak");
+        }
+
+        if (!Files.exists(target) || !Files.isRegularFile(target)) {
+            throw new IllegalStateException("File CV tidak ditemukan pada sistem penyimpanan");
+        }
+
+        try {
+            return Files.newInputStream(target, StandardOpenOption.READ);
+        } catch (IOException e) {
+            log.error("Gagal membaca file dari storage: {}", target, e);
+            throw new IllegalStateException("Gagal membaca file CV dari storage", e);
+        }
+    }
+
+    @Override
     public void delete(String storageKey) {
         if (storageKey == null || storageKey.trim().isEmpty()) {
             return;

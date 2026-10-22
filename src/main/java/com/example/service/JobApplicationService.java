@@ -274,6 +274,58 @@ public class JobApplicationService {
         return repository.save(existingApplication);
     }
 
+    public JobApplication findApplicationForEmployer(Long applicationId, User employer) {
+        if (applicationId == null) {
+            throw new IllegalArgumentException("ID lamaran tidak boleh null");
+        }
+
+        JobApplication existingApplication = repository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Lamaran tidak ditemukan"));
+
+        if (existingApplication.getJobPosting() == null) {
+            throw new IllegalStateException("Lamaran tidak terhubung dengan lowongan kerja");
+        }
+
+        if (employer == null || employer.getId() == null) {
+            throw new IllegalArgumentException("Employer tidak valid");
+        }
+
+        Company company = employer.getCompany();
+        if (company == null || company.getVerificationStatus() != CompanyVerificationStatus.VERIFIED) {
+            throw new IllegalStateException("Perusahaan harus berstatus VERIFIED untuk melihat data pelamar");
+        }
+
+        if (employer.getMembershipStatus() != CompanyMembershipStatus.ACTIVE) {
+            throw new IllegalStateException("Status membership employer belum aktif");
+        }
+
+        JobPosting jobPosting = existingApplication.getJobPosting();
+        Company postingCompany = getJobPostingCompany(jobPosting);
+        if (postingCompany == null || postingCompany.getId() == null || company.getId() == null) {
+            throw new SecurityException("Anda tidak memiliki hak untuk mengakses lamaran ini");
+        }
+
+        if (!postingCompany.getId().equals(company.getId())) {
+            throw new SecurityException("Anda tidak memiliki hak untuk mengakses lamaran ini");
+        }
+
+        return existingApplication;
+    }
+
+    public InputStream loadResumeStreamForEmployer(Long applicationId, User employer) {
+        JobApplication application = findApplicationForEmployer(applicationId, employer);
+
+        if (application.getResumeStorageKey() == null || application.getResumeStorageKey().trim().isEmpty()) {
+            throw new IllegalStateException("Dokumen CV tidak tersedia untuk lamaran ini");
+        }
+
+        if (resumeStorageService == null) {
+            throw new IllegalStateException("Layanan penyimpanan CV tidak tersedia");
+        }
+
+        return resumeStorageService.load(application.getResumeStorageKey());
+    }
+
     public List<JobApplication> findByEmployer(User employer) {
         if (employer == null || employer.getId() == null) {
             return List.of();

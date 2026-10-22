@@ -188,4 +188,51 @@ class LocalResumeStorageServiceTest {
                 () -> storageService.delete("../../etc/passwd")
         );
     }
+
+    @Test
+    void harusBisaMembacaKembaliFileCvDariStorage() throws IOException {
+        String content = "Konten CV pelamar untuk verifikasi read";
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+        ResumeStorageResult stored = storageService.store(
+                new ByteArrayInputStream(bytes),
+                "CV_Test.pdf",
+                "application/pdf"
+        );
+
+        try (InputStream loadedStream = storageService.load(stored.storageKey())) {
+            assertNotNull(loadedStream);
+            byte[] loadedBytes = loadedStream.readAllBytes();
+            assertEquals(content, new String(loadedBytes, StandardCharsets.UTF_8));
+        }
+    }
+
+    @Test
+    void harusMenolakLoadJikaStorageKeyKosong() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> storageService.load(null)
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> storageService.load("   ")
+        );
+    }
+
+    @Test
+    void harusMenolakPathTraversalSaatLoad() {
+        assertThrows(
+                SecurityException.class,
+                () -> storageService.load("../../../secret/password.txt")
+        );
+    }
+
+    @Test
+    void harusMemberiErrorAmanJikaFileTidakDitemukan() {
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> storageService.load("non-existent-uuid-file.pdf")
+        );
+        assertTrue(ex.getMessage().contains("tidak ditemukan"));
+    }
 }
