@@ -20,5 +20,7 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
             CompanyVerificationStatus verificationStatus);
 
     List<Company> findByNameIgnoreCase(String name);
+
+    List<Company> findByNameContainingIgnoreCase(String name);
 }
 

@@ -36,6 +36,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
     private RouterLink adminDashboardLink;
     private RouterLink adminVerificationLink;
+    private RouterLink adminCompaniesLink;
     private boolean isAdminUser = false;
 
     private RouterLink employerDashboardLink;
@@ -170,9 +171,15 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
         adminVerificationLink.add(verifyIcon, verifyLabel);
         sidebarContent.add(adminVerificationLink);
 
-        // 3. Companies (Future Phase 2 - Visual / Non-navigable)
-        Div companiesItem = createDisabledAdminNavItem("lucide:building-2", "Companies");
-        sidebarContent.add(companiesItem);
+        // 3. Companies
+        adminCompaniesLink = new RouterLink();
+        adminCompaniesLink.setRoute(AdminCompaniesView.class);
+        adminCompaniesLink.addClassName("employer-nav-item");
+        Html companiesIcon = new Html("<iconify-icon icon=\"lucide:building-2\" class=\"employer-nav-lucide-icon\"></iconify-icon>");
+        Span companiesLabel = new Span("Companies");
+        companiesLabel.addClassName("employer-nav-label");
+        adminCompaniesLink.add(companiesIcon, companiesLabel);
+        sidebarContent.add(adminCompaniesLink);
 
         // 4. Users (Future Phase 3 - Visual / Non-navigable)
         Div usersItem = createDisabledAdminNavItem("lucide:users", "Users");
@@ -435,16 +442,19 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
     }
 
     private void updateAdminNavActiveState(String path) {
-        if (adminDashboardLink == null || adminVerificationLink == null) {
+        if (adminDashboardLink == null || adminVerificationLink == null || adminCompaniesLink == null) {
             return;
         }
 
         adminDashboardLink.removeClassName("employer-nav-item-active");
         adminVerificationLink.removeClassName("employer-nav-item-active");
+        adminCompaniesLink.removeClassName("employer-nav-item-active");
 
         if (path == null || path.isBlank()) {
             adminDashboardLink.addClassName("employer-nav-item-active");
-        } else if (path.startsWith("admin")) {
+        } else if (path.startsWith("admin/companies")) {
+            adminCompaniesLink.addClassName("employer-nav-item-active");
+        } else if (path.equals("admin") || path.equals("admin/")) {
             adminVerificationLink.addClassName("employer-nav-item-active");
         }
     }
