@@ -7,6 +7,8 @@ import com.example.entity.Role;
 import com.example.entity.User;
 import com.example.repository.CompanyRepository;
 import com.example.repository.UserRepository;
+import com.example.service.AdminUserService;
+import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -17,10 +19,13 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -42,6 +47,7 @@ public class AdminUsersView extends VerticalLayout {
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+    private final AdminUserService adminUserService;
 
     // Filter states
     private int currentPage = 0;
@@ -72,9 +78,21 @@ public class AdminUsersView extends VerticalLayout {
     private final Select<Company> dialogCompanySelect = new Select<>();
     private final Select<CompanyMembershipStatus> dialogStatusSelect = new Select<>();
 
-    public AdminUsersView(UserRepository userRepository, CompanyRepository companyRepository) {
+    // Reset Password Dialog components
+    private final Dialog resetPasswordDialog = new Dialog();
+    private final Span targetUserNameSpan = new Span();
+    private final Span targetUserEmailSpan = new Span();
+    private final PasswordField newPasswordField = new PasswordField("New Password");
+    private final PasswordField confirmPasswordField = new PasswordField("Confirm New Password");
+    private User currentResetTargetUser = null;
+
+    public AdminUsersView(
+            UserRepository userRepository,
+            CompanyRepository companyRepository,
+            AdminUserService adminUserService) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
+        this.adminUserService = adminUserService;
 
         addClassName("view-container");
         setWidthFull();
@@ -83,6 +101,7 @@ public class AdminUsersView extends VerticalLayout {
 
         buildView();
         buildFilterDialog();
+        buildResetPasswordDialog();
         refreshUsers();
     }
 
@@ -257,6 +276,24 @@ public class AdminUsersView extends VerticalLayout {
                 .setWidth("190px")
                 .setFlexGrow(0);
 
+        // Column 6: ACTIONS (Lucide key-round icon only)
+        grid.addComponentColumn(user -> {
+            Button resetBtn = new Button();
+            resetBtn.setIcon(new Html("<iconify-icon icon=\"lucide:key-round\" style=\"font-size: 16px; color: #475569;\"></iconify-icon>"));
+            resetBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+            resetBtn.setTooltipText("Reset Password");
+            resetBtn.getElement().setAttribute("aria-label", "Reset Password");
+            resetBtn.getElement().setAttribute("title", "Reset Password");
+            resetBtn.getStyle()
+                    .set("cursor", "pointer")
+                    .set("padding", "0")
+                    .set("min-width", "32px")
+                    .set("height", "32px")
+                    .set("border-radius", "6px");
+            resetBtn.addClickListener(event -> openResetPasswordDialog(user));
+            return resetBtn;
+        }).setHeader(createTableHeader("ACTIONS")).setWidth("100px").setFlexGrow(0);
+
         // 6. EMPTY STATE
         emptyStateContainer.setWidthFull();
         emptyStateContainer.getStyle()
@@ -420,6 +457,193 @@ public class AdminUsersView extends VerticalLayout {
         dialogStatusSelect.setValue(selectedMembershipStatus);
 
         filterDialog.open();
+    }
+
+    private void buildResetPasswordDialog() {
+        resetPasswordDialog.setWidth("420px");
+        resetPasswordDialog.setCloseOnOutsideClick(true);
+
+        VerticalLayout dialogContent = new VerticalLayout();
+        dialogContent.setPadding(false);
+        dialogContent.setSpacing(false);
+        dialogContent.setWidthFull();
+
+        // Header with title, subtitle, and close 'x' button
+        Div headerRow = new Div();
+        headerRow.setWidthFull();
+        headerRow.getStyle()
+                .set("display", "flex")
+                .set("justify-content", "space-between")
+                .set("align-items", "flex-start")
+                .set("margin-bottom", "14px");
+
+        Div titleGroup = new Div();
+        H2 dialogTitle = new H2("Reset Password");
+        dialogTitle.getStyle()
+                .set("font-size", "18px")
+                .set("font-weight", "700")
+                .set("color", "#0F172A")
+                .set("margin", "0 0 4px 0");
+
+        Span dialogSubtitle = new Span("Set a new password for this user.");
+        dialogSubtitle.getStyle()
+                .set("font-size", "13px")
+                .set("color", "#64748B");
+
+        titleGroup.add(dialogTitle, dialogSubtitle);
+
+        Button closeBtn = new Button("×", event -> resetPasswordDialog.close());
+        closeBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        closeBtn.getStyle()
+                .set("font-size", "22px")
+                .set("font-weight", "600")
+                .set("color", "#64748B")
+                .set("cursor", "pointer")
+                .set("padding", "0")
+                .set("min-width", "28px")
+                .set("height", "28px")
+                .set("line-height", "1");
+
+        headerRow.add(titleGroup, closeBtn);
+
+        // Read-only Target User Card
+        Div targetUserCard = new Div();
+        targetUserCard.setWidthFull();
+        targetUserCard.getStyle()
+                .set("background-color", "#F8FAFC")
+                .set("border", "1px solid #E2E8F0")
+                .set("border-radius", "8px")
+                .set("padding", "12px 14px")
+                .set("box-sizing", "border-box")
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("gap", "3px")
+                .set("margin-bottom", "16px");
+
+        Span targetLabel = new Span("TARGET USER");
+        targetLabel.getStyle()
+                .set("font-size", "11px")
+                .set("font-weight", "700")
+                .set("color", "#64748B")
+                .set("letter-spacing", "0.05em");
+
+        targetUserNameSpan.getStyle()
+                .set("font-size", "14px")
+                .set("font-weight", "600")
+                .set("color", "#0F172A");
+
+        targetUserEmailSpan.getStyle()
+                .set("font-size", "12.5px")
+                .set("color", "#64748B");
+
+        targetUserCard.add(targetLabel, targetUserNameSpan, targetUserEmailSpan);
+
+        // Form fields
+        newPasswordField.setLabel("New Password");
+        newPasswordField.setPlaceholder("Enter new password");
+        newPasswordField.setHelperText("Minimum 8 characters");
+        newPasswordField.setWidthFull();
+        newPasswordField.getStyle().set("margin-bottom", "12px");
+        newPasswordField.addValueChangeListener(e -> newPasswordField.setInvalid(false));
+
+        confirmPasswordField.setLabel("Confirm New Password");
+        confirmPasswordField.setPlaceholder("Re-enter new password");
+        confirmPasswordField.setWidthFull();
+        confirmPasswordField.getStyle().set("margin-bottom", "8px");
+        confirmPasswordField.addValueChangeListener(e -> confirmPasswordField.setInvalid(false));
+
+        dialogContent.add(headerRow, targetUserCard, newPasswordField, confirmPasswordField);
+        resetPasswordDialog.add(dialogContent);
+
+        // Footer buttons
+        Button cancelBtn = new Button("Cancel", event -> resetPasswordDialog.close());
+        cancelBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancelBtn.getStyle()
+                .set("font-size", "13.5px")
+                .set("color", "#475569")
+                .set("cursor", "pointer");
+
+        Button submitBtn = new Button("Reset Password", event -> handleResetPasswordSubmit());
+        submitBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitBtn.getStyle()
+                .set("font-size", "13.5px")
+                .set("font-weight", "600")
+                .set("background-color", "#1E2858")
+                .set("color", "#FFFFFF")
+                .set("cursor", "pointer");
+
+        HorizontalLayout footerLayout = new HorizontalLayout(cancelBtn, submitBtn);
+        footerLayout.setWidthFull();
+        footerLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        footerLayout.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+
+        resetPasswordDialog.getFooter().add(footerLayout);
+    }
+
+    private void openResetPasswordDialog(User user) {
+        if (user == null) {
+            return;
+        }
+        this.currentResetTargetUser = user;
+        targetUserNameSpan.setText(formatNullable(user.getName()));
+        targetUserEmailSpan.setText(user.getEmail() != null ? user.getEmail().trim() : "-");
+
+        newPasswordField.clear();
+        newPasswordField.setInvalid(false);
+        newPasswordField.setErrorMessage(null);
+
+        confirmPasswordField.clear();
+        confirmPasswordField.setInvalid(false);
+        confirmPasswordField.setErrorMessage(null);
+
+        resetPasswordDialog.open();
+    }
+
+    private void handleResetPasswordSubmit() {
+        if (currentResetTargetUser == null) {
+            return;
+        }
+
+        String newPass = newPasswordField.getValue();
+        String confirmPass = confirmPasswordField.getValue();
+
+        boolean isValid = true;
+
+        if (newPass == null || newPass.trim().isEmpty()) {
+            newPasswordField.setInvalid(true);
+            newPasswordField.setErrorMessage("Password is required");
+            isValid = false;
+        } else if (newPass.length() < 8) {
+            newPasswordField.setInvalid(true);
+            newPasswordField.setErrorMessage("Password must contain at least 8 characters");
+            isValid = false;
+        } else {
+            newPasswordField.setInvalid(false);
+        }
+
+        if (confirmPass == null || confirmPass.trim().isEmpty()) {
+            confirmPasswordField.setInvalid(true);
+            confirmPasswordField.setErrorMessage("Password confirmation is required");
+            isValid = false;
+        } else if (newPass != null && !newPass.equals(confirmPass)) {
+            confirmPasswordField.setInvalid(true);
+            confirmPasswordField.setErrorMessage("Passwords do not match");
+            isValid = false;
+        } else {
+            confirmPasswordField.setInvalid(false);
+        }
+
+        if (!isValid) {
+            return;
+        }
+
+        try {
+            adminUserService.resetPassword(currentResetTargetUser.getId(), newPass);
+            resetPasswordDialog.close();
+            Notification.show("Password berhasil direset", 3000, Notification.Position.BOTTOM_START);
+        } catch (IllegalArgumentException | SecurityException ex) {
+            Notification.show(ex.getMessage(), 4000, Notification.Position.BOTTOM_START);
+        }
     }
 
     private void refreshUsers() {
