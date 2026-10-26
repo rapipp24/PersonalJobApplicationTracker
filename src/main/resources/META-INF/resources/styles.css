@@ -92,9 +92,8 @@
     color: #991B1B;
 }
 
-/* Auth Views (Login & Register) */
+/* Auth Views (Register & Fallback) */
 .auth-view,
-.login-view,
 .register-view {
     min-height: 100% !important;
     height: auto !important;
@@ -148,6 +147,420 @@
         padding: var(--lumo-space-m);
     }
 }
+
+/* ==========================================================================
+   Login View - Modern Split-Screen Authentication Layout
+   Scoped strictly under .login-view to ensure zero side-effects
+   ========================================================================== */
+
+.login-view {
+    background-color: #F8FAFC !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px 16px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.login-view .login-card {
+    display: flex;
+    flex-direction: row;
+    background-color: #FFFFFF;
+    border-radius: 24px;
+    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(226, 232, 240, 0.8);
+    border: 1px solid #E2E8F0;
+    width: 100%;
+    max-width: 980px;
+    min-height: 580px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* --- Left Panel: Branding & Illustration --- */
+.login-view .login-left-panel {
+    background: linear-gradient(160deg, #1E2D4A 0%, #152238 100%);
+    width: 46%;
+    padding: 36px 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 20px;
+    margin: 12px;
+    color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-view .login-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    color: #FFFFFF;
+    width: fit-content;
+    text-transform: uppercase;
+}
+
+.login-view .login-badge-icon {
+    width: 14px;
+    height: 14px;
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+.login-view .login-left-heading {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 20px 0 12px 0;
+    color: #FFFFFF;
+    letter-spacing: -0.3px;
+}
+
+.login-view .login-left-desc {
+    font-size: 13.5px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.78);
+    margin: 0 0 20px 0;
+}
+
+.login-view .login-illustration-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    overflow: hidden;
+}
+
+.login-view .login-illustration-img {
+    width: auto;
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 20px;
+}
+
+/* --- Right Panel: Login Form --- */
+.login-view .login-right-panel {
+    width: 54%;
+    padding: 40px 48px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-view .login-brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.login-view .login-brand-logo-wrapper {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #1A2B4C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.login-view .login-brand-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+}
+
+.login-view .login-brand-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1A2B4C;
+    letter-spacing: -0.2px;
+}
+
+.login-view .login-form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 6px 0;
+    text-align: center;
+    letter-spacing: -0.3px;
+}
+
+.login-view .login-form-subtitle {
+    font-size: 14px;
+    color: #64748B;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+/* Vaadin LoginForm styling */
+.login-view vaadin-login-form {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    --lumo-primary-color: #1A2B4C;
+    --lumo-primary-text-color: #1A2B4C;
+    --lumo-primary-contrast-color: #FFFFFF;
+    --lumo-border-radius-m: 8px;
+    --vaadin-input-field-border-width: 1px;
+    --vaadin-input-field-border-color: #CBD5E1;
+    --vaadin-input-field-background: #F8FAFC;
+    --vaadin-input-field-border-radius: 8px;
+    --lumo-contrast-10pct: #F8FAFC;
+    --lumo-body-text-color: #0F172A;
+    --lumo-secondary-text-color: #64748B;
+}
+
+.login-view vaadin-login-form-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.login-view vaadin-login-form::part(form),
+.login-view vaadin-login-form-wrapper::part(form) {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.login-view vaadin-login-form::part(form-title),
+.login-view vaadin-login-form-wrapper::part(form-title) {
+    display: none;
+}
+
+.login-view vaadin-login-form-wrapper::part(error-message) {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 0 16px 0 !important;
+    border-radius: 8px !important;
+}
+
+/* Input Fields (Email & Password) */
+.login-view vaadin-text-field,
+.login-view vaadin-password-field {
+    width: 100% !important;
+    margin-bottom: 6px;
+}
+
+.login-view vaadin-text-field::part(label),
+.login-view vaadin-password-field::part(label) {
+    color: #1E293B;
+    font-weight: 500;
+    font-size: 13.5px;
+    margin-bottom: 4px;
+}
+
+.login-view vaadin-text-field[focused]::part(label),
+.login-view vaadin-password-field[focused]::part(label) {
+    color: #1A2B4C;
+}
+
+/* 
+ * Menggunakan satu mekanisme border yang bersih via inset box-shadow:
+ * Menghilangkan konflik antara CSS border luar dengan internal shadow pada vaadin-input-container,
+ * sehingga mencegah munculnya double border atau garis tambahan di bawah input.
+ */
+.login-view vaadin-text-field::part(input-field),
+.login-view vaadin-password-field::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1px #CBD5E1 !important;
+    border-radius: 8px !important;
+    background-color: #F8FAFC !important;
+    min-height: 44px;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.login-view vaadin-text-field:hover:not([focused])::part(input-field),
+.login-view vaadin-password-field:hover:not([focused])::part(input-field) {
+    box-shadow: inset 0 0 0 1px #94A3B8 !important;
+}
+
+.login-view vaadin-text-field[focused]::part(input-field),
+.login-view vaadin-password-field[focused]::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1.5px #1A2B4C, 0 0 0 3px rgba(26, 43, 76, 0.15) !important;
+    background-color: #FFFFFF !important;
+}
+
+.login-view vaadin-text-field[invalid]::part(input-field),
+.login-view vaadin-password-field[invalid]::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1.5px var(--lumo-error-color, #EF4444), 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.login-view vaadin-login-form vaadin-button[theme~="submit"],
+.login-view vaadin-login-form-wrapper vaadin-button[theme~="submit"] {
+    width: 100% !important;
+    height: 46px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    background-color: #1A2B4C;
+    color: #FFFFFF;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
+}
+
+.login-view vaadin-login-form vaadin-button[theme~="submit"]:hover,
+.login-view vaadin-login-form-wrapper vaadin-button[theme~="submit"]:hover {
+    background-color: #152238;
+}
+
+/* Divider & Register Button */
+.login-view .login-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #94A3B8;
+    font-size: 13px;
+    margin: 18px 0 14px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.login-view .login-divider::before,
+.login-view .login-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.login-view .login-divider span {
+    padding: 0 12px;
+    white-space: nowrap;
+}
+
+.login-view .login-register-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #1A2B4C;
+    border-radius: 8px;
+    color: #1A2B4C;
+    background-color: #FFFFFF;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.login-view .login-register-btn:hover {
+    background-color: #F8FAFC;
+    border-color: #152238;
+}
+
+/* ==========================================================================
+   Responsive Breakpoints for Login View
+   ========================================================================== */
+
+/* Tablet (max-width: 900px) */
+@media (max-width: 900px) {
+    .login-view .login-card {
+        max-width: 720px;
+        min-height: auto;
+    }
+
+    .login-view .login-left-panel {
+        width: 44%;
+        padding: 28px 24px;
+    }
+
+    .login-view .login-left-heading {
+        font-size: 22px;
+    }
+
+    .login-view .login-left-desc {
+        font-size: 13px;
+    }
+
+    .login-view .login-right-panel {
+        width: 56%;
+        padding: 32px 32px;
+    }
+}
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+    .login-view {
+        padding: 16px 12px !important;
+        align-items: flex-start !important;
+    }
+
+    .login-view .login-card {
+        flex-direction: column;
+        border-radius: 20px;
+        max-width: 460px;
+        margin: auto;
+    }
+
+    .login-view .login-left-panel {
+        width: auto;
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        padding: 24px 20px;
+    }
+
+    .login-view .login-left-heading {
+        font-size: 20px;
+        margin: 12px 0 8px 0;
+    }
+
+    .login-view .login-left-desc {
+        font-size: 12.5px;
+        margin-bottom: 0;
+    }
+
+    /* Sembunyikan ilustrasi besar di mobile agar form tetap fokus dan tidak butuh scroll panjang */
+    .login-view .login-illustration-card {
+        display: none;
+    }
+
+    .login-view .login-right-panel {
+        width: 100%;
+        padding: 28px 20px;
+    }
+
+    .login-view .login-form-title {
+        font-size: 22px;
+    }
+}
+
 
 /* ==========================================================================
    Employer Dashboard Styles
