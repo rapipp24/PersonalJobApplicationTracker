@@ -5,6 +5,7 @@ import com.example.dto.RegistrationFormData;
 import com.example.entity.Company;
 import com.example.entity.Role;
 import com.example.service.RegistrationService;
+import com.vaadin.flow.component.HtmlComponent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -14,12 +15,12 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.select.Select;
@@ -31,9 +32,9 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -47,13 +48,14 @@ public class RegisterView extends VerticalLayout {
     private final RegistrationService registrationService;
     private final BeanValidationBinder<RegistrationFormData> binder;
 
+    // Account Details Fields
     private final TextField fullName = new TextField("Full Name");
     private final EmailField email = new EmailField("Email");
     private final PasswordField password = new PasswordField("Password");
     private final PasswordField confirmPassword = new PasswordField("Confirm Password");
     private final RadioButtonGroup<Role> accountType = new RadioButtonGroup<>("Account Type");
 
-    // Task 2: Pilihan Registrasi Employer
+    // Employer Company Registration Option
     private final RadioButtonGroup<CompanyRegistrationType> companyRegistrationType =
             new RadioButtonGroup<>("Company Registration Option");
 
@@ -80,19 +82,20 @@ public class RegisterView extends VerticalLayout {
             "Lainnya"
     );
 
-    // Task 2: Field Register New Company
+    // Employer: Register New Company Fields
     private final TextField companyName = new TextField("Company Name");
     private final Select<String> industry = new Select<>();
     private final TextField companyLocation = new TextField("Company Location");
     private final TextField website = new TextField("Official Website (Optional)");
     private final TextField officialContact = new TextField("Official Company Email / Contact");
     private final TextArea description = new TextArea("Company Description");
-    private final VerticalLayout newCompanyContainer = new VerticalLayout();
+    private final Div newCompanyContainer = new Div();
 
-    // Task 2: Pencarian Existing Company
+    // Employer: Join Existing Company Search
     private final ComboBox<Company> companySearch = new ComboBox<>("Search Company");
-    private final VerticalLayout existingCompanyContainer = new VerticalLayout();
+    private final Div existingCompanyContainer = new Div();
 
+    // Action Button
     private final Button registerButton = new Button("Register");
 
     public RegisterView(RegistrationService registrationService) {
@@ -103,8 +106,10 @@ public class RegisterView extends VerticalLayout {
 
         addClassNames("auth-view", "register-view");
         setSizeFull();
+        setPadding(false);
+        setSpacing(false);
         setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.START);
+        setJustifyContentMode(JustifyContentMode.CENTER);
 
         configureBinder();
         createRegisterForm();
@@ -114,17 +119,12 @@ public class RegisterView extends VerticalLayout {
         try (InputStream is = getClass().getResourceAsStream("/META-INF/resources/styles.css")) {
             if (is != null) {
                 String css = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                getElement().executeJs(
-                        "if (!document.getElementById('app-styles')) {" +
-                        "  const style = document.createElement('style');" +
-                        "  style.id = 'app-styles';" +
-                        "  style.textContent = $0;" +
-                        "  document.head.appendChild(style);" +
-                        "}",
-                        css
-                );
+                HtmlComponent styleTag = new HtmlComponent("style");
+                styleTag.getElement().setAttribute("id", "register-injected-styles");
+                styleTag.getElement().setText(css);
+                getElement().appendChild(styleTag.getElement());
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -169,26 +169,60 @@ public class RegisterView extends VerticalLayout {
     }
 
     private void createRegisterForm() {
-        H1 title = new H1("Job Application Tracker");
-        title.addClassName("auth-title");
+        Div registerCard = new Div();
+        registerCard.addClassName("register-card");
 
-        VerticalLayout form = new VerticalLayout();
-        form.addClassNames("auth-form", "register-form");
-        form.setPadding(false);
-        form.setSpacing(true);
-        form.setAlignItems(Alignment.STRETCH);
+        // 1. Panel Kiri (Register Form)
+        Div leftPanel = buildLeftPanel();
 
+        // 2. Panel Kanan (Branding & Benefit & Ilustrasi)
+        Div rightPanel = buildRightPanel();
+
+        registerCard.add(leftPanel, rightPanel);
+        add(registerCard);
+    }
+
+    private Div buildLeftPanel() {
+        Div leftPanel = new Div();
+        leftPanel.addClassName("register-left-panel");
+
+        // Brand Header (Lucide briefcase icon + Title)
+        Div brandHeader = new Div();
+        brandHeader.addClassName("register-brand-header");
+
+        Div brandLogoWrapper = new Div();
+        brandLogoWrapper.addClassName("register-brand-logo-wrapper");
+        StreamResource logoResource = new StreamResource("briefcase-business.svg", () ->
+                getClass().getResourceAsStream("/META-INF/resources/images/briefcase-business.svg")
+        );
+        Image brandLogo = new Image(logoResource, "Job Application Tracker Logo");
+        brandLogo.addClassName("register-brand-logo");
+        brandLogoWrapper.add(brandLogo);
+
+        Span brandTitle = new Span("Job Application Tracker");
+        brandTitle.addClassName("register-brand-title");
+        brandHeader.add(brandLogoWrapper, brandTitle);
+
+        // Heading & Subtitle
         H2 formTitle = new H2("Create Account");
-        formTitle.addClassName("auth-form-title");
+        formTitle.addClassName("register-form-title");
 
+        Paragraph formSubtitle = new Paragraph("Join our portal to track applications or hire top talent");
+        formSubtitle.addClassName("register-form-subtitle");
+
+        // Basic Account Input Fields
         fullName.setWidthFull();
+        fullName.setPlaceholder("Enter your full name");
 
         email.setWidthFull();
+        email.setPlaceholder("Enter your email address");
         email.setErrorMessage("Please enter a valid email address.");
 
         password.setWidthFull();
+        password.setPlaceholder("Create a password");
 
         confirmPassword.setWidthFull();
+        confirmPassword.setPlaceholder("Repeat your password");
 
         accountType.setItems(Role.PELAMAR, Role.PEMBERI_LAMARAN);
         accountType.setItemLabelGenerator(role -> {
@@ -200,8 +234,9 @@ public class RegisterView extends VerticalLayout {
             }
             return role.name();
         });
+        accountType.setValue(Role.PELAMAR);
 
-        // Konfigurasi opsi tipe registrasi Company
+        // Employer: Company Registration Option RadioGroup
         companyRegistrationType.setItems(
                 CompanyRegistrationType.REGISTER_NEW_COMPANY,
                 CompanyRegistrationType.JOIN_EXISTING_COMPANY
@@ -219,13 +254,11 @@ public class RegisterView extends VerticalLayout {
         companyRegistrationType.setWidthFull();
         companyRegistrationType.setVisible(false);
 
-        // Konfigurasi container dan field New Company
-        newCompanyContainer.setWidthFull();
-        newCompanyContainer.setPadding(false);
-        newCompanyContainer.setSpacing(true);
+        // Employer: New Company Container & Fields
+        newCompanyContainer.addClassName("register-new-company-container");
         newCompanyContainer.setVisible(false);
 
-        companyName.setWidthFull();
+        companyName.setPlaceholder("Enter company name");
         companyName.setHelperText("Enter the official company name. Example: PT Muara Buana");
 
         industry.setLabel("Industry *");
@@ -234,32 +267,39 @@ public class RegisterView extends VerticalLayout {
         industry.setWidthFull();
         industry.setHelperText("Select the company's primary industry.");
 
-        companyLocation.setWidthFull();
-        companyLocation.setHelperText("Enter the main location of the company. Example: Bandar Lampung");
+        Div row1 = new Div();
+        row1.addClassName("register-form-row");
+        row1.add(companyName, industry);
 
-        website.setWidthFull();
-        website.setHelperText("Enter the official company website if available. Example: https://company.com");
+        companyLocation.setPlaceholder("City, Country");
+        companyLocation.setHelperText("Enter the main location. Example: Bandar Lampung");
+
+        website.setPlaceholder("https://...");
+        website.setHelperText("Example: https://company.com");
+
+        Div row2 = new Div();
+        row2.addClassName("register-form-row");
+        row2.add(companyLocation, website);
 
         officialContact.setWidthFull();
-        officialContact.setHelperText("Use an official company email if available. Example: hr@company.com or contact@company.com");
+        officialContact.setPlaceholder("hr@company.com or contact@...");
+        officialContact.setHelperText("Example: hr@company.com or contact@company.com");
 
         description.setWidthFull();
-        description.setMinHeight("80px");
+        description.setMinHeight("52px");
+        description.setHeight("58px");
+        description.setPlaceholder("Briefly describe your company culture, core products, and scale...");
         description.setHelperText("Briefly describe the company's main business activities.");
 
         newCompanyContainer.add(
-                companyName,
-                industry,
-                companyLocation,
-                website,
+                row1,
+                row2,
                 officialContact,
                 description
         );
 
-        // Konfigurasi container dan pencarian Existing Company
-        existingCompanyContainer.setWidthFull();
-        existingCompanyContainer.setPadding(false);
-        existingCompanyContainer.setSpacing(true);
+        // Employer: Existing Company Container & Search ComboBox
+        existingCompanyContainer.addClassName("register-existing-company-container");
         existingCompanyContainer.setVisible(false);
 
         companySearch.setWidthFull();
@@ -290,10 +330,9 @@ public class RegisterView extends VerticalLayout {
                     return registrationService.findVerifiedCompanies(filter).size();
                 }
         );
-
         existingCompanyContainer.add(companySearch);
 
-        // Listener perubahan Account Type
+        // Account Type Change Listener
         accountType.addValueChangeListener(event -> {
             Role selectedRole = event.getValue();
             if (selectedRole != Role.PEMBERI_LAMARAN) {
@@ -302,24 +341,16 @@ public class RegisterView extends VerticalLayout {
             updateCompanyRegistrationVisibility();
         });
 
-        // Listener perubahan Opsi Registrasi Company
+        // Company Registration Option Change Listener
         companyRegistrationType.addValueChangeListener(event -> {
             updateCompanyRegistrationVisibility();
         });
 
-        registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        // Submit Button (Single 'Register' Button)
         registerButton.setWidthFull();
-        registerButton.addClassName("auth-submit-btn");
-        registerButton.setDisableOnClick(true);
-
-        HorizontalLayout loginLayout = new HorizontalLayout(
-                new Span("Already have an account?"),
-                new RouterLink("Login", LoginView.class)
-        );
-        loginLayout.setAlignItems(Alignment.CENTER);
-        loginLayout.addClassName("register-link-layout");
-
+        registerButton.addClassName("register-submit-btn");
         registerButton.addClickListener(event -> {
+            registerButton.setEnabled(false);
             RegistrationFormData formData = new RegistrationFormData();
             boolean isValid = binder.writeBeanIfValid(formData);
 
@@ -396,6 +427,8 @@ public class RegisterView extends VerticalLayout {
                     String emailValue = formData.getEmail().trim();
                     if (registrationService.emailExists(emailValue)) {
                         resetRegisterButton();
+                        email.setErrorMessage("Email is already registered.");
+                        email.setInvalid(true);
                         Notification.show("Email is already registered.");
                         return;
                     }
@@ -438,6 +471,8 @@ public class RegisterView extends VerticalLayout {
                     String emailValue = formData.getEmail().trim();
                     if (registrationService.emailExists(emailValue)) {
                         resetRegisterButton();
+                        email.setErrorMessage("Email is already registered.");
+                        email.setInvalid(true);
                         Notification.show("Email is already registered.");
                         return;
                     }
@@ -456,10 +491,12 @@ public class RegisterView extends VerticalLayout {
                 }
             }
 
-            // Flow pendaftaran PELAMAR (Applicant) tetap normal
+            // Flow pendaftaran PELAMAR (Applicant)
             String emailValue = formData.getEmail().trim();
             if (registrationService.emailExists(emailValue)) {
                 resetRegisterButton();
+                email.setErrorMessage("Email is already registered.");
+                email.setInvalid(true);
                 Notification.show("Email is already registered.");
                 return;
             }
@@ -482,8 +519,20 @@ public class RegisterView extends VerticalLayout {
             }
         });
 
-        form.add(
+        // Divider
+        Div divider = new Div();
+        divider.addClassName("register-divider");
+        Span dividerText = new Span("Already have an account?");
+        divider.add(dividerText);
+
+        // Outlined Login Button
+        RouterLink loginLink = new RouterLink("Login", LoginView.class);
+        loginLink.addClassName("register-login-btn");
+
+        leftPanel.add(
+                brandHeader,
                 formTitle,
+                formSubtitle,
                 fullName,
                 email,
                 password,
@@ -492,10 +541,65 @@ public class RegisterView extends VerticalLayout {
                 companyRegistrationType,
                 newCompanyContainer,
                 existingCompanyContainer,
-                registerButton
+                registerButton,
+                divider,
+                loginLink
         );
 
-        add(title, form, loginLayout);
+        return leftPanel;
+    }
+
+    private Div buildRightPanel() {
+        Div rightPanel = new Div();
+        rightPanel.addClassName("register-right-panel");
+
+        Div badge = new Div();
+        badge.addClassName("register-badge");
+        Icon badgeIcon = VaadinIcon.BRIEFCASE.create();
+        badgeIcon.addClassName("register-badge-icon");
+        badge.add(badgeIcon, new Span("ENTERPRISE RECRUITMENT"));
+
+        H1 rightHeading = new H1("Simplify job tracking with our portal");
+        rightHeading.addClassName("register-right-heading");
+
+        Paragraph rightDesc = new Paragraph(
+                "Manage your job applications, track recruitment stages, and connect with verified employers in one place."
+        );
+        rightDesc.addClassName("register-right-desc");
+
+        // Benefit Points (Static 3 points for Applicant / Portal)
+        Div benefitContainer = new Div();
+        benefitContainer.addClassName("register-benefit-container");
+
+        String[] benefits = new String[]{
+                "Real-time application status tracking from applied to offered",
+                "Direct connection with verified companies and recruiters",
+                "One-click CV submission and saved job bookmarks"
+        };
+
+        for (String benefitText : benefits) {
+            Div item = new Div();
+            item.addClassName("register-benefit-item");
+            Icon check = VaadinIcon.CHECK.create();
+            check.addClassName("register-benefit-check");
+            Span text = new Span(benefitText);
+            text.addClassName("register-benefit-text");
+            item.add(check, text);
+            benefitContainer.add(item);
+        }
+
+        // Illustration Card with 20px rounded image
+        Div illustrationCard = new Div();
+        illustrationCard.addClassName("register-illustration-card");
+        StreamResource illustResource = new StreamResource("logo_register.png", () ->
+                getClass().getResourceAsStream("/META-INF/resources/images/logo_register.png")
+        );
+        Image illustrationImg = new Image(illustResource, "Job Application Tracker Registration");
+        illustrationImg.addClassName("register-illustration-img");
+        illustrationCard.add(illustrationImg);
+
+        rightPanel.add(badge, rightHeading, rightDesc, benefitContainer, illustrationCard);
+        return rightPanel;
     }
 
     private void updateCompanyRegistrationVisibility() {
@@ -575,7 +679,6 @@ public class RegisterView extends VerticalLayout {
                 .set("padding", "32px 24px 28px 24px")
                 .set("box-sizing", "border-box");
 
-        // Icon Container (Circular light green badge with Success Checkmark icon)
         Div iconContainer = new Div();
         iconContainer.getStyle()
                 .set("width", "52px")
@@ -594,7 +697,6 @@ public class RegisterView extends VerticalLayout {
         checkIcon.setColor("#15803D");
         iconContainer.add(checkIcon);
 
-        // Title
         H2 title = new H2("Company Registration Submitted");
         title.getStyle()
                 .set("margin", "0 0 8px 0")
@@ -603,7 +705,6 @@ public class RegisterView extends VerticalLayout {
                 .set("color", "#0F172A")
                 .set("line-height", "1.3");
 
-        // Subtitle
         Paragraph subtitle = new Paragraph("Your company has been successfully registered and is currently under verification.");
         subtitle.getStyle()
                 .set("margin", "0 0 20px 0")
@@ -611,7 +712,6 @@ public class RegisterView extends VerticalLayout {
                 .set("color", "#64748B")
                 .set("line-height", "1.5");
 
-        // Estimated Review Time Box
         Div reviewTimeBox = new Div();
         reviewTimeBox.setWidthFull();
         reviewTimeBox.getStyle()
@@ -638,7 +738,6 @@ public class RegisterView extends VerticalLayout {
 
         reviewTimeBox.add(hourglassIcon, reviewTimeText);
 
-        // Supporting Information
         Paragraph supportingInfo = new Paragraph("Please wait for approval from the application administrator. No further action is required at this time.");
         supportingInfo.getStyle()
                 .set("margin", "0 0 24px 0")
@@ -646,7 +745,6 @@ public class RegisterView extends VerticalLayout {
                 .set("color", "#64748B")
                 .set("line-height", "1.5");
 
-        // Primary Button (Got It)
         Button gotItButton = new Button("Got It");
         gotItButton.setWidthFull();
         gotItButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

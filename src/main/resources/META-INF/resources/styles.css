@@ -92,9 +92,8 @@
     color: #991B1B;
 }
 
-/* Auth Views (Register & Fallback) */
-.auth-view,
-.register-view {
+/* Auth Views (Generic Fallback) */
+.auth-view {
     min-height: 100% !important;
     height: auto !important;
     box-sizing: border-box;
@@ -106,8 +105,7 @@
     text-align: center;
 }
 
-.auth-form,
-.register-form {
+.auth-form {
     width: 360px !important;
     max-width: 100% !important;
     box-sizing: border-box;
@@ -330,6 +328,8 @@
     --vaadin-input-field-border-color: #CBD5E1;
     --vaadin-input-field-background: #F8FAFC;
     --vaadin-input-field-border-radius: 8px;
+    --vaadin-input-field-height: 34px;
+    --lumo-size-m: 34px;
     --lumo-contrast-10pct: #F8FAFC;
     --lumo-body-text-color: #0F172A;
     --lumo-secondary-text-color: #64748B;
@@ -367,15 +367,20 @@
 .login-view vaadin-text-field,
 .login-view vaadin-password-field {
     width: 100% !important;
-    margin-bottom: 6px;
+    padding-top: 3px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 2px;
+    font-size: 12.5px;
+    --vaadin-input-field-height: 34px;
+    --lumo-size-m: 34px;
 }
 
 .login-view vaadin-text-field::part(label),
 .login-view vaadin-password-field::part(label) {
     color: #1E293B;
     font-weight: 500;
-    font-size: 13.5px;
-    margin-bottom: 4px;
+    font-size: 12px;
+    margin-bottom: 2px;
 }
 
 .login-view vaadin-text-field[focused]::part(label),
@@ -394,7 +399,8 @@
     box-shadow: inset 0 0 0 1px #CBD5E1 !important;
     border-radius: 8px !important;
     background-color: #F8FAFC !important;
-    min-height: 44px;
+    min-height: 34px;
+    height: 34px;
     box-sizing: border-box;
     transition: box-shadow 0.15s ease, background-color 0.15s ease;
 }
@@ -420,14 +426,15 @@
 .login-view vaadin-login-form vaadin-button[theme~="submit"],
 .login-view vaadin-login-form-wrapper vaadin-button[theme~="submit"] {
     width: 100% !important;
-    height: 46px;
-    font-size: 15px;
+    height: 38px;
+    min-height: 38px;
+    font-size: 13.5px;
     font-weight: 600;
     border-radius: 8px;
     background-color: #1A2B4C;
     color: #FFFFFF;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 6px;
     margin-bottom: 0;
     box-sizing: border-box;
     transition: background-color 0.15s ease;
@@ -467,13 +474,14 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 44px;
+    height: 36px;
+    min-height: 36px;
     border: 1.5px solid #1A2B4C;
     border-radius: 8px;
     color: #1A2B4C;
     background-color: #FFFFFF;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 13px;
     text-decoration: none;
     box-sizing: border-box;
     cursor: pointer;
@@ -558,6 +566,548 @@
 
     .login-view .login-form-title {
         font-size: 22px;
+    }
+}
+
+
+/* ==========================================================================
+   Register View - Modern Split-Screen Authentication Layout (Reversed)
+   Form on LEFT (54%), Branding Navy on RIGHT (46%)
+   Scoped strictly under .register-view to ensure zero side-effects
+   ========================================================================== */
+
+.register-view {
+    background-color: #F8FAFC !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 16px 12px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.register-view .register-card {
+    display: flex;
+    flex-direction: row;
+    background-color: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.07), 0 0 1px 1px rgba(226, 232, 240, 0.8);
+    border: 1px solid #E2E8F0;
+    width: 100%;
+    max-width: 900px;
+    min-height: auto;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin: auto;
+}
+
+/* --- Left Panel: Register Form (Wider ~55%) --- */
+.register-view .register-left-panel {
+    width: 55%;
+    padding: 18px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+
+
+.register-view .register-brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.register-view .register-brand-logo-wrapper {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #1A2B4C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.register-view .register-brand-logo {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    display: block;
+}
+
+.register-view .register-brand-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A2B4C;
+    letter-spacing: -0.2px;
+}
+
+.register-view .register-form-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 2px 0;
+    text-align: left;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+}
+
+.register-view .register-form-subtitle {
+    font-size: 12px;
+    color: #64748B;
+    margin: 0 0 8px 0;
+    text-align: left;
+    line-height: 1.35;
+}
+
+/* Two-column row for Step 2 */
+.register-view .register-form-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.register-view .register-form-row > * {
+    flex: 1 1 50%;
+    min-width: 0;
+}
+
+/* Form Input Fields (Full Name, Email, Password, Select, ComboBox, TextArea) */
+.register-view vaadin-text-field,
+.register-view vaadin-email-field,
+.register-view vaadin-password-field,
+.register-view vaadin-select,
+.register-view vaadin-combo-box,
+.register-view vaadin-text-area {
+    width: 100% !important;
+    padding-top: 3px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 2px;
+    --lumo-primary-color: #1A2B4C;
+    --lumo-primary-text-color: #1A2B4C;
+    --lumo-primary-contrast-color: #FFFFFF;
+    --lumo-border-radius-m: 8px;
+    --vaadin-input-field-border-width: 1px;
+    --vaadin-input-field-border-color: #CBD5E1;
+    --vaadin-input-field-background: #F8FAFC;
+    --vaadin-input-field-border-radius: 8px;
+    --vaadin-input-field-height: 34px;
+    --lumo-size-m: 34px;
+    --lumo-contrast-10pct: #F8FAFC;
+    --lumo-body-text-color: #0F172A;
+    --lumo-secondary-text-color: #64748B;
+    font-size: 12.5px;
+}
+
+.register-view vaadin-text-field::part(label),
+.register-view vaadin-email-field::part(label),
+.register-view vaadin-password-field::part(label),
+.register-view vaadin-select::part(label),
+.register-view vaadin-combo-box::part(label),
+.register-view vaadin-text-area::part(label),
+.register-view vaadin-radio-group::part(label) {
+    color: #1E293B;
+    font-weight: 500;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.register-view vaadin-text-field::part(helper-text),
+.register-view vaadin-email-field::part(helper-text),
+.register-view vaadin-password-field::part(helper-text),
+.register-view vaadin-select::part(helper-text),
+.register-view vaadin-combo-box::part(helper-text),
+.register-view vaadin-text-area::part(helper-text) {
+    font-size: 10.5px;
+    line-height: 1.25;
+    color: #64748B;
+    margin-top: 1px;
+}
+
+.register-view vaadin-text-field[focused]::part(label),
+.register-view vaadin-email-field[focused]::part(label),
+.register-view vaadin-password-field[focused]::part(label),
+.register-view vaadin-select[focused]::part(label),
+.register-view vaadin-combo-box[focused]::part(label),
+.register-view vaadin-text-area[focused]::part(label) {
+    color: #1A2B4C;
+}
+
+/* Inset box-shadow border matching Login styling */
+.register-view vaadin-text-field::part(input-field),
+.register-view vaadin-email-field::part(input-field),
+.register-view vaadin-password-field::part(input-field),
+.register-view vaadin-select::part(input-field),
+.register-view vaadin-combo-box::part(input-field),
+.register-view vaadin-text-area::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1px #CBD5E1 !important;
+    border-radius: 8px !important;
+    background-color: #F8FAFC !important;
+    min-height: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.register-view vaadin-text-area::part(input-field) {
+    min-height: 52px;
+}
+
+.register-view vaadin-text-field:hover:not([focused])::part(input-field),
+.register-view vaadin-email-field:hover:not([focused])::part(input-field),
+.register-view vaadin-password-field:hover:not([focused])::part(input-field),
+.register-view vaadin-select:hover:not([focused])::part(input-field),
+.register-view vaadin-combo-box:hover:not([focused])::part(input-field),
+.register-view vaadin-text-area:hover:not([focused])::part(input-field) {
+    box-shadow: inset 0 0 0 1px #94A3B8 !important;
+}
+
+.register-view vaadin-text-field[focused]::part(input-field),
+.register-view vaadin-email-field[focused]::part(input-field),
+.register-view vaadin-password-field[focused]::part(input-field),
+.register-view vaadin-select[focused]::part(input-field),
+.register-view vaadin-combo-box[focused]::part(input-field),
+.register-view vaadin-text-area[focused]::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1.5px #1A2B4C, 0 0 0 3px rgba(26, 43, 76, 0.15) !important;
+    background-color: #FFFFFF !important;
+}
+
+.register-view vaadin-text-field[invalid]::part(input-field),
+.register-view vaadin-email-field[invalid]::part(input-field),
+.register-view vaadin-password-field[invalid]::part(input-field),
+.register-view vaadin-select[invalid]::part(input-field),
+.register-view vaadin-combo-box[invalid]::part(input-field),
+.register-view vaadin-text-area[invalid]::part(input-field) {
+    border: none !important;
+    box-shadow: inset 0 0 0 1.5px var(--lumo-error-color, #EF4444), 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* RadioButtonGroup styling */
+.register-view vaadin-radio-group {
+    padding-top: 3px !important;
+    padding-bottom: 2px !important;
+    margin: 2px 0 6px 0;
+    width: 100%;
+}
+
+.register-view vaadin-radio-group vaadin-radio-button {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #1E293B;
+    margin-right: 18px;
+    --lumo-primary-color: #1A2B4C;
+}
+
+.register-view vaadin-radio-button[checked]::part(radio) {
+    border-color: #1A2B4C !important;
+}
+
+.register-view vaadin-radio-button[checked]::part(dot) {
+    background-color: #1A2B4C !important;
+}
+
+/* Dynamic Employer containers */
+.register-view .register-new-company-container,
+.register-view .register-existing-company-container {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 0 4px 0;
+}
+
+/* Submit Button */
+.register-view .register-submit-btn {
+    width: 100% !important;
+    height: 38px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    background-color: #1A2B4C;
+    color: #FFFFFF;
+    cursor: pointer;
+    margin-top: 6px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
+    border: none;
+}
+
+.register-view .register-submit-btn:hover {
+    background-color: #152238;
+}
+
+/* Divider & Login Outlined Button */
+.register-view .register-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #94A3B8;
+    font-size: 11.5px;
+    margin: 8px 0 6px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.register-view .register-divider::before,
+.register-view .register-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.register-view .register-divider span {
+    padding: 0 10px;
+    white-space: nowrap;
+}
+
+.register-view .register-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 36px;
+    border: 1.5px solid #1A2B4C;
+    border-radius: 8px;
+    color: #1A2B4C;
+    background-color: #FFFFFF;
+    font-weight: 600;
+    font-size: 13px;
+    text-decoration: none;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.register-view .register-login-btn:hover {
+    background-color: #F8FAFC;
+    border-color: #152238;
+}
+
+/* --- Right Panel: Branding & Benefits & Illustration (Narrower ~45%) --- */
+.register-view .register-right-panel {
+    background: linear-gradient(160deg, #1E2D4A 0%, #152238 100%);
+    width: 45%;
+    padding: 20px 22px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-radius: 16px;
+    margin: 8px;
+    color: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+}
+
+.register-view .register-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    color: #FFFFFF;
+    width: fit-content;
+    text-transform: uppercase;
+}
+
+.register-view .register-badge-icon {
+    width: 12px;
+    height: 12px;
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+.register-view .register-right-heading {
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 8px 0 4px 0;
+    color: #FFFFFF;
+    letter-spacing: -0.3px;
+}
+
+.register-view .register-right-desc {
+    font-size: 11.5px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.78);
+    margin: 0 0 10px 0;
+}
+
+/* Benefit List Container */
+.register-view .register-benefit-container {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+}
+
+.register-view .register-benefit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.register-view .register-benefit-check {
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    color: #93C5FD;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.register-view .register-benefit-text {
+    font-size: 11px;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.register-view .register-illustration-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+
+.register-view .register-illustration-img {
+    width: 100%;
+    max-width: 345px;
+    height: auto;
+    aspect-ratio: 1200 / 896;
+    object-fit: contain;
+    border-radius: 20px;
+    display: block;
+}
+
+
+
+/* ==========================================================================
+   Responsive Breakpoints for Register View
+   ========================================================================== */
+
+/* Tablet (max-width: 900px) */
+@media (max-width: 900px) {
+    .register-view .register-card {
+        max-width: 720px;
+        min-height: auto;
+    }
+
+    .register-view .register-left-panel {
+        width: 55%;
+        padding: 18px 16px;
+    }
+
+    .register-view .register-right-panel {
+        width: 45%;
+        padding: 18px 16px;
+    }
+
+    .register-view .register-right-heading {
+        font-size: 17px;
+    }
+
+    .register-view .register-form-title {
+        font-size: 18px;
+    }
+
+    .register-view .register-illustration-card {
+        margin-top: 14px;
+    }
+
+    .register-view .register-illustration-img {
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+        aspect-ratio: 1200 / 896;
+        border-radius: 16px;
+    }
+}
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+    .register-view {
+        padding: 12px 8px !important;
+        align-items: flex-start !important;
+    }
+
+    .register-view .register-card {
+        flex-direction: column;
+        border-radius: 16px;
+        max-width: 460px;
+        margin: auto;
+    }
+
+    .register-view .register-left-panel {
+        width: 100%;
+        padding: 20px 16px;
+    }
+
+    .register-view .register-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .register-view .register-right-panel {
+        width: auto;
+        margin: 0;
+        border-radius: 0 0 16px 16px;
+        padding: 18px 16px;
+    }
+
+    .register-view .register-illustration-card {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Smooth Motion Entrance Transitions for Auth Views
+   ========================================================================== */
+@keyframes authCardFadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .register-view .register-card {
+        animation: authCardFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .login-view .login-card {
+        animation: authCardFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 }
 
