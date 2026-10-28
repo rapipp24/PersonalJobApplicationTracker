@@ -190,6 +190,7 @@ public class RegisterView extends VerticalLayout {
     private void createRegisterForm() {
         registerCard = new Div();
         registerCard.addClassName("register-card");
+        registerCard.addClassName("register-card-applicant");
 
         // 1. Panel Kiri (Register Form - Step 1 & Step 2)
         Div leftPanel = buildLeftPanel();
@@ -481,8 +482,14 @@ public class RegisterView extends VerticalLayout {
             if (selectedRole == Role.PELAMAR) {
                 registerButton.setText("Register");
                 clearCompanyInputsAndErrors();
+                if (registerCard != null) {
+                    registerCard.addClassName("register-card-applicant");
+                }
             } else {
                 registerButton.setText("Continue");
+                if (registerCard != null) {
+                    registerCard.removeClassName("register-card-applicant");
+                }
             }
         });
 
@@ -660,6 +667,11 @@ public class RegisterView extends VerticalLayout {
                 registerCard.removeClassName("step-2-active");
                 registerCard.removeClassName("step-2-new-company");
                 registerCard.removeClassName("step-2-join-company");
+                if (accountType.getValue() == Role.PELAMAR) {
+                    registerCard.addClassName("register-card-applicant");
+                } else {
+                    registerCard.removeClassName("register-card-applicant");
+                }
             }
             if (joinLoginDivider != null) {
                 joinLoginDivider.setVisible(false);
@@ -678,6 +690,7 @@ public class RegisterView extends VerticalLayout {
             applicantBenefitContainer.setVisible(false);
             illustrationCard.addClassName("step-2-illust");
             if (registerCard != null) {
+                registerCard.removeClassName("register-card-applicant");
                 registerCard.addClassName("step-2-active");
             }
             updateCompanyRegistrationVisibility();

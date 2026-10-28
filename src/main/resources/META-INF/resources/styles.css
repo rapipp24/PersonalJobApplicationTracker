@@ -641,6 +641,12 @@
     margin: auto;
 }
 
+/* --- Register Step 1 (Applicant & Employer Shared): Unified Desktop Scaling --- */
+.register-view .register-card:not(.step-2-active),
+.register-view .register-card.register-card-applicant:not(.step-2-active) {
+    max-width: 1200px;
+}
+
 /* --- Step 2 Employer: Compact Proportional Card --- */
 .register-view .register-card.step-2-active {
     max-width: 1020px;
@@ -899,6 +905,28 @@
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+}
+
+/* --- Step 1 Form Container & Input Fields: Width Constraint & Increased Vertical Height --- */
+.register-view .register-card:not(.step-2-active) .register-step1-container {
+    max-width: 580px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-text-field,
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-email-field,
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-password-field {
+    --vaadin-input-field-height: 38px;
+    --lumo-size-m: 38px;
+}
+
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-text-field::part(input-field),
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-email-field::part(input-field),
+.register-view .register-card:not(.step-2-active) .register-step1-container vaadin-password-field::part(input-field) {
+    min-height: 38px;
+    height: 38px;
 }
 
 /* Step 2 Header (Back button + Step badge) */
@@ -1295,6 +1323,21 @@ vaadin-select-overlay vaadin-select-item {
     border-color: #152238;
 }
 
+/* --- Step 1 Buttons & Divider: Shortened & Horizontally Centered --- */
+.register-view .register-card:not(.step-2-active) .register-step1-container .register-submit-btn,
+.register-view .register-card:not(.step-2-active) .register-step1-container .register-login-btn {
+    max-width: 400px;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.register-view .register-card:not(.step-2-active) .register-step1-container .register-divider {
+    max-width: 400px;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
 /* --- Right Panel: Branding & Benefits & Illustration (Narrower ~45%) --- */
 .register-view .register-right-panel {
     background: linear-gradient(160deg, #1E2D4A 0%, #152238 100%);
@@ -1408,6 +1451,11 @@ vaadin-select-overlay vaadin-select-item {
     object-fit: contain;
     border-radius: 20px;
     display: block;
+}
+
+/* --- Step 1 Illustration: Proportional Scaling for Unified Card --- */
+.register-view .register-card:not(.step-2-active) .register-illustration-img {
+    max-width: 390px;
 }
 
 /* Step 2 Right Panel Footer */
@@ -1596,6 +1644,8 @@ vaadin-select-overlay vaadin-select-item {
 
 /* Desktop Compact (max-width: 1200px) */
 @media (max-width: 1200px) {
+    .register-view .register-card:not(.step-2-active),
+    .register-view .register-card.register-card-applicant,
     .register-view .register-card.step-2-active {
         max-width: 960px;
     }
@@ -1604,6 +1654,7 @@ vaadin-select-overlay vaadin-select-item {
 /* Tablet (max-width: 900px) */
 @media (max-width: 900px) {
     .register-view .register-card,
+    .register-view .register-card.register-card-applicant,
     .register-view .register-card.step-2-active {
         max-width: 720px;
         min-height: auto;
@@ -1650,6 +1701,7 @@ vaadin-select-overlay vaadin-select-item {
     }
 
     .register-view .register-card,
+    .register-view .register-card.register-card-applicant,
     .register-view .register-card.step-2-active {
         flex-direction: column;
         border-radius: 16px;
