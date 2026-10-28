@@ -156,7 +156,7 @@
     min-height: 100vh !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 24px 16px !important;
+    padding: clamp(16px, 2.5vh, 28px) 16px !important;
     box-sizing: border-box;
     display: flex !important;
     align-items: center !important;
@@ -171,8 +171,9 @@
     box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(226, 232, 240, 0.8);
     border: 1px solid #E2E8F0;
     width: 100%;
-    max-width: 980px;
-    min-height: 580px;
+    max-width: 1260px;
+    min-height: clamp(560px, 75vh, 720px);
+    max-height: min(730px, calc(100vh - 40px));
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -180,8 +181,8 @@
 /* --- Left Panel: Branding & Illustration --- */
 .login-view .login-left-panel {
     background: linear-gradient(160deg, #1E2D4A 0%, #152238 100%);
-    width: 46%;
-    padding: 36px 32px;
+    width: 48%;
+    padding: clamp(28px, 4vh, 44px) clamp(28px, 2.5vw, 40px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -217,10 +218,10 @@
 }
 
 .login-view .login-left-heading {
-    font-size: 26px;
+    font-size: clamp(24px, 2vw, 30px);
     font-weight: 700;
     line-height: 1.25;
-    margin: 20px 0 12px 0;
+    margin: 18px 0 10px 0;
     color: #FFFFFF;
     letter-spacing: -0.3px;
 }
@@ -230,7 +231,7 @@
     font-weight: 400;
     line-height: 1.55;
     color: rgba(255, 255, 255, 0.78);
-    margin: 0 0 20px 0;
+    margin: 0 0 16px 0;
 }
 
 .login-view .login-illustration-card {
@@ -249,19 +250,31 @@
 .login-view .login-illustration-img {
     width: auto;
     max-width: 100%;
-    max-height: 260px;
+    max-height: clamp(240px, 44vh, 360px);
     object-fit: contain;
     border-radius: 20px;
 }
 
 /* --- Right Panel: Login Form --- */
 .login-view .login-right-panel {
-    width: 54%;
-    padding: 40px 48px;
+    width: 52%;
+    padding: clamp(32px, 4.5vh, 48px) clamp(36px, 4vw, 56px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
+}
+
+.login-view .login-brand-header,
+.login-view .login-form-title,
+.login-view .login-form-subtitle,
+.login-view vaadin-login-form,
+.login-view .login-divider,
+.login-view .login-register-btn {
+    width: 100% !important;
+    max-width: 360px !important;
+    box-sizing: border-box !important;
 }
 
 .login-view .login-brand-header {
@@ -317,7 +330,7 @@
 /* Vaadin LoginForm styling */
 .login-view vaadin-login-form {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 360px !important;
     padding: 0 !important;
     margin: 0 !important;
     --lumo-primary-color: #1A2B4C;
@@ -328,8 +341,8 @@
     --vaadin-input-field-border-color: #CBD5E1;
     --vaadin-input-field-background: #F8FAFC;
     --vaadin-input-field-border-radius: 8px;
-    --vaadin-input-field-height: 34px;
-    --lumo-size-m: 34px;
+    --vaadin-input-field-height: 38px;
+    --lumo-size-m: 38px;
     --lumo-contrast-10pct: #F8FAFC;
     --lumo-body-text-color: #0F172A;
     --lumo-secondary-text-color: #64748B;
@@ -337,7 +350,7 @@
 
 .login-view vaadin-login-form-wrapper {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 360px !important;
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -347,7 +360,7 @@
 .login-view vaadin-login-form-wrapper::part(form) {
     padding: 0 !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 360px !important;
     box-sizing: border-box !important;
 }
 
@@ -358,6 +371,7 @@
 
 .login-view vaadin-login-form-wrapper::part(error-message) {
     width: 100% !important;
+    max-width: 360px !important;
     box-sizing: border-box !important;
     margin: 0 0 16px 0 !important;
     border-radius: 8px !important;
@@ -369,18 +383,18 @@
     width: 100% !important;
     padding-top: 3px !important;
     padding-bottom: 2px !important;
-    margin-bottom: 2px;
-    font-size: 12.5px;
-    --vaadin-input-field-height: 34px;
-    --lumo-size-m: 34px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    --vaadin-input-field-height: 38px;
+    --lumo-size-m: 38px;
 }
 
 .login-view vaadin-text-field::part(label),
 .login-view vaadin-password-field::part(label) {
     color: #1E293B;
     font-weight: 500;
-    font-size: 12px;
-    margin-bottom: 2px;
+    font-size: 12.5px;
+    margin-bottom: 3px;
 }
 
 .login-view vaadin-text-field[focused]::part(label),
@@ -399,8 +413,8 @@
     box-shadow: inset 0 0 0 1px #CBD5E1 !important;
     border-radius: 8px !important;
     background-color: #F8FAFC !important;
-    min-height: 34px;
-    height: 34px;
+    min-height: 38px;
+    height: 38px;
     box-sizing: border-box;
     transition: box-shadow 0.15s ease, background-color 0.15s ease;
 }
@@ -426,9 +440,9 @@
 .login-view vaadin-login-form vaadin-button[theme~="submit"],
 .login-view vaadin-login-form-wrapper vaadin-button[theme~="submit"] {
     width: 100% !important;
-    height: 38px;
-    min-height: 38px;
-    font-size: 13.5px;
+    height: 40px;
+    min-height: 40px;
+    font-size: 14px;
     font-weight: 600;
     border-radius: 8px;
     background-color: #1A2B4C;
@@ -452,8 +466,9 @@
     text-align: center;
     color: #94A3B8;
     font-size: 13px;
-    margin: 18px 0 14px 0;
+    margin: 20px 0 16px 0;
     width: 100%;
+    max-width: 360px !important;
     box-sizing: border-box;
 }
 
@@ -474,20 +489,20 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 36px;
-    min-height: 36px;
+    max-width: 360px !important;
+    height: 40px;
+    min-height: 40px;
     border: 1.5px solid #1A2B4C;
     border-radius: 8px;
     color: #1A2B4C;
     background-color: #FFFFFF;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     text-decoration: none;
     box-sizing: border-box;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
-
 .login-view .login-register-btn:hover {
     background-color: #F8FAFC;
     border-color: #152238;
@@ -497,11 +512,12 @@
    Responsive Breakpoints for Login View
    ========================================================================== */
 
-/* Tablet (max-width: 900px) */
-@media (max-width: 900px) {
+/* Tablet (max-width: 1024px) */
+@media (max-width: 1024px) {
     .login-view .login-card {
-        max-width: 720px;
+        max-width: 820px;
         min-height: auto;
+        max-height: none;
     }
 
     .login-view .login-left-panel {
@@ -521,6 +537,15 @@
         width: 56%;
         padding: 32px 32px;
     }
+
+    .login-view .login-brand-header,
+    .login-view .login-form-title,
+    .login-view .login-form-subtitle,
+    .login-view vaadin-login-form,
+    .login-view .login-divider,
+    .login-view .login-register-btn {
+        max-width: 100% !important;
+    }
 }
 
 /* Mobile (max-width: 768px) */
@@ -528,12 +553,16 @@
     .login-view {
         padding: 16px 12px !important;
         align-items: flex-start !important;
+        height: auto !important;
+        min-height: 100vh !important;
     }
 
     .login-view .login-card {
         flex-direction: column;
         border-radius: 20px;
         max-width: 460px;
+        min-height: auto;
+        max-height: none;
         margin: auto;
     }
 
@@ -566,6 +595,15 @@
 
     .login-view .login-form-title {
         font-size: 22px;
+    }
+
+    .login-view .login-brand-header,
+    .login-view .login-form-title,
+    .login-view .login-form-subtitle,
+    .login-view vaadin-login-form,
+    .login-view .login-divider,
+    .login-view .login-register-btn {
+        max-width: 100% !important;
     }
 }
 
