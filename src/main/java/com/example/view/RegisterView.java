@@ -48,16 +48,30 @@ public class RegisterView extends VerticalLayout {
     private final RegistrationService registrationService;
     private final BeanValidationBinder<RegistrationFormData> binder;
 
-    // Account Details Fields
+    // State management for Two-Step Employer Registration
+    private int currentStep = 1;
+    private Div step1Container;
+    private Div step2Container;
+    private Div applicantBenefitContainer;
+    private Div employerBenefitContainer;
+    private Div employerFooter;
+    private Div verificationProcessBox;
+    private Div illustrationCard;
+    private Image defaultIllustrationImg;
+    private Image companyIllustrationImg;
+    private Div registerCard;
+
+    // Step 1: Account Details Fields
     private final TextField fullName = new TextField("Full Name");
     private final EmailField email = new EmailField("Email");
     private final PasswordField password = new PasswordField("Password");
     private final PasswordField confirmPassword = new PasswordField("Confirm Password");
     private final RadioButtonGroup<Role> accountType = new RadioButtonGroup<>("Account Type");
+    private final Button registerButton = new Button("Register");
 
-    // Employer Company Registration Option
+    // Step 2: Employer Company Registration Option
     private final RadioButtonGroup<CompanyRegistrationType> companyRegistrationType =
-            new RadioButtonGroup<>("Company Registration Option");
+            new RadioButtonGroup<>("Registration Option");
 
     private static final List<String> INDUSTRY_OPTIONS = List.of(
             "Teknologi Informasi",
@@ -82,7 +96,7 @@ public class RegisterView extends VerticalLayout {
             "Lainnya"
     );
 
-    // Employer: Register New Company Fields
+    // Step 2: Register New Company Fields (Grid 4 baris)
     private final TextField companyName = new TextField("Company Name");
     private final Select<String> industry = new Select<>();
     private final TextField companyLocation = new TextField("Company Location");
@@ -91,12 +105,12 @@ public class RegisterView extends VerticalLayout {
     private final TextArea description = new TextArea("Company Description");
     private final Div newCompanyContainer = new Div();
 
-    // Employer: Join Existing Company Search
+    // Step 2: Join Existing Company Container & Search
     private final ComboBox<Company> companySearch = new ComboBox<>("Search Company");
     private final Div existingCompanyContainer = new Div();
 
-    // Action Button
-    private final Button registerButton = new Button("Register");
+    // Step 2 Action Button
+    private final Button step2SubmitButton = new Button("Register & Submit Company");
 
     public RegisterView(RegistrationService registrationService) {
         this.registrationService = registrationService;
@@ -169,10 +183,10 @@ public class RegisterView extends VerticalLayout {
     }
 
     private void createRegisterForm() {
-        Div registerCard = new Div();
+        registerCard = new Div();
         registerCard.addClassName("register-card");
 
-        // 1. Panel Kiri (Register Form)
+        // 1. Panel Kiri (Register Form - Step 1 & Step 2)
         Div leftPanel = buildLeftPanel();
 
         // 2. Panel Kanan (Branding & Benefit & Ilustrasi)
@@ -185,6 +199,12 @@ public class RegisterView extends VerticalLayout {
     private Div buildLeftPanel() {
         Div leftPanel = new Div();
         leftPanel.addClassName("register-left-panel");
+
+        // =====================================================================
+        // STEP 1 CONTAINER (Account Details)
+        // =====================================================================
+        step1Container = new Div();
+        step1Container.addClassName("register-step1-container");
 
         // Brand Header (Lucide briefcase icon + Title)
         Div brandHeader = new Div();
@@ -236,7 +256,66 @@ public class RegisterView extends VerticalLayout {
         });
         accountType.setValue(Role.PELAMAR);
 
-        // Employer: Company Registration Option RadioGroup
+        // Submit Button (Step 1)
+        registerButton.setWidthFull();
+        registerButton.addClassName("register-submit-btn");
+        registerButton.setText("Register");
+
+        // Divider
+        Div divider = new Div();
+        divider.addClassName("register-divider");
+        Span dividerText = new Span("Already have an account?");
+        divider.add(dividerText);
+
+        // Outlined Login Button
+        RouterLink loginLink = new RouterLink("Login", LoginView.class);
+        loginLink.addClassName("register-login-btn");
+
+        step1Container.add(
+                brandHeader,
+                formTitle,
+                formSubtitle,
+                fullName,
+                email,
+                password,
+                confirmPassword,
+                accountType,
+                registerButton,
+                divider,
+                loginLink
+        );
+
+        // =====================================================================
+        // STEP 2 CONTAINER (Company Registration - Two-Step Employer)
+        // =====================================================================
+        step2Container = new Div();
+        step2Container.addClassName("register-step2-container");
+        step2Container.setVisible(false);
+
+        // Header: Back button & Step Badge
+        Div step2Header = new Div();
+        step2Header.addClassName("register-step2-header");
+
+        Button backBtn = new Button("Back to Account Details", VaadinIcon.ARROW_LEFT.create());
+        backBtn.addClassName("register-back-btn");
+        backBtn.addClickListener(event -> switchToStep(1));
+
+        Span stepBadge = new Span("Step 2 of 2: Company Profile");
+        stepBadge.addClassName("register-step-badge");
+
+        step2Header.add(backBtn, stepBadge);
+
+        // Heading & Subtitle
+        H2 step2Title = new H2("Company Registration");
+        step2Title.addClassName("register-step2-title");
+
+        Paragraph step2Subtitle = new Paragraph(
+                "Set up your organization profile to start posting jobs and reviewing applicants."
+        );
+        step2Subtitle.addClassName("register-step2-subtitle");
+
+        // Registration Option RadioGroup
+        companyRegistrationType.setLabel("Registration Option");
         companyRegistrationType.setItems(
                 CompanyRegistrationType.REGISTER_NEW_COMPANY,
                 CompanyRegistrationType.JOIN_EXISTING_COMPANY
@@ -252,16 +331,20 @@ public class RegisterView extends VerticalLayout {
         });
         companyRegistrationType.setValue(CompanyRegistrationType.REGISTER_NEW_COMPANY);
         companyRegistrationType.setWidthFull();
-        companyRegistrationType.setVisible(false);
 
-        // Employer: New Company Container & Fields
+        // ---------------------------------------------------------------------
+        // New Company Container & Fields (Grid Layout)
+        // ---------------------------------------------------------------------
         newCompanyContainer.addClassName("register-new-company-container");
-        newCompanyContainer.setVisible(false);
 
+        // Baris 1: Company Name & Industry
+        companyName.setLabel("Company Name");
+        companyName.setRequiredIndicatorVisible(true);
         companyName.setPlaceholder("Enter company name");
         companyName.setHelperText("Enter the official company name. Example: PT Muara Buana");
 
-        industry.setLabel("Industry *");
+        industry.setLabel("Industry");
+        industry.setRequiredIndicatorVisible(true);
         industry.setPlaceholder("Pilih Industri");
         industry.setItems(INDUSTRY_OPTIONS);
         industry.setWidthFull();
@@ -271,37 +354,53 @@ public class RegisterView extends VerticalLayout {
         row1.addClassName("register-form-row");
         row1.add(companyName, industry);
 
-        companyLocation.setPlaceholder("City, Country");
-        companyLocation.setHelperText("Enter the main location. Example: Bandar Lampung");
-
+        // Baris 2: Official Website (Optional) & Official Company Email / Contact
+        website.setLabel("Official Website (Optional)");
+        website.setRequiredIndicatorVisible(false);
+        website.setWidthFull();
         website.setPlaceholder("https://...");
         website.setHelperText("Example: https://company.com");
 
-        Div row2 = new Div();
-        row2.addClassName("register-form-row");
-        row2.add(companyLocation, website);
-
+        officialContact.setLabel("Official Company Email / Contact");
+        officialContact.setRequiredIndicatorVisible(true);
         officialContact.setWidthFull();
         officialContact.setPlaceholder("hr@company.com or contact@...");
         officialContact.setHelperText("Example: hr@company.com or contact@company.com");
 
+        Div row2 = new Div();
+        row2.addClassName("register-form-row");
+        row2.add(website, officialContact);
+
+        // Baris 3: Company Location (Full Width)
+        companyLocation.setLabel("Company Location");
+        companyLocation.setRequiredIndicatorVisible(true);
+        companyLocation.setWidthFull();
+        companyLocation.setPlaceholder("City, Country");
+        companyLocation.setHelperText("Enter the main location. Example: Bandar Lampung");
+
+        // Baris 4: Company Description (Full Width)
+        description.setLabel("Company Description");
+        description.setRequiredIndicatorVisible(false);
         description.setWidthFull();
-        description.setMinHeight("52px");
-        description.setHeight("58px");
+        description.setMinHeight("104px");
         description.setPlaceholder("Briefly describe your company culture, core products, and scale...");
         description.setHelperText("Briefly describe the company's main business activities.");
 
         newCompanyContainer.add(
                 row1,
                 row2,
-                officialContact,
+                companyLocation,
                 description
         );
 
-        // Employer: Existing Company Container & Search ComboBox
+        // ---------------------------------------------------------------------
+        // Existing Company Container & Search ComboBox
+        // ---------------------------------------------------------------------
         existingCompanyContainer.addClassName("register-existing-company-container");
         existingCompanyContainer.setVisible(false);
 
+        companySearch.setLabel("Search Company");
+        companySearch.setRequiredIndicatorVisible(true);
         companySearch.setWidthFull();
         companySearch.setPlaceholder("Search verified company by name...");
         companySearch.setItemLabelGenerator(company -> {
@@ -332,220 +431,51 @@ public class RegisterView extends VerticalLayout {
         );
         existingCompanyContainer.add(companySearch);
 
-        // Account Type Change Listener
+        // Step 2 Submit Button
+        step2SubmitButton.setWidthFull();
+        step2SubmitButton.addClassName("register-submit-btn");
+        step2SubmitButton.setText("Register & Submit Company");
+
+        step2Container.add(
+                step2Header,
+                step2Title,
+                step2Subtitle,
+                companyRegistrationType,
+                newCompanyContainer,
+                existingCompanyContainer,
+                step2SubmitButton
+        );
+
+        // =====================================================================
+        // EVENT LISTENERS
+        // =====================================================================
         accountType.addValueChangeListener(event -> {
             Role selectedRole = event.getValue();
-            if (selectedRole != Role.PEMBERI_LAMARAN) {
+            if (selectedRole == Role.PELAMAR) {
+                registerButton.setText("Register");
                 clearCompanyInputsAndErrors();
+            } else {
+                registerButton.setText("Continue");
             }
-            updateCompanyRegistrationVisibility();
         });
 
-        // Company Registration Option Change Listener
         companyRegistrationType.addValueChangeListener(event -> {
             updateCompanyRegistrationVisibility();
         });
 
-        // Submit Button (Single 'Register' Button)
-        registerButton.setWidthFull();
-        registerButton.addClassName("register-submit-btn");
         registerButton.addClickListener(event -> {
-            registerButton.setEnabled(false);
-            RegistrationFormData formData = new RegistrationFormData();
-            boolean isValid = binder.writeBeanIfValid(formData);
-
-            if (!isValid) {
-                resetRegisterButton();
-                return;
-            }
-
-            if (formData.getAccountType() == Role.PEMBERI_LAMARAN) {
-                CompanyRegistrationType regType = companyRegistrationType.getValue();
-                if (regType == null) {
-                    regType = CompanyRegistrationType.REGISTER_NEW_COMPANY;
-                }
-                formData.setCompanyRegistrationType(regType);
-
-                if (regType == CompanyRegistrationType.REGISTER_NEW_COMPANY) {
-                    boolean companyFormValid = true;
-
-                    String nameVal = companyName.getValue() != null ? companyName.getValue().trim() : "";
-                    if (nameVal.isEmpty()) {
-                        companyName.setErrorMessage("Company Name harus diisi.");
-                        companyName.setInvalid(true);
-                        companyFormValid = false;
-                    } else {
-                        companyName.setInvalid(false);
-                        companyName.setErrorMessage(null);
-                    }
-
-                    String industryVal = industry.getValue() != null ? industry.getValue().trim() : "";
-                    if (industryVal.isEmpty()) {
-                        industry.setErrorMessage("Industry harus dipilih.");
-                        industry.setInvalid(true);
-                        companyFormValid = false;
-                    } else {
-                        industry.setInvalid(false);
-                        industry.setErrorMessage(null);
-                    }
-
-                    String locationVal = companyLocation.getValue() != null ? companyLocation.getValue().trim() : "";
-                    if (locationVal.isEmpty()) {
-                        companyLocation.setErrorMessage("Company Location harus diisi.");
-                        companyLocation.setInvalid(true);
-                        companyFormValid = false;
-                    } else {
-                        companyLocation.setInvalid(false);
-                        companyLocation.setErrorMessage(null);
-                    }
-
-                    String contactVal = officialContact.getValue() != null ? officialContact.getValue().trim() : "";
-                    if (contactVal.isEmpty()) {
-                        officialContact.setErrorMessage("Official Company Email / Contact harus diisi.");
-                        officialContact.setInvalid(true);
-                        companyFormValid = false;
-                    } else {
-                        officialContact.setInvalid(false);
-                        officialContact.setErrorMessage(null);
-                    }
-
-                    String descVal = description.getValue() != null ? description.getValue().trim() : "";
-                    if (descVal.isEmpty()) {
-                        description.setErrorMessage("Company Description harus diisi.");
-                        description.setInvalid(true);
-                        companyFormValid = false;
-                    } else {
-                        description.setInvalid(false);
-                        description.setErrorMessage(null);
-                    }
-
-                    if (!companyFormValid) {
-                        resetRegisterButton();
-                        return;
-                    }
-
-                    String emailValue = formData.getEmail().trim();
-                    if (registrationService.emailExists(emailValue)) {
-                        resetRegisterButton();
-                        email.setErrorMessage("Email is already registered.");
-                        email.setInvalid(true);
-                        Notification.show("Email is already registered.");
-                        return;
-                    }
-
-                    formData.setCompanyName(nameVal);
-                    formData.setIndustry(industryVal);
-                    formData.setLocation(locationVal);
-                    formData.setWebsite(website.getValue() != null ? website.getValue().trim() : "");
-                    formData.setOfficialContact(contactVal);
-                    formData.setDescription(descVal);
-
-                    try {
-                        registrationService.registerEmployerWithNewCompany(formData);
-                        showCompanyRegistrationSuccessDialog();
-                    } catch (IllegalStateException ex) {
-                        resetRegisterButton();
-                        String msg = ex.getMessage();
-                        Notification.show(msg);
-                        if (msg != null && msg.contains("Join Existing Company")) {
-                            companyRegistrationType.setValue(CompanyRegistrationType.JOIN_EXISTING_COMPANY);
-                            updateCompanyRegistrationVisibility();
-                        }
-                    } catch (Exception ex) {
-                        resetRegisterButton();
-                        Notification.show(ex.getMessage());
-                    }
-                    return;
-                } else if (regType == CompanyRegistrationType.JOIN_EXISTING_COMPANY) {
-                    Company selectedCompany = companySearch.getValue();
-                    if (selectedCompany == null || selectedCompany.getId() == null) {
-                        resetRegisterButton();
-                        companySearch.setErrorMessage("Silakan pilih perusahaan terlebih dahulu.");
-                        companySearch.setInvalid(true);
-                        return;
-                    } else {
-                        companySearch.setInvalid(false);
-                        companySearch.setErrorMessage(null);
-                    }
-
-                    String emailValue = formData.getEmail().trim();
-                    if (registrationService.emailExists(emailValue)) {
-                        resetRegisterButton();
-                        email.setErrorMessage("Email is already registered.");
-                        email.setInvalid(true);
-                        Notification.show("Email is already registered.");
-                        return;
-                    }
-
-                    formData.setSelectedCompanyId(selectedCompany.getId());
-                    formData.setCompanyName(selectedCompany.getName());
-
-                    try {
-                        registrationService.registerEmployerWithExistingCompany(formData);
-                        showJoinCompanySuccessDialog(selectedCompany.getName());
-                    } catch (Exception ex) {
-                        resetRegisterButton();
-                        Notification.show(ex.getMessage());
-                    }
-                    return;
-                }
-            }
-
-            // Flow pendaftaran PELAMAR (Applicant)
-            String emailValue = formData.getEmail().trim();
-            if (registrationService.emailExists(emailValue)) {
-                resetRegisterButton();
-                email.setErrorMessage("Email is already registered.");
-                email.setInvalid(true);
-                Notification.show("Email is already registered.");
-                return;
-            }
-
-            try {
-                String nameValue = formData.getFullName().trim();
-                registrationService.register(
-                        nameValue,
-                        emailValue,
-                        formData.getPassword(),
-                        formData.getAccountType(),
-                        null
-                );
-
-                Notification.show("Registration successful. Please log in.");
-                UI.getCurrent().navigate(LoginView.class);
-            } catch (Exception ex) {
-                resetRegisterButton();
-                Notification.show(ex.getMessage());
+            if (accountType.getValue() == Role.PELAMAR) {
+                handleApplicantRegistration();
+            } else {
+                handleEmployerStep1Continue();
             }
         });
 
-        // Divider
-        Div divider = new Div();
-        divider.addClassName("register-divider");
-        Span dividerText = new Span("Already have an account?");
-        divider.add(dividerText);
+        step2SubmitButton.addClickListener(event -> {
+            handleEmployerFinalSubmit();
+        });
 
-        // Outlined Login Button
-        RouterLink loginLink = new RouterLink("Login", LoginView.class);
-        loginLink.addClassName("register-login-btn");
-
-        leftPanel.add(
-                brandHeader,
-                formTitle,
-                formSubtitle,
-                fullName,
-                email,
-                password,
-                confirmPassword,
-                accountType,
-                companyRegistrationType,
-                newCompanyContainer,
-                existingCompanyContainer,
-                registerButton,
-                divider,
-                loginLink
-        );
-
+        leftPanel.add(step1Container, step2Container);
         return leftPanel;
     }
 
@@ -567,17 +497,17 @@ public class RegisterView extends VerticalLayout {
         );
         rightDesc.addClassName("register-right-desc");
 
-        // Benefit Points (Static 3 points for Applicant / Portal)
-        Div benefitContainer = new Div();
-        benefitContainer.addClassName("register-benefit-container");
+        // 1. Applicant Benefit Container (Step 1)
+        applicantBenefitContainer = new Div();
+        applicantBenefitContainer.addClassName("register-benefit-container");
 
-        String[] benefits = new String[]{
+        String[] applicantBenefits = new String[]{
                 "Real-time application status tracking from applied to offered",
                 "Direct connection with verified companies and recruiters",
                 "One-click CV submission and saved job bookmarks"
         };
 
-        for (String benefitText : benefits) {
+        for (String benefitText : applicantBenefits) {
             Div item = new Div();
             item.addClassName("register-benefit-item");
             Icon check = VaadinIcon.CHECK.create();
@@ -585,34 +515,336 @@ public class RegisterView extends VerticalLayout {
             Span text = new Span(benefitText);
             text.addClassName("register-benefit-text");
             item.add(check, text);
-            benefitContainer.add(item);
+            applicantBenefitContainer.add(item);
         }
 
-        // Illustration Card with 20px rounded image
-        Div illustrationCard = new Div();
+        // 2. Employer Benefit Container (Step 2)
+        employerBenefitContainer = new Div();
+        employerBenefitContainer.addClassName("register-benefit-container");
+        employerBenefitContainer.setVisible(false);
+
+        String[] employerBenefits = new String[]{
+                "Publish job openings and manage candidate pipelines easily",
+                "Verified organization badge to attract top-tier talent",
+                "Centralized team access for recruiters and hiring managers"
+        };
+
+        for (String benefitText : employerBenefits) {
+            Div item = new Div();
+            item.addClassName("register-benefit-item");
+            Icon check = VaadinIcon.CHECK.create();
+            check.addClassName("register-benefit-check");
+            Span text = new Span(benefitText);
+            text.addClassName("register-benefit-text");
+            item.add(check, text);
+            employerBenefitContainer.add(item);
+        }
+
+        // 3. Illustration Card with 20px rounded image
+        illustrationCard = new Div();
         illustrationCard.addClassName("register-illustration-card");
-        StreamResource illustResource = new StreamResource("logo_register.png", () ->
+
+        StreamResource defaultIllustResource = new StreamResource("logo_register.png", () ->
                 getClass().getResourceAsStream("/META-INF/resources/images/logo_register.png")
         );
-        Image illustrationImg = new Image(illustResource, "Job Application Tracker Registration");
-        illustrationImg.addClassName("register-illustration-img");
-        illustrationCard.add(illustrationImg);
+        defaultIllustrationImg = new Image(defaultIllustResource, "Job Application Tracker Registration");
+        defaultIllustrationImg.addClassName("register-illustration-img");
 
-        rightPanel.add(badge, rightHeading, rightDesc, benefitContainer, illustrationCard);
+        StreamResource companyIllustResource = new StreamResource("company.jfif", () ->
+                getClass().getResourceAsStream("/META-INF/resources/images/company.jfif")
+        );
+        companyIllustResource.setContentType("image/jpeg");
+        companyIllustrationImg = new Image(companyIllustResource, "Enterprise Company Registration");
+        companyIllustrationImg.addClassName("register-illustration-img");
+        companyIllustrationImg.addClassName("register-company-illustration-img");
+        companyIllustrationImg.setVisible(false);
+
+        illustrationCard.add(defaultIllustrationImg, companyIllustrationImg);
+
+        // 4. Employer Footer (Step 2)
+        employerFooter = new Div();
+        employerFooter.addClassName("register-right-footer");
+        employerFooter.setVisible(false);
+
+        Div footerLeft = new Div();
+        footerLeft.addClassName("register-footer-item");
+        Icon shieldIcon = VaadinIcon.SHIELD.create();
+        shieldIcon.addClassName("register-footer-icon");
+        Span verifiedText = new Span("Verified Employer Network");
+        footerLeft.add(shieldIcon, verifiedText);
+
+        Div footerRight = new Div();
+        footerRight.addClassName("register-footer-item");
+        Span slaText = new Span("1–3 Days Review SLA");
+        footerRight.add(slaText);
+
+        // 5. Verification & Approval Process Info Box (Step 2 - New Company)
+        verificationProcessBox = new Div();
+        verificationProcessBox.addClassName("register-verification-box");
+        verificationProcessBox.setVisible(false);
+
+        Div verifyHeader = new Div();
+        verifyHeader.addClassName("register-verify-header");
+        Icon verifyIcon = VaadinIcon.CHECK_CIRCLE.create();
+        verifyIcon.addClassName("register-verify-icon");
+        Span verifyTitle = new Span("Verification & Approval Process");
+        verifyTitle.addClassName("register-verify-title");
+        verifyHeader.add(verifyIcon, verifyTitle);
+
+        Paragraph verifyDesc = new Paragraph(
+                "New company profiles are reviewed by the platform administrator before verification. You can check the verification status after registration."
+        );
+        verifyDesc.addClassName("register-verify-desc");
+
+        verificationProcessBox.add(verifyHeader, verifyDesc);
+
+        rightPanel.add(
+                badge,
+                rightHeading,
+                rightDesc,
+                applicantBenefitContainer,
+                employerBenefitContainer,
+                illustrationCard,
+                verificationProcessBox,
+                employerFooter
+        );
         return rightPanel;
     }
 
-    private void updateCompanyRegistrationVisibility() {
-        Role role = accountType.getValue();
-        boolean isEmployer = (role == Role.PEMBERI_LAMARAN);
-        companyRegistrationType.setVisible(isEmployer);
+    private void switchToStep(int step) {
+        this.currentStep = step;
+        if (step == 1) {
+            step1Container.setVisible(true);
+            step2Container.setVisible(false);
+            applicantBenefitContainer.setVisible(true);
+            employerBenefitContainer.setVisible(false);
+            if (defaultIllustrationImg != null) {
+                defaultIllustrationImg.setVisible(true);
+            }
+            if (companyIllustrationImg != null) {
+                companyIllustrationImg.setVisible(false);
+            }
+            if (verificationProcessBox != null) {
+                verificationProcessBox.setVisible(false);
+            }
+            employerFooter.setVisible(false);
+            illustrationCard.removeClassName("step-2-illust");
+            if (registerCard != null) {
+                registerCard.removeClassName("step-2-active");
+            }
+            if (accountType.getValue() == Role.PEMBERI_LAMARAN) {
+                registerButton.setText("Continue");
+            } else {
+                registerButton.setText("Register");
+            }
+        } else {
+            step1Container.setVisible(false);
+            step2Container.setVisible(true);
+            applicantBenefitContainer.setVisible(false);
+            employerBenefitContainer.setVisible(true);
+            illustrationCard.addClassName("step-2-illust");
+            if (registerCard != null) {
+                registerCard.addClassName("step-2-active");
+            }
+            updateCompanyRegistrationVisibility();
+        }
+    }
 
-        if (!isEmployer) {
-            newCompanyContainer.setVisible(false);
-            existingCompanyContainer.setVisible(false);
+    private void handleEmployerStep1Continue() {
+        registerButton.setEnabled(false);
+
+        // Validate Step 1 Account Details
+        boolean isValid = binder.validate().isOk();
+        if (!isValid) {
+            registerButton.setEnabled(true);
             return;
         }
 
+        String emailValue = email.getValue() != null ? email.getValue().trim() : "";
+        if (registrationService.emailExists(emailValue)) {
+            registerButton.setEnabled(true);
+            email.setErrorMessage("Email is already registered.");
+            email.setInvalid(true);
+            Notification.show("Email is already registered.");
+            return;
+        }
+
+        // Valid: Switch to Step 2 without writing to database
+        registerButton.setEnabled(true);
+        switchToStep(2);
+    }
+
+    private void handleApplicantRegistration() {
+        registerButton.setEnabled(false);
+        RegistrationFormData formData = new RegistrationFormData();
+        boolean isValid = binder.writeBeanIfValid(formData);
+
+        if (!isValid) {
+            registerButton.setEnabled(true);
+            return;
+        }
+
+        String emailValue = formData.getEmail().trim();
+        if (registrationService.emailExists(emailValue)) {
+            registerButton.setEnabled(true);
+            email.setErrorMessage("Email is already registered.");
+            email.setInvalid(true);
+            Notification.show("Email is already registered.");
+            return;
+        }
+
+        try {
+            String nameValue = formData.getFullName().trim();
+            registrationService.register(
+                    nameValue,
+                    emailValue,
+                    formData.getPassword(),
+                    formData.getAccountType(),
+                    null
+            );
+
+            Notification.show("Registration successful. Please log in.");
+            UI.getCurrent().navigate(LoginView.class);
+        } catch (Exception ex) {
+            registerButton.setEnabled(true);
+            Notification.show(ex.getMessage());
+        }
+    }
+
+    private void handleEmployerFinalSubmit() {
+        step2SubmitButton.setEnabled(false);
+
+        RegistrationFormData formData = new RegistrationFormData();
+        boolean isStep1Valid = binder.writeBeanIfValid(formData);
+        if (!isStep1Valid) {
+            step2SubmitButton.setEnabled(true);
+            switchToStep(1);
+            Notification.show("Silakan periksa kembali data akun Anda.");
+            return;
+        }
+
+        String emailValue = formData.getEmail().trim();
+        if (registrationService.emailExists(emailValue)) {
+            step2SubmitButton.setEnabled(true);
+            switchToStep(1);
+            email.setErrorMessage("Email is already registered.");
+            email.setInvalid(true);
+            Notification.show("Email is already registered.");
+            return;
+        }
+
+        CompanyRegistrationType regType = companyRegistrationType.getValue();
+        if (regType == null) {
+            regType = CompanyRegistrationType.REGISTER_NEW_COMPANY;
+        }
+        formData.setCompanyRegistrationType(regType);
+
+        if (regType == CompanyRegistrationType.REGISTER_NEW_COMPANY) {
+            boolean companyFormValid = true;
+
+            String nameVal = companyName.getValue() != null ? companyName.getValue().trim() : "";
+            if (nameVal.isEmpty()) {
+                companyName.setErrorMessage("Company Name harus diisi.");
+                companyName.setInvalid(true);
+                companyFormValid = false;
+            } else {
+                companyName.setInvalid(false);
+                companyName.setErrorMessage(null);
+            }
+
+            String industryVal = industry.getValue() != null ? industry.getValue().trim() : "";
+            if (industryVal.isEmpty()) {
+                industry.setErrorMessage("Industry harus dipilih.");
+                industry.setInvalid(true);
+                companyFormValid = false;
+            } else {
+                industry.setInvalid(false);
+                industry.setErrorMessage(null);
+            }
+
+            String locationVal = companyLocation.getValue() != null ? companyLocation.getValue().trim() : "";
+            if (locationVal.isEmpty()) {
+                companyLocation.setErrorMessage("Company Location harus diisi.");
+                companyLocation.setInvalid(true);
+                companyFormValid = false;
+            } else {
+                companyLocation.setInvalid(false);
+                companyLocation.setErrorMessage(null);
+            }
+
+            String contactVal = officialContact.getValue() != null ? officialContact.getValue().trim() : "";
+            if (contactVal.isEmpty()) {
+                officialContact.setErrorMessage("Official Company Email / Contact harus diisi.");
+                officialContact.setInvalid(true);
+                companyFormValid = false;
+            } else {
+                officialContact.setInvalid(false);
+                officialContact.setErrorMessage(null);
+            }
+
+            String descVal = description.getValue() != null ? description.getValue().trim() : "";
+            if (descVal.isEmpty()) {
+                description.setErrorMessage("Company Description harus diisi.");
+                description.setInvalid(true);
+                companyFormValid = false;
+            } else {
+                description.setInvalid(false);
+                description.setErrorMessage(null);
+            }
+
+            if (!companyFormValid) {
+                step2SubmitButton.setEnabled(true);
+                return;
+            }
+
+            formData.setCompanyName(nameVal);
+            formData.setIndustry(industryVal);
+            formData.setLocation(locationVal);
+            formData.setWebsite(website.getValue() != null ? website.getValue().trim() : "");
+            formData.setOfficialContact(contactVal);
+            formData.setDescription(descVal);
+
+            try {
+                registrationService.registerEmployerWithNewCompany(formData);
+                showCompanyRegistrationSuccessDialog();
+            } catch (IllegalStateException ex) {
+                step2SubmitButton.setEnabled(true);
+                String msg = ex.getMessage();
+                Notification.show(msg);
+                if (msg != null && msg.contains("Join Existing Company")) {
+                    companyRegistrationType.setValue(CompanyRegistrationType.JOIN_EXISTING_COMPANY);
+                    updateCompanyRegistrationVisibility();
+                }
+            } catch (Exception ex) {
+                step2SubmitButton.setEnabled(true);
+                Notification.show(ex.getMessage());
+            }
+        } else if (regType == CompanyRegistrationType.JOIN_EXISTING_COMPANY) {
+            Company selectedCompany = companySearch.getValue();
+            if (selectedCompany == null || selectedCompany.getId() == null) {
+                step2SubmitButton.setEnabled(true);
+                companySearch.setErrorMessage("Silakan pilih perusahaan terlebih dahulu.");
+                companySearch.setInvalid(true);
+                return;
+            } else {
+                companySearch.setInvalid(false);
+                companySearch.setErrorMessage(null);
+            }
+
+            formData.setSelectedCompanyId(selectedCompany.getId());
+            formData.setCompanyName(selectedCompany.getName());
+
+            try {
+                registrationService.registerEmployerWithExistingCompany(formData);
+                showJoinCompanySuccessDialog(selectedCompany.getName());
+            } catch (Exception ex) {
+                step2SubmitButton.setEnabled(true);
+                Notification.show(ex.getMessage());
+            }
+        }
+    }
+
+    private void updateCompanyRegistrationVisibility() {
         CompanyRegistrationType regType = companyRegistrationType.getValue();
         if (regType == null) {
             regType = CompanyRegistrationType.REGISTER_NEW_COMPANY;
@@ -623,11 +855,35 @@ public class RegisterView extends VerticalLayout {
             newCompanyContainer.setVisible(false);
             existingCompanyContainer.setVisible(true);
             clearNewCompanyErrors();
+            if (defaultIllustrationImg != null) {
+                defaultIllustrationImg.setVisible(true);
+            }
+            if (companyIllustrationImg != null) {
+                companyIllustrationImg.setVisible(false);
+            }
+            if (verificationProcessBox != null) {
+                verificationProcessBox.setVisible(false);
+            }
+            if (employerFooter != null) {
+                employerFooter.setVisible(true);
+            }
         } else {
             newCompanyContainer.setVisible(true);
             existingCompanyContainer.setVisible(false);
             companySearch.setInvalid(false);
             companySearch.setErrorMessage(null);
+            if (defaultIllustrationImg != null) {
+                defaultIllustrationImg.setVisible(false);
+            }
+            if (companyIllustrationImg != null) {
+                companyIllustrationImg.setVisible(true);
+            }
+            if (verificationProcessBox != null) {
+                verificationProcessBox.setVisible(true);
+            }
+            if (employerFooter != null) {
+                employerFooter.setVisible(false);
+            }
         }
     }
 
@@ -758,7 +1014,7 @@ public class RegisterView extends VerticalLayout {
 
         gotItButton.addClickListener(event -> {
             dialog.close();
-            resetRegisterButton();
+            resetButtons();
             UI.getCurrent().navigate(LoginView.class);
         });
 
@@ -846,7 +1102,7 @@ public class RegisterView extends VerticalLayout {
 
         gotItButton.addClickListener(event -> {
             dialog.close();
-            resetRegisterButton();
+            resetButtons();
             UI.getCurrent().navigate(LoginView.class);
         });
 
@@ -862,8 +1118,13 @@ public class RegisterView extends VerticalLayout {
         dialog.open();
     }
 
-    private void resetRegisterButton() {
+    private void resetButtons() {
         registerButton.setEnabled(true);
-        registerButton.setText("Register");
+        if (accountType.getValue() == Role.PEMBERI_LAMARAN) {
+            registerButton.setText("Continue");
+        } else {
+            registerButton.setText("Register");
+        }
+        step2SubmitButton.setEnabled(true);
     }
 }
