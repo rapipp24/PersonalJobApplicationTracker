@@ -603,7 +603,7 @@
     margin: auto;
 }
 
-/* --- Step 2 Employer: Compact Proportional Card (Target: 980-1060px, ideal 1020px) --- */
+/* --- Step 2 Employer: Compact Proportional Card --- */
 .register-view .register-card.step-2-active {
     max-width: 1020px;
 }
@@ -616,6 +616,25 @@
 .register-view .register-card.step-2-active .register-right-panel {
     width: 42%;
     padding: 28px 26px 28px 26px;
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Specific Card Layout for Step 2 Join Existing Company (Compact & Balanced) */
+.register-view .register-card.step-2-active.step-2-join-company {
+    max-width: 950px;
+}
+
+.register-view .register-card.step-2-active.step-2-join-company .register-left-panel {
+    width: 56%;
+    padding: 26px 32px 24px 32px;
+}
+
+.register-view .register-card.step-2-active.step-2-join-company .register-right-panel {
+    width: 44%;
+    padding: 28px 26px;
     margin: 10px;
     display: flex;
     flex-direction: column;
@@ -893,6 +912,19 @@
     letter-spacing: -0.1px;
 }
 
+.register-view .register-step-badge.register-step-badge-join {
+    background: #EFF6FF !important;
+    border: 1px solid #BFDBFE !important;
+    color: #1D4ED8 !important;
+    gap: 6px !important;
+}
+
+.register-view .register-step-badge.register-step-badge-join vaadin-icon {
+    width: 14px !important;
+    height: 14px !important;
+    color: #2563EB !important;
+}
+
 .register-view .register-step2-title {
     font-size: 22px;
     font-weight: 700;
@@ -918,20 +950,115 @@
     font-size: 13px;
 }
 
+.register-view .register-radio-join::part(label) {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.6px !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 8px !important;
+    white-space: normal !important;
+}
+
 /* Dynamic Employer containers */
+.register-view [hidden] {
+    display: none !important;
+}
+
 .register-view .register-new-company-container {
     width: 100% !important;
     padding: 0 !important;
     margin: 0 0 22px 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.register-view .register-new-company-container[hidden] {
+    display: none !important;
 }
 
 .register-view .register-existing-company-container {
     width: 100% !important;
     padding: 0 !important;
-    margin: 0 0 16px 0;
+    margin: 0 0 16px 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.register-view .register-existing-company-container[hidden] {
+    display: none !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box::part(label) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #1E293B !important;
+    margin-bottom: 6px !important;
+    line-height: 1.2 !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box::part(input-field) {
+    min-height: 42px !important;
+    height: 42px !important;
+    border-radius: 8px !important;
+    box-shadow: inset 0 0 0 1px #CBD5E1 !important;
+    background-color: #F8FAFC !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box:hover:not([focused])::part(input-field) {
+    box-shadow: inset 0 0 0 1px #94A3B8 !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box[focused]::part(input-field) {
+    box-shadow: inset 0 0 0 1.5px #1A2B4C, 0 0 0 3px rgba(26, 43, 76, 0.15) !important;
+    background-color: #FFFFFF !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box input {
+    font-size: 13.5px !important;
+    color: #0F172A !important;
+}
+
+.register-view .register-existing-company-container vaadin-combo-box input::placeholder {
+    font-size: 13px !important;
+    color: #94A3B8 !important;
+}
+
+/* Information Box below Search Company */
+.register-view .register-join-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.register-view .register-join-info-icon {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    color: #1A2B4C;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.register-view .register-join-info-text {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #475569;
+    margin: 0;
 }
 
 /* Two-column row for Step 2 New Company */
@@ -1047,6 +1174,40 @@ vaadin-select-overlay vaadin-select-item {
     height: 42px !important;
     font-size: 14px !important;
     margin-top: 0 !important;
+}
+
+/* Step 2 Join Company Submit, Divider & Login Button */
+.register-view .register-card.step-2-join-company .register-submit-btn {
+    height: 42px !important;
+    font-size: 14px !important;
+    margin-top: 10px !important;
+    margin-bottom: 0 !important;
+}
+
+.register-view .register-card.step-2-join-company .register-divider {
+    margin: 18px 0 14px 0 !important;
+}
+
+.register-view .register-card.step-2-join-company .register-login-btn {
+    height: 40px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    border: 1.5px solid #1A2B4C !important;
+    background-color: #FFFFFF !important;
+    color: #1A2B4C !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.register-view .register-card.step-2-join-company .register-login-btn:hover {
+    background-color: #F8FAFC !important;
+    border-color: #152238 !important;
 }
 
 /* Divider & Login Outlined Button */
@@ -1360,6 +1521,37 @@ vaadin-select-overlay vaadin-select-item {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+/* Step 2 Join Company Right Panel Isolated Layout */
+.register-view .register-card.step-2-active.step-2-join-company .register-right-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+}
+
+.register-view .register-card.step-2-active.step-2-join-company .register-right-desc {
+    margin: 0 0 12px 0;
+}
+
+.register-view .register-card.step-2-active.step-2-join-company .register-illustration-card.step-2-illust {
+    margin-top: 14px;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.register-view .register-card.step-2-active.step-2-join-company .register-company-illustration-img {
+    max-width: 100%;
+    width: 100%;
+    max-height: 240px;
+    height: auto;
+    border-radius: 20px;
+    object-fit: contain;
+    display: block;
+}
+
 /* ==========================================================================
    Responsive Breakpoints for Register View
    ========================================================================== */
@@ -1436,6 +1628,17 @@ vaadin-select-overlay vaadin-select-item {
     .register-view .register-form-row {
         flex-direction: column;
         gap: 16px;
+    }
+
+    .register-view .register-step2-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .register-view .register-step-badge,
+    .register-view .register-step-badge.register-step-badge-join {
+        font-size: 11px !important;
+        white-space: nowrap !important;
     }
 
     .register-view .register-right-panel,

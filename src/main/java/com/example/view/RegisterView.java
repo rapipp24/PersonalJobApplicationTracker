@@ -60,6 +60,11 @@ public class RegisterView extends VerticalLayout {
     private Image defaultIllustrationImg;
     private Image companyIllustrationImg;
     private Div registerCard;
+    private Span stepBadge;
+    private H2 step2Title;
+    private Paragraph step2Subtitle;
+    private Div joinLoginDivider;
+    private RouterLink joinLoginLink;
 
     // Step 1: Account Details Fields
     private final TextField fullName = new TextField("Full Name");
@@ -300,16 +305,16 @@ public class RegisterView extends VerticalLayout {
         backBtn.addClassName("register-back-btn");
         backBtn.addClickListener(event -> switchToStep(1));
 
-        Span stepBadge = new Span("Step 2 of 2: Company Profile");
+        stepBadge = new Span("Step 2 of 2: Company Profile");
         stepBadge.addClassName("register-step-badge");
 
         step2Header.add(backBtn, stepBadge);
 
         // Heading & Subtitle
-        H2 step2Title = new H2("Company Registration");
+        step2Title = new H2("Company Registration");
         step2Title.addClassName("register-step2-title");
 
-        Paragraph step2Subtitle = new Paragraph(
+        step2Subtitle = new Paragraph(
                 "Set up your organization profile to start posting jobs and reviewing applicants."
         );
         step2Subtitle.addClassName("register-step2-subtitle");
@@ -429,12 +434,32 @@ public class RegisterView extends VerticalLayout {
                     return registrationService.findVerifiedCompanies(filter).size();
                 }
         );
-        existingCompanyContainer.add(companySearch);
+        Div joinInfoBox = new Div();
+        joinInfoBox.addClassName("register-join-info-box");
+        Icon infoIcon = VaadinIcon.INFO_CIRCLE_O.create();
+        infoIcon.addClassName("register-join-info-icon");
+        Paragraph infoText = new Paragraph(
+                "Only verified companies appear in this list. Your request to join will be reviewed before access is granted."
+        );
+        infoText.addClassName("register-join-info-text");
+        joinInfoBox.add(infoIcon, infoText);
+
+        existingCompanyContainer.add(companySearch, joinInfoBox);
 
         // Step 2 Submit Button
         step2SubmitButton.setWidthFull();
         step2SubmitButton.addClassName("register-submit-btn");
         step2SubmitButton.setText("Register & Submit Company");
+
+        // Step 2 Join Company Login Divider & Outlined Button
+        joinLoginDivider = new Div();
+        joinLoginDivider.addClassName("register-divider");
+        joinLoginDivider.add(new Span("Already have an account?"));
+        joinLoginDivider.setVisible(false);
+
+        joinLoginLink = new RouterLink("Login", LoginView.class);
+        joinLoginLink.addClassName("register-login-btn");
+        joinLoginLink.setVisible(false);
 
         step2Container.add(
                 step2Header,
@@ -443,7 +468,9 @@ public class RegisterView extends VerticalLayout {
                 companyRegistrationType,
                 newCompanyContainer,
                 existingCompanyContainer,
-                step2SubmitButton
+                step2SubmitButton,
+                joinLoginDivider,
+                joinLoginLink
         );
 
         // =====================================================================
@@ -631,6 +658,14 @@ public class RegisterView extends VerticalLayout {
             illustrationCard.removeClassName("step-2-illust");
             if (registerCard != null) {
                 registerCard.removeClassName("step-2-active");
+                registerCard.removeClassName("step-2-new-company");
+                registerCard.removeClassName("step-2-join-company");
+            }
+            if (joinLoginDivider != null) {
+                joinLoginDivider.setVisible(false);
+            }
+            if (joinLoginLink != null) {
+                joinLoginLink.setVisible(false);
             }
             if (accountType.getValue() == Role.PEMBERI_LAMARAN) {
                 registerButton.setText("Continue");
@@ -641,7 +676,6 @@ public class RegisterView extends VerticalLayout {
             step1Container.setVisible(false);
             step2Container.setVisible(true);
             applicantBenefitContainer.setVisible(false);
-            employerBenefitContainer.setVisible(true);
             illustrationCard.addClassName("step-2-illust");
             if (registerCard != null) {
                 registerCard.addClassName("step-2-active");
@@ -855,34 +889,127 @@ public class RegisterView extends VerticalLayout {
             newCompanyContainer.setVisible(false);
             existingCompanyContainer.setVisible(true);
             clearNewCompanyErrors();
-            if (defaultIllustrationImg != null) {
-                defaultIllustrationImg.setVisible(true);
+
+            // Dynamic Header Badge for Join Existing Company
+            if (stepBadge != null) {
+                stepBadge.removeAll();
+                Icon checkIcon = VaadinIcon.CHECK_SQUARE_O.create();
+                checkIcon.addClassName("register-step-badge-icon");
+                stepBadge.add(checkIcon, new Span("Step 2 of 2: Organization Binding"));
+                stepBadge.addClassName("register-step-badge-join");
             }
-            if (companyIllustrationImg != null) {
-                companyIllustrationImg.setVisible(false);
+
+            // Dynamic Heading and Subtitle
+            if (step2Title != null) {
+                step2Title.setText("Join Existing Company");
+            }
+            if (step2Subtitle != null) {
+                step2Subtitle.setText("Connect your account with an already registered organization on our platform.");
+            }
+
+            // Radio button label
+            companyRegistrationType.setLabel("COMPANY REGISTRATION OPTION");
+            companyRegistrationType.addClassName("register-radio-join");
+
+            // Submit button
+            step2SubmitButton.setText("Register & Join Company");
+            step2SubmitButton.addClassName("register-submit-join");
+
+            // Divider and Login Link
+            if (joinLoginDivider != null) {
+                joinLoginDivider.setVisible(true);
+            }
+            if (joinLoginLink != null) {
+                joinLoginLink.setVisible(true);
+            }
+
+            // Modifier classes on card for isolated compact styling
+            if (registerCard != null) {
+                registerCard.addClassName("step-2-join-company");
+                registerCard.removeClassName("step-2-new-company");
+            }
+
+            // Right panel composition: Badge, Heading, Desc, company.jfif
+            // Strictly NO benefit list, NO verification box, NO footer SLA!
+            if (applicantBenefitContainer != null) {
+                applicantBenefitContainer.setVisible(false);
+            }
+            if (employerBenefitContainer != null) {
+                employerBenefitContainer.setVisible(false);
             }
             if (verificationProcessBox != null) {
                 verificationProcessBox.setVisible(false);
             }
             if (employerFooter != null) {
-                employerFooter.setVisible(true);
+                employerFooter.setVisible(false);
             }
-        } else {
-            newCompanyContainer.setVisible(true);
-            existingCompanyContainer.setVisible(false);
-            companySearch.setInvalid(false);
-            companySearch.setErrorMessage(null);
             if (defaultIllustrationImg != null) {
                 defaultIllustrationImg.setVisible(false);
             }
             if (companyIllustrationImg != null) {
                 companyIllustrationImg.setVisible(true);
             }
+        } else {
+            newCompanyContainer.setVisible(true);
+            existingCompanyContainer.setVisible(false);
+            companySearch.setInvalid(false);
+            companySearch.setErrorMessage(null);
+
+            // Dynamic Header Badge for Register New Company
+            if (stepBadge != null) {
+                stepBadge.removeAll();
+                stepBadge.setText("Step 2 of 2: Company Profile");
+                stepBadge.removeClassName("register-step-badge-join");
+            }
+
+            // Dynamic Heading and Subtitle
+            if (step2Title != null) {
+                step2Title.setText("Company Registration");
+            }
+            if (step2Subtitle != null) {
+                step2Subtitle.setText("Set up your organization profile to start posting jobs and reviewing applicants.");
+            }
+
+            // Radio button label
+            companyRegistrationType.setLabel("Registration Option");
+            companyRegistrationType.removeClassName("register-radio-join");
+
+            // Submit button
+            step2SubmitButton.setText("Register & Submit Company");
+            step2SubmitButton.removeClassName("register-submit-join");
+
+            // Divider and Login Link hidden in New Company mode
+            if (joinLoginDivider != null) {
+                joinLoginDivider.setVisible(false);
+            }
+            if (joinLoginLink != null) {
+                joinLoginLink.setVisible(false);
+            }
+
+            // Modifier classes on card
+            if (registerCard != null) {
+                registerCard.addClassName("step-2-new-company");
+                registerCard.removeClassName("step-2-join-company");
+            }
+
+            // Right panel composition for New Company
+            if (applicantBenefitContainer != null) {
+                applicantBenefitContainer.setVisible(false);
+            }
+            if (employerBenefitContainer != null) {
+                employerBenefitContainer.setVisible(true);
+            }
             if (verificationProcessBox != null) {
                 verificationProcessBox.setVisible(true);
             }
             if (employerFooter != null) {
                 employerFooter.setVisible(false);
+            }
+            if (defaultIllustrationImg != null) {
+                defaultIllustrationImg.setVisible(false);
+            }
+            if (companyIllustrationImg != null) {
+                companyIllustrationImg.setVisible(true);
             }
         }
     }
